@@ -111,7 +111,6 @@ def _apply_limits() -> None:
 
 def grade(task: Task, submission: Path, timeout_s: float | None = None) -> Grade:
     """Grade the submission folder (solution.py and/or answer.yaml) against the task."""
-    st = config.settings()["runner"]
     timeout = float(timeout_s or max(task.time_limit_s, 1.0))
     t0 = time.monotonic()
     findings: list[apiscan.Finding] = []
