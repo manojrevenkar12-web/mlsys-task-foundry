@@ -5,20 +5,20 @@
 
 | Task | Area | Difficulty | Reference | Mutants killed | Checks | Problems |
 |---|---|---:|---|---:|---:|---|
-| dp-replicas-drift | debugging | 2 | passes (2 s) | 4/4 | 4 | - |
+| dp-replicas-drift | debugging | 2 | passes (1 s) | 4/4 | 4 | - |
 | grad-accumulation-weights | debugging | 3 | passes (3 s) | 5/5 | 4 | - |
-| nan-from-padding | debugging | 3 | passes (2 s) | 5/5 | 5 | - |
+| nan-from-padding | debugging | 3 | passes (3 s) | 5/5 | 5 | - |
 | same-dropout-everywhere | debugging | 3 | passes (3 s) | 5/5 | 4 | - |
-| vocab-parallel-loss | debugging | 4 | passes (7 s) | 6/6 | 4 | - |
+| vocab-parallel-loss | debugging | 4 | passes (8 s) | 6/6 | 4 | - |
 | flash-attention-causal | kernels | 4 | passes (6 s) | 7/7 | 6 | - |
 | int8-matmul-scales | kernels | 3 | passes (6 s) | 5/5 | 6 | - |
 | port-dma-kernel | kernels | 3 | passes (3 s) | 6/6 | 5 | - |
 | rmsnorm-residual-ragged | kernels | 3 | passes (5 s) | 5/5 | 6 | - |
 | row-softmax | kernels | 2 | passes (3 s) | 6/6 | 6 | - |
-| tiled-matmul | kernels | 2 | passes (8 s) | 8/8 | 6 | - |
+| tiled-matmul | kernels | 2 | passes (10 s) | 8/8 | 6 | - |
 | gpu-launch-bound | profiling | 2 | passes (0 s) | 4/4 | 4 | - |
 | host-bound-input | profiling | 2 | passes (0 s) | 5/5 | 4 | - |
-| recompiling-train-step | profiling | 2 | passes (8 s) | 6/6 | 6 | - |
+| recompiling-train-step | profiling | 2 | passes (11 s) | 6/6 | 6 | - |
 | roofline-classify | profiling | 3 | passes (0 s) | 4/4 | 3 | - |
 | tpu-exposed-collectives | profiling | 3 | passes (0 s) | 4/4 | 4 | - |
 | continuous-batching | serving | 4 | passes (0 s) | 6/6 | 3 | - |

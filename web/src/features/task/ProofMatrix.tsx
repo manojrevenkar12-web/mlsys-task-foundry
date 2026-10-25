@@ -33,7 +33,7 @@ export function ProofMatrix({ forge, modeText }: { forge: ForgeTask; modeText: R
         <strong>{forge.ok ? "Proven" : "Not proven"}</strong>
         <span>
           The reference {forge.reference_passed ? "passes every check" : "fails"}
-          {forge.deterministic ? " on every run" : ", and its results change between runs"} ({forge.reference_seconds.toFixed(0)} s).{" "}
+          {forge.deterministic ? " on every run" : ", and its results change between runs"} ({forge.reference_seconds < 1 ? "under a second" : `${forge.reference_seconds.toFixed(0)} s`}).{" "}
           {forge.killed} of {rows.length} plausible wrong solutions are rejected.
         </span>
         {forge.problems.length > 0 && (
@@ -56,7 +56,7 @@ export function ProofMatrix({ forge, modeText }: { forge: ForgeTask; modeText: R
                 {i + 1}
               </span>
             ))}
-            <span role="columnheader" className={styles.result}>
+            <span role="columnheader" className={`${styles.result} ${styles.resultHead}`}>
               Result
             </span>
           </div>

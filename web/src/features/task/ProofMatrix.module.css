@@ -151,3 +151,8 @@
   font-family: var(--font-mono);
   font-size: var(--text-xs);
 }
+
+.resultHead {
+  color: var(--ink-faint);
+  font-family: var(--font-sans);
+}

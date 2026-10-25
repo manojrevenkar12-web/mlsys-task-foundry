@@ -1,5 +1,5 @@
 {
- "seconds": 17.4,
+ "seconds": 441.3,
  "tasks": [
   {
    "id": "dp-replicas-drift",
@@ -9,7 +9,7 @@
    "title": "Data-parallel replicas that drift apart (and the check someone turned off)",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 1.55,
+   "reference_seconds": 1.42,
    "checks": [
     "matches_full_batch_gradient_descent",
     "weights_are_identical_on_every_device",
@@ -44,7 +44,7 @@
       "shard_map_checks_are_on"
      ],
      "crashed": null,
-     "seconds": 1.2
+     "seconds": 1.39
     },
     "loss-max-not-mean": {
      "modes": [
@@ -55,7 +55,7 @@
       "matches_full_batch_gradient_descent"
      ],
      "crashed": null,
-     "seconds": 1.35
+     "seconds": 1.38
     },
     "pmean-of-summed-grads": {
      "modes": [
@@ -67,7 +67,7 @@
       "independent_of_the_device_count"
      ],
      "crashed": null,
-     "seconds": 1.34
+     "seconds": 1.19
     },
     "summed-gradient": {
      "modes": [
@@ -79,7 +79,7 @@
       "independent_of_the_device_count"
      ],
      "crashed": null,
-     "seconds": 1.28
+     "seconds": 1.34
     }
    },
    "idle_checks": [],
@@ -98,7 +98,7 @@
    "title": "Gradient accumulation that does not match the big batch",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 3.32,
+   "reference_seconds": 3.3,
    "checks": [
     "equal_microbatches_match",
     "unequal_microbatches_match",
@@ -131,7 +131,7 @@
       "an_empty_microbatch_is_harmless"
      ],
      "crashed": null,
-     "seconds": 3.21
+     "seconds": 3.25
     },
     "counts-padding": {
      "modes": [
@@ -144,7 +144,7 @@
       "an_empty_microbatch_is_harmless"
      ],
      "crashed": null,
-     "seconds": 3.35
+     "seconds": 3.3
     },
     "mean-of-means": {
      "modes": [
@@ -156,7 +156,7 @@
       "an_empty_microbatch_is_harmless"
      ],
      "crashed": null,
-     "seconds": 3.31
+     "seconds": 3.49
     },
     "weighted-but-nan": {
      "modes": [
@@ -167,7 +167,7 @@
       "an_empty_microbatch_is_harmless"
      ],
      "crashed": null,
-     "seconds": 3.35
+     "seconds": 3.41
     },
     "whole-batch-at-once": {
      "modes": [
@@ -178,7 +178,7 @@
       "still_accumulates_with_scan"
      ],
      "crashed": null,
-     "seconds": 2.93
+     "seconds": 3.28
     }
    },
    "idle_checks": [],
@@ -197,7 +197,7 @@
    "title": "NaN loss from a batch with an empty sequence",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 2.25,
+   "reference_seconds": 2.79,
    "checks": [
     "pool_is_right_including_empty_sequences",
     "gradients_are_finite_with_an_empty_sequence",
@@ -233,7 +233,7 @@
       "same_gradients_as_starter_without_empty_sequences"
      ],
      "crashed": null,
-     "seconds": 2.25
+     "seconds": 2.66
     },
     "nan-to-num-output": {
      "modes": [
@@ -244,7 +244,7 @@
       "gradients_are_finite_with_an_empty_sequence"
      ],
      "crashed": null,
-     "seconds": 2.23
+     "seconds": 2.44
     },
     "no-max-shift": {
      "modes": [
@@ -255,7 +255,7 @@
       "exact_for_large_scores"
      ],
      "crashed": null,
-     "seconds": 2.18
+     "seconds": 2.82
     },
     "uniform-for-empty": {
      "modes": [
@@ -268,7 +268,7 @@
       "exact_for_large_scores"
      ],
      "crashed": null,
-     "seconds": 2.14
+     "seconds": 2.41
     },
     "where-after-inf": {
      "modes": [
@@ -279,7 +279,7 @@
       "gradients_are_finite_with_an_empty_sequence"
      ],
      "crashed": null,
-     "seconds": 2.26
+     "seconds": 2.41
     }
    },
    "idle_checks": [],
@@ -298,7 +298,7 @@
    "title": "Every data-parallel shard draws the same dropout mask",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 2.71,
+   "reference_seconds": 2.91,
    "checks": [
     "shards_get_different_masks",
     "steps_get_different_masks",
@@ -330,7 +330,7 @@
       "determined_by_key_and_step"
      ],
      "crashed": null,
-     "seconds": 1.21
+     "seconds": 1.32
     },
     "inverted-rate": {
      "modes": [
@@ -341,7 +341,7 @@
       "keep_rate_and_scaling"
      ],
      "crashed": null,
-     "seconds": 2.85
+     "seconds": 2.8
     },
     "shard-only": {
      "modes": [
@@ -363,7 +363,7 @@
       "shards_get_different_masks"
      ],
      "crashed": null,
-     "seconds": 3.27
+     "seconds": 3.09
     },
     "step-only": {
      "modes": [
@@ -374,7 +374,7 @@
       "shards_get_different_masks"
      ],
      "crashed": null,
-     "seconds": 2.45
+     "seconds": 2.58
     }
    },
    "idle_checks": [],
@@ -393,7 +393,7 @@
    "title": "Cross-entropy over a vocabulary sharded across devices",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 7.09,
+   "reference_seconds": 7.68,
    "checks": [
     "equals_single_device_cross_entropy",
     "exact_for_large_logits",
@@ -428,7 +428,7 @@
       "vocabulary_stays_sharded"
      ],
      "crashed": null,
-     "seconds": 3.97
+     "seconds": 3.88
     },
     "local-max": {
      "modes": [
@@ -442,7 +442,7 @@
       "gradient_is_softmax_minus_onehot"
      ],
      "crashed": null,
-     "seconds": 3.94
+     "seconds": 4.0
     },
     "max-not-stopped": {
      "modes": [
@@ -453,7 +453,7 @@
       "gradient_is_softmax_minus_onehot"
      ],
      "crashed": null,
-     "seconds": 4.76
+     "seconds": 5.36
     },
     "no-shift": {
      "modes": [
@@ -464,7 +464,7 @@
       "exact_for_large_logits"
      ],
      "crashed": null,
-     "seconds": 7.1
+     "seconds": 7.05
     },
     "psum-of-lse": {
      "modes": [
@@ -477,7 +477,7 @@
       "gradient_is_softmax_minus_onehot"
      ],
      "crashed": null,
-     "seconds": 5.93
+     "seconds": 5.97
     },
     "target-not-offset": {
      "modes": [
@@ -490,7 +490,7 @@
       "gradient_is_softmax_minus_onehot"
      ],
      "crashed": null,
-     "seconds": 4.64
+     "seconds": 5.04
     }
    },
    "idle_checks": [],
@@ -509,7 +509,7 @@
    "title": "Flash attention forward with a causal mask and online softmax",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 5.83,
+   "reference_seconds": 5.92,
    "checks": [
     "uses_current_api",
     "runs_a_pallas_kernel",
@@ -557,7 +557,7 @@
       "correct_on_two_cores_in_random_order"
      ],
      "crashed": null,
-     "seconds": 4.32
+     "seconds": 4.84
     },
     "max-not-tracked": {
      "modes": [
@@ -572,7 +572,7 @@
       "correct_on_two_cores_in_random_order"
      ],
      "crashed": null,
-     "seconds": 4.32
+     "seconds": 5.4
     },
     "no-acc-rescale": {
      "modes": [
@@ -586,7 +586,7 @@
       "correct_on_two_cores_in_random_order"
      ],
      "crashed": null,
-     "seconds": 4.15
+     "seconds": 4.18
     },
     "no-scale": {
      "modes": [
@@ -600,7 +600,7 @@
       "correct_on_two_cores_in_random_order"
      ],
      "crashed": null,
-     "seconds": 4.24
+     "seconds": 6.05
     },
     "no-sum-rescale": {
      "modes": [
@@ -614,7 +614,7 @@
       "correct_on_two_cores_in_random_order"
      ],
      "crashed": null,
-     "seconds": 4.31
+     "seconds": 5.96
     },
     "normalise-every-step": {
      "modes": [
@@ -628,7 +628,7 @@
       "correct_on_two_cores_in_random_order"
      ],
      "crashed": null,
-     "seconds": 4.15
+     "seconds": 4.3
     },
     "strict-causal": {
      "modes": [
@@ -641,7 +641,7 @@
       "correct_on_two_cores_in_random_order"
      ],
      "crashed": null,
-     "seconds": 5.05
+     "seconds": 5.68
     }
    },
    "idle_checks": [
@@ -663,7 +663,7 @@
    "title": "int8 x int8 matmul with per-row and per-channel scales",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 6.28,
+   "reference_seconds": 6.42,
    "checks": [
     "uses_current_api",
     "runs_a_pallas_kernel",
@@ -709,7 +709,7 @@
       "one_sided_and_sparse_values"
      ],
      "crashed": null,
-     "seconds": 1.89
+     "seconds": 2.54
     },
     "float32-accumulator": {
      "modes": [
@@ -720,7 +720,7 @@
       "exact_integer_sums_with_long_k"
      ],
      "crashed": null,
-     "seconds": 5.35
+     "seconds": 9.25
     },
     "int16-accumulator": {
      "modes": [
@@ -734,7 +734,7 @@
       "one_sided_and_sparse_values"
      ],
      "crashed": null,
-     "seconds": 4.68
+     "seconds": 7.28
     },
     "k-parallel": {
      "modes": [
@@ -748,7 +748,7 @@
       "one_sided_and_sparse_values"
      ],
      "crashed": null,
-     "seconds": 5.35
+     "seconds": 6.27
     },
     "scales-transposed": {
      "modes": [
@@ -760,7 +760,7 @@
       "one_sided_and_sparse_values"
      ],
      "crashed": null,
-     "seconds": 4.73
+     "seconds": 4.99
     }
    },
    "idle_checks": [
@@ -781,7 +781,7 @@
    "title": "Port a manual-DMA kernel from old Pallas to JAX 0.12",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 3.4,
+   "reference_seconds": 2.99,
    "checks": [
     "uses_current_api",
     "keeps_the_manual_dma",
@@ -819,7 +819,7 @@
       "keeps_the_manual_dma"
      ],
      "crashed": null,
-     "seconds": 3.18
+     "seconds": 3.26
     },
     "hallucinated-params": {
      "modes": [
@@ -833,7 +833,7 @@
       "bf16_in_bf16_out"
      ],
      "crashed": null,
-     "seconds": 1.02
+     "seconds": 1.06
     },
     "kept-pl-dot": {
      "modes": [
@@ -848,7 +848,7 @@
       "bf16_in_bf16_out"
      ],
      "crashed": null,
-     "seconds": 1.1
+     "seconds": 1.12
     },
     "kept-pltpu-any": {
      "modes": [
@@ -863,7 +863,7 @@
       "bf16_in_bf16_out"
      ],
      "crashed": null,
-     "seconds": 1.04
+     "seconds": 1.08
     },
     "wait-after-use": {
      "modes": [
@@ -876,7 +876,7 @@
       "bf16_in_bf16_out"
      ],
      "crashed": null,
-     "seconds": 3.21
+     "seconds": 2.49
     },
     "wrong-row-offset": {
      "modes": [
@@ -889,7 +889,7 @@
       "bf16_in_bf16_out"
      ],
      "crashed": null,
-     "seconds": 2.67
+     "seconds": 2.51
     }
    },
    "idle_checks": [],
@@ -912,7 +912,7 @@
    "title": "Fused residual add and RMSNorm when rows do not fill the last block",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 4.78,
+   "reference_seconds": 4.71,
    "checks": [
     "uses_current_api",
     "runs_a_pallas_kernel",
@@ -954,7 +954,7 @@
       "eps_is_inside_the_square_root"
      ],
      "crashed": null,
-     "seconds": 4.66
+     "seconds": 4.76
     },
     "floor-grid": {
      "modes": [
@@ -965,7 +965,7 @@
       "every_row_right_when_the_last_block_is_partial"
      ],
      "crashed": null,
-     "seconds": 3.65
+     "seconds": 3.34
     },
     "norm-before-add": {
      "modes": [
@@ -978,7 +978,7 @@
       "bf16_in_bf16_out_computed_in_f32"
      ],
      "crashed": null,
-     "seconds": 3.56
+     "seconds": 3.38
     },
     "outputs-swapped": {
      "modes": [
@@ -992,7 +992,7 @@
       "eps_is_inside_the_square_root"
      ],
      "crashed": null,
-     "seconds": 3.63
+     "seconds": 3.02
     },
     "pad-to-block": {
      "modes": [
@@ -1004,7 +1004,7 @@
       "every_row_right_when_the_last_block_is_partial"
      ],
      "crashed": null,
-     "seconds": 3.34
+     "seconds": 3.24
     }
    },
    "idle_checks": [
@@ -1026,7 +1026,7 @@
    "title": "Row softmax that survives large logits and bf16",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 3.02,
+   "reference_seconds": 3.27,
    "checks": [
     "uses_current_api",
     "runs_a_pallas_kernel",
@@ -1067,7 +1067,7 @@
       "bf16_in_bf16_out_computed_in_f32"
      ],
      "crashed": null,
-     "seconds": 3.2
+     "seconds": 3.27
     },
     "column-max": {
      "modes": [
@@ -1081,7 +1081,7 @@
       "other_shapes_and_row_blocks"
      ],
      "crashed": null,
-     "seconds": 2.45
+     "seconds": 2.67
     },
     "fixed-rows": {
      "modes": [
@@ -1094,7 +1094,7 @@
       "other_shapes_and_row_blocks"
      ],
      "crashed": null,
-     "seconds": 2.74
+     "seconds": 3.02
     },
     "library-softmax": {
      "modes": [
@@ -1105,7 +1105,7 @@
       "runs_a_pallas_kernel"
      ],
      "crashed": null,
-     "seconds": 1.32
+     "seconds": 1.41
     },
     "log-domain-shift": {
      "modes": [
@@ -1117,7 +1117,7 @@
       "finite_and_exact_for_logits_in_the_hundreds"
      ],
      "crashed": null,
-     "seconds": 3.04
+     "seconds": 3.66
     },
     "no-max-subtraction": {
      "modes": [
@@ -1129,7 +1129,7 @@
       "finite_and_exact_for_logits_in_the_hundreds"
      ],
      "crashed": null,
-     "seconds": 2.95
+     "seconds": 3.23
     }
    },
    "idle_checks": [
@@ -1150,7 +1150,7 @@
    "title": "Tiled matmul with an f32 accumulator, ready for two TensorCores",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 7.76,
+   "reference_seconds": 9.69,
    "checks": [
     "uses_current_api",
     "runs_a_pallas_kernel",
@@ -1192,7 +1192,7 @@
       "bf16_in_bf16_out_with_f32_accumulation"
      ],
      "crashed": null,
-     "seconds": 7.54
+     "seconds": 7.34
     },
     "f32-output": {
      "modes": [
@@ -1203,7 +1203,7 @@
       "bf16_in_bf16_out_with_f32_accumulation"
      ],
      "crashed": null,
-     "seconds": 7.31
+     "seconds": 8.31
     },
     "fixed-grid": {
      "modes": [
@@ -1216,7 +1216,7 @@
       "correct_when_parallel_axes_run_on_two_cores_in_random_order"
      ],
      "crashed": null,
-     "seconds": 4.51
+     "seconds": 4.79
     },
     "flush-at-first-step": {
      "modes": [
@@ -1230,7 +1230,7 @@
       "correct_when_parallel_axes_run_on_two_cores_in_random_order"
      ],
      "crashed": null,
-     "seconds": 4.17
+     "seconds": 5.19
     },
     "jnp-bypass": {
      "modes": [
@@ -1241,7 +1241,7 @@
       "runs_a_pallas_kernel"
      ],
      "crashed": null,
-     "seconds": 1.44
+     "seconds": 1.52
     },
     "parallel-k": {
      "modes": [
@@ -1255,7 +1255,7 @@
       "correct_when_parallel_axes_run_on_two_cores_in_random_order"
      ],
      "crashed": null,
-     "seconds": 4.76
+     "seconds": 4.95
     },
     "removed-api": {
      "modes": [
@@ -1271,7 +1271,7 @@
       "correct_when_parallel_axes_run_on_two_cores_in_random_order"
      ],
      "crashed": null,
-     "seconds": 1.07
+     "seconds": 1.1
     },
     "zero-every-step": {
      "modes": [
@@ -1285,7 +1285,7 @@
       "correct_when_parallel_axes_run_on_two_cores_in_random_order"
      ],
      "crashed": null,
-     "seconds": 4.01
+     "seconds": 3.98
     }
    },
    "idle_checks": [],
@@ -1304,7 +1304,7 @@
    "title": "A GPU that waits for Python to launch its kernels",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 0.26,
+   "reference_seconds": 0.31,
    "checks": [
     "names_the_bottleneck",
     "measures_gpu_busy_share",
@@ -1336,7 +1336,7 @@
       "names_the_bottleneck"
      ],
      "crashed": null,
-     "seconds": 0.28
+     "seconds": 0.3
     },
     "counts-launch-events-twice": {
      "modes": [
@@ -1347,7 +1347,7 @@
       "counts_kernels"
      ],
      "crashed": null,
-     "seconds": 0.31
+     "seconds": 0.34
     },
     "cpu-lane-measured": {
      "modes": [
@@ -1358,7 +1358,7 @@
       "measures_gpu_busy_share"
      ],
      "crashed": null,
-     "seconds": 0.28
+     "seconds": 0.33
     },
     "whole-iteration-for-optimizer": {
      "modes": [
@@ -1369,7 +1369,7 @@
       "measures_the_optimizer_phase"
      ],
      "crashed": null,
-     "seconds": 0.29
+     "seconds": 0.33
     }
    },
    "idle_checks": [],
@@ -1388,7 +1388,7 @@
    "title": "Where does a training step's time go when the device is mostly idle?",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 0.18,
+   "reference_seconds": 0.28,
    "checks": [
     "names_the_bottleneck",
     "measures_device_busy_share",
@@ -1420,7 +1420,7 @@
       "names_the_bottleneck"
      ],
      "crashed": null,
-     "seconds": 0.18
+     "seconds": 0.24
     },
     "container-not-phase": {
      "modes": [
@@ -1431,7 +1431,7 @@
       "finds_the_largest_host_phase"
      ],
      "crashed": null,
-     "seconds": 0.17
+     "seconds": 0.25
     },
     "counted-compile-step": {
      "modes": [
@@ -1442,7 +1442,7 @@
       "measures_device_busy_share"
      ],
      "crashed": null,
-     "seconds": 0.2
+     "seconds": 0.26
     },
     "overlap-ignored": {
      "modes": [
@@ -1454,7 +1454,7 @@
       "bounds_the_step_with_perfect_overlap"
      ],
      "crashed": null,
-     "seconds": 0.19
+     "seconds": 0.34
     },
     "python-thread-events": {
      "modes": [
@@ -1465,7 +1465,7 @@
       "measures_device_busy_share"
      ],
      "crashed": null,
-     "seconds": 0.19
+     "seconds": 0.29
     }
    },
    "idle_checks": [],
@@ -1484,7 +1484,7 @@
    "title": "A training step that recompiles every batch",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 8.13,
+   "reference_seconds": 11.04,
    "checks": [
     "names_the_cause",
     "counts_the_compilations_in_the_trace",
@@ -1523,7 +1523,7 @@
       "names_the_cause"
      ],
      "crashed": null,
-     "seconds": 7.82
+     "seconds": 8.12
     },
     "counted-every-compile": {
      "modes": [
@@ -1534,7 +1534,7 @@
       "counts_the_compilations_in_the_trace"
      ],
      "crashed": null,
-     "seconds": 7.63
+     "seconds": 8.03
     },
     "mask-dropped": {
      "modes": [
@@ -1545,7 +1545,7 @@
       "losses_are_unchanged_by_padding"
      ],
      "crashed": null,
-     "seconds": 7.54
+     "seconds": 16.85
     },
     "multiple-of-eight": {
      "modes": [
@@ -1556,7 +1556,7 @@
       "fixed_train_compiles_step_at_most_six_times"
      ],
      "crashed": null,
-     "seconds": 14.11
+     "seconds": 20.86
     },
     "nested-events-summed": {
      "modes": [
@@ -1568,7 +1568,7 @@
       "measures_the_compile_share"
      ],
      "crashed": null,
-     "seconds": 8.1
+     "seconds": 14.33
     },
     "pad-to-max": {
      "modes": [
@@ -1579,7 +1579,7 @@
       "padding_stays_below_twice_the_longest_sequence"
      ],
      "crashed": null,
-     "seconds": 7.65
+     "seconds": 8.72
     }
    },
    "idle_checks": [],
@@ -1598,7 +1598,7 @@
    "title": "Which LLM ops are memory-bound on an H100, and how close to the roof do they run?",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 0.23,
+   "reference_seconds": 0.17,
    "checks": [
     "ridge_point",
     "classifies_every_op",
@@ -1638,7 +1638,7 @@
       "roof_fraction_of_every_op"
      ],
      "crashed": null,
-     "seconds": 0.17
+     "seconds": 0.21
     },
     "gib-bandwidth": {
      "modes": [
@@ -1650,7 +1650,7 @@
       "roof_fraction_of_every_op"
      ],
      "crashed": null,
-     "seconds": 0.17
+     "seconds": 0.23
     },
     "sparse-peak": {
      "modes": [
@@ -1664,7 +1664,7 @@
       "roof_fraction_of_every_op"
      ],
      "crashed": null,
-     "seconds": 0.16
+     "seconds": 0.17
     }
    },
    "idle_checks": [],
@@ -1683,7 +1683,7 @@
    "title": "How much FSDP communication is exposed, and which collective is to blame?",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 0.18,
+   "reference_seconds": 0.21,
    "checks": [
     "measures_exposed_share",
     "measures_hidden_share",
@@ -1715,7 +1715,7 @@
       "measures_hidden_share"
      ],
      "crashed": null,
-     "seconds": 0.18
+     "seconds": 0.29
     },
     "no-overlap-assumed": {
      "modes": [
@@ -1726,7 +1726,7 @@
       "measures_exposed_share"
      ],
      "crashed": null,
-     "seconds": 0.18
+     "seconds": 0.27
     },
     "ranked-by-total": {
      "modes": [
@@ -1737,7 +1737,7 @@
       "finds_the_most_exposed_collective"
      ],
      "crashed": null,
-     "seconds": 0.21
+     "seconds": 0.24
     },
     "total-not-per-step": {
      "modes": [
@@ -1748,7 +1748,7 @@
       "exposed_time_per_step"
      ],
      "crashed": null,
-     "seconds": 0.19
+     "seconds": 0.22
     }
    },
    "idle_checks": [],
@@ -1767,7 +1767,7 @@
    "title": "A continuous-batching scheduler with chunked prefill and preemption",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 0.25,
+   "reference_seconds": 0.28,
    "checks": [
     "roomy_pool_traces",
     "tight_pool_traces_with_preemption",
@@ -1798,7 +1798,7 @@
       "tight_pool_traces_with_preemption"
      ],
      "crashed": null,
-     "seconds": 0.25
+     "seconds": 0.21
     },
     "preempt-oldest": {
      "modes": [
@@ -1809,7 +1809,7 @@
       "tight_pool_traces_with_preemption"
      ],
      "crashed": null,
-     "seconds": 0.23
+     "seconds": 0.2
     },
     "preempted-keeps-progress": {
      "modes": [
@@ -1820,7 +1820,7 @@
       "tight_pool_traces_with_preemption"
      ],
      "crashed": null,
-     "seconds": 0.19
+     "seconds": 0.2
     },
     "prefill-first": {
      "modes": [
@@ -1832,7 +1832,7 @@
       "tight_pool_traces_with_preemption"
      ],
      "crashed": null,
-     "seconds": 0.22
+     "seconds": 0.26
     },
     "readmit-same-step": {
      "modes": [
@@ -1843,7 +1843,7 @@
       "tight_pool_traces_with_preemption"
      ],
      "crashed": null,
-     "seconds": 0.2
+     "seconds": 0.27
     },
     "waiting-before-partial": {
      "modes": [
@@ -1855,7 +1855,7 @@
       "tight_pool_traces_with_preemption"
      ],
      "crashed": null,
-     "seconds": 0.21
+     "seconds": 0.25
     }
    },
    "idle_checks": [
@@ -1914,7 +1914,7 @@
       "tokens_per_second_at_batch_one"
      ],
      "crashed": null,
-     "seconds": 0.18
+     "seconds": 0.17
     },
     "gib-bandwidth": {
      "modes": [
@@ -1927,7 +1927,7 @@
       "throughput_at_batch_256"
      ],
      "crashed": null,
-     "seconds": 0.23
+     "seconds": 0.22
     },
     "kv-ignored": {
      "modes": [
@@ -1941,7 +1941,7 @@
       "throughput_at_batch_256"
      ],
      "crashed": null,
-     "seconds": 0.2
+     "seconds": 0.18
     },
     "no-threshold": {
      "modes": [
@@ -1952,7 +1952,7 @@
       "longest_context_with_a_crossover"
      ],
      "crashed": null,
-     "seconds": 0.18
+     "seconds": 0.21
     }
    },
    "idle_checks": [],
@@ -1971,7 +1971,7 @@
    "title": "How many 8k-token conversations fit on one H100?",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 0.18,
+   "reference_seconds": 0.27,
    "checks": [
     "bytes_per_token",
     "blocks_that_fit",
@@ -2007,7 +2007,7 @@
       "sequences_that_fit_with_fp8_kv"
      ],
      "crashed": null,
-     "seconds": 0.17
+     "seconds": 0.22
     },
     "fp8-weights-too": {
      "modes": [
@@ -2018,7 +2018,7 @@
       "sequences_that_fit_with_fp8_kv"
      ],
      "crashed": null,
-     "seconds": 0.17
+     "seconds": 0.23
     },
     "gib-hbm": {
      "modes": [
@@ -2044,7 +2044,7 @@
       "sequences_that_fit_with_fp8_kv"
      ],
      "crashed": null,
-     "seconds": 0.19
+     "seconds": 0.25
     }
    },
    "idle_checks": [],
@@ -2063,7 +2063,7 @@
    "title": "A paged KV-cache block allocator with forking and copy-on-write",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 0.25,
+   "reference_seconds": 0.4,
    "checks": [
     "random_workloads_keep_the_books",
     "writing_into_a_shared_block_copies_it_first",
@@ -2101,7 +2101,7 @@
       "writing_into_a_shared_block_copies_it_first"
      ],
      "crashed": null,
-     "seconds": 0.17
+     "seconds": 0.26
     },
     "fork-copies": {
      "modes": [
@@ -2114,7 +2114,7 @@
       "out_of_blocks_changes_nothing"
      ],
      "crashed": null,
-     "seconds": 0.24
+     "seconds": 0.5
     },
     "free-ignores-refs": {
      "modes": [
@@ -2126,7 +2126,7 @@
       "freeing_a_parent_keeps_the_childs_blocks"
      ],
      "crashed": null,
-     "seconds": 0.17
+     "seconds": 0.3
     },
     "no-cow": {
      "modes": [
@@ -2137,7 +2137,7 @@
       "writing_into_a_shared_block_copies_it_first"
      ],
      "crashed": null,
-     "seconds": 0.38
+     "seconds": 0.56
     },
     "off-by-one-boundary": {
      "modes": [
@@ -2149,7 +2149,7 @@
       "a_new_block_is_never_a_copy"
      ],
      "crashed": null,
-     "seconds": 0.17
+     "seconds": 0.25
     },
     "partial-allocate": {
      "modes": [
@@ -2161,7 +2161,7 @@
       "out_of_blocks_changes_nothing"
      ],
      "crashed": null,
-     "seconds": 0.18
+     "seconds": 0.26
     }
    },
    "idle_checks": [],
@@ -2180,7 +2180,7 @@
    "title": "Prefix caching by chained block hashes",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 0.21,
+   "reference_seconds": 0.32,
    "checks": [
     "same_block_different_prefix_differs",
     "equal_prefixes_share_digests_and_partial_blocks_are_ignored",
@@ -2224,7 +2224,7 @@
       "same_block_different_prefix_differs"
      ],
      "crashed": null,
-     "seconds": 0.2
+     "seconds": 0.37
     },
     "evict-plain-lru": {
      "modes": [
@@ -2235,7 +2235,7 @@
       "evicts_least_recently_used_leaves_never_in_use"
      ],
      "crashed": null,
-     "seconds": 0.22
+     "seconds": 0.28
     },
     "partial-block-hashed": {
      "modes": [
@@ -2246,7 +2246,7 @@
       "equal_prefixes_share_digests_and_partial_blocks_are_ignored"
      ],
      "crashed": null,
-     "seconds": 0.22
+     "seconds": 0.27
     },
     "python-hash": {
      "modes": [
@@ -2257,7 +2257,7 @@
       "digests_are_the_same_in_another_process"
      ],
      "crashed": null,
-     "seconds": 0.2
+     "seconds": 0.3
     },
     "string-join": {
      "modes": [
@@ -2268,7 +2268,7 @@
       "boundaries_matter"
      ],
      "crashed": null,
-     "seconds": 0.22
+     "seconds": 0.25
     }
    },
    "idle_checks": [
@@ -2290,7 +2290,7 @@
    "title": "Is speculative decoding worth it here, and with how many draft tokens?",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 0.21,
+   "reference_seconds": 0.19,
    "checks": [
     "expected_tokens",
     "speedup_at_k4",
@@ -2321,7 +2321,7 @@
       "best_draft_length_costly_draft"
      ],
      "crashed": null,
-     "seconds": 0.17
+     "seconds": 0.21
     },
     "draft-free": {
      "modes": [
@@ -2346,7 +2346,7 @@
       "speedup_at_k4"
      ],
      "crashed": null,
-     "seconds": 0.16
+     "seconds": 0.21
     },
     "no-bonus-token": {
      "modes": [
@@ -2358,7 +2358,7 @@
       "speedup_at_k4"
      ],
      "crashed": null,
-     "seconds": 0.16
+     "seconds": 0.22
     }
    },
    "idle_checks": [],
