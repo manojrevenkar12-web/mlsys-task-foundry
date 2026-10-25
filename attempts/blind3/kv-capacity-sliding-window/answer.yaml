@@ -1,0 +1,28 @@
+kv_bytes_per_token_per_layer: 4096
+layer_blocks_per_conversation: 25640
+shared_layer_blocks: 1024
+pool_layer_blocks: 732421
+max_conversations: 28
+explanation: >-
+  K and V for one token in one layer: 2 (K,V) x 8 heads x 128 dims x 2 bytes = 4,096 bytes, so a
+  16-token block is 65,536 bytes. Pool: 80e9 - 24e9 (12B params in bf16) - 8e9 = 48e9 bytes =
+  732,421 blocks (rounded down). Global layers (8 of them) keep every block of the 32,768-token
+  conversation: 2,048 blocks each. Local layers (40): the newest token p attends to [p-4095, p],
+  4,096 positions; with blocks aligned to multiples of 16 that window covers exactly 256 blocks
+  only when p is the last position of a block (p mod 16 = 15) and straddles 257 blocks at every
+  other position, so to be able to generate the next token at any position a local layer must be
+  budgeted 257 blocks, not 4,096/16 = 256 (and certainly not 2,048 - it does not grow with the
+  context). The 2,048-token system prompt is 128 whole blocks (2,048 is a multiple of 16, so no
+  block mixes system-prompt and conversation tokens and no partial block is copied). In the 8 global
+  layers those 128 blocks are shared: 8 x 128 = 1,024 blocks held once instead of per
+  conversation, saving 1,024 blocks per conversation. In the local layers it saves nothing at full
+  length: positions 0-2047 left the 4,096-token window long ago, so those blocks were freed and
+  every local block a conversation holds is its own. Per conversation: 8 x (2,048 - 128) +
+  40 x 257 = 15,360 + 10,280 = 25,640 blocks; (732,421 - 1,024) / 25,640 = 28.5, so 28
+  conversations. The global layers are 60% of the per-conversation cost although they are only
+  1/6 of the layers, so the levers are: quantize the KV cache to FP8 (halves every block, about 57
+  conversations); quantize weights to FP8 (frees 12 GB, pool 60e9 -> about 35 conversations;
+  both together about 71); trim the activation reserve; for local layers use a ring buffer or
+  a window aligned to blocks (256 blocks, saves 40 blocks per conversation, small); or, if the
+  model allows, fewer global layers or shorter maximum context, since only the global layers grow
+  with length.
