@@ -1,0 +1,3 @@
+modes:
+- narrow-distribution
+note: Copies rows starting at i instead of i * rows.

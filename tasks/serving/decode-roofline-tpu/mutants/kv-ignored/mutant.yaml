@@ -1,0 +1,3 @@
+modes:
+- decode-roofline
+note: 'Leaves out the KV-cache reads: decode looks compute-bound past batch ~560 at any context.'

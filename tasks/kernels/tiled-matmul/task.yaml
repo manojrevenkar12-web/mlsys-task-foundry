@@ -1,0 +1,9 @@
+id: tiled-matmul
+title: Tiled matmul with an f32 accumulator, ready for two TensorCores
+area: kernels
+kind: code
+difficulty: 2
+target: "Pallas TPU kernel, JAX 0.12.0.1, run in TPU interpret mode on CPU"
+skills: [pallas, blockspec, scratch-accumulator, dimension-semantics, bf16]
+modes: [reduction-axis-parallel, accumulator-init, output-dtype, kernel-bypass, shape-special-case, narrow-distribution, api-removed]
+time_limit_s: 240

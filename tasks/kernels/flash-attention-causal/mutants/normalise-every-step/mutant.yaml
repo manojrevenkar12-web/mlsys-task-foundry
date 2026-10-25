@@ -1,0 +1,3 @@
+modes:
+- accumulator-init
+note: Writes acc/l after every key block, but the write happens at the first block only.

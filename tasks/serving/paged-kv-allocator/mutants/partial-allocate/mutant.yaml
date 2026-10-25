@@ -1,0 +1,3 @@
+modes:
+- block-leak
+note: Takes blocks one at a time and raises midway, keeping the ones it took.

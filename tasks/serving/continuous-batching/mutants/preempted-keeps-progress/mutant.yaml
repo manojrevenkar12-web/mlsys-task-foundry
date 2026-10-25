@@ -1,0 +1,4 @@
+modes:
+- block-leak
+note: Puts a preempted request back in the queue but keeps its counters, so its blocks are counted as freed while it still
+  claims them.

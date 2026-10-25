@@ -1,0 +1,3 @@
+modes:
+- kv-capacity
+note: Uses the 32 query heads, ignoring grouped-query attention.

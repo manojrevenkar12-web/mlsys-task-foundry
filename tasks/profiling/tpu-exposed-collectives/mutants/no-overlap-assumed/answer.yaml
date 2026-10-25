@@ -1,0 +1,16 @@
+exposed_share: 0.66
+hidden_share: 0.878
+most_exposed_collective: reduce-scatter
+exposed_us_per_step: 1171
+explanation: >
+  About 8% of each 14.6 ms step is collective time with no compute beside it, about 1.17 ms per
+  step. It sits at two ends of the step. At the start, layer 0's weights are all-gathered before
+  any compute can run (~400 us). At the end, layer 0's gradient reduce-scatter starts only when the
+  last backward layer finishes, and the optimizer needs every shard, so ~740 us of reduce-scatter
+  plus the small all-reduce are exposed. All-gathers and reduce-scatters take about the same total
+  time (~48 ms each over 8 steps), but the all-gathers are prefetched a layer ahead and hide much
+  better, so reduce-scatter is the larger exposed cost. Changes: apply the optimizer per layer as
+  each gradient shard arrives, which moves the update under the remaining reduce-scatters and saves
+  most of the 740 us; prefetch layer 0's all-gather during the previous step's update, saving the
+  ~400 us at the start; with gradient accumulation over several microbatches the reduce-scatter
+  runs once per accumulated step, so its exposure is amortised.

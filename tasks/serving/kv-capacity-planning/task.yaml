@@ -1,0 +1,9 @@
+id: kv-capacity-planning
+title: How many 8k-token conversations fit on one H100?
+area: serving
+kind: answer
+difficulty: 2
+target: "Arithmetic for a Llama-3.1-8B-shaped model served with paged attention on an H100 80GB"
+skills: [kv-cache, gqa, capacity-planning, units]
+modes: [kv-capacity, units]
+time_limit_s: 60

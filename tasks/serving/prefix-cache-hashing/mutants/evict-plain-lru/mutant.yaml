@@ -1,0 +1,3 @@
+modes:
+- block-leak
+note: Evicts the least recently used block whether or not it is in use or has cached children.

@@ -1,0 +1,15 @@
+step_ms_b1_l4096: 0.0175
+tokens_per_s_b1_l4096: 57160
+crossover_batch_l128: 1352
+max_context_for_crossover: 218.6
+tokens_per_s_b256_l4096: 2732
+explanation: >
+  At batch 1 a step reads 16.06 GB of bf16 weights plus 4096 x 131,072 bytes = 0.54 GB of KV
+  cache: 16.6 GB at 1.638 TB/s is 10.13 ms, about 99 tokens/s, while compute needs only 0.0175 ms.
+  Batching amortises the weight reads, but not the KV reads: every extra sequence adds 0.54 GB
+  (0.33 ms) of memory time and only 0.0175 ms of compute. At 4k context decode therefore stays
+  memory-bound at any batch; at 256 sequences a step reads 153 GB, 93.7 ms, about 2,730 tokens/s.
+  Only when a sequence's KV reads cost less than its compute, below 2 x 8.03e9 x 1.638e12 /
+  (918e12 x 131,072), about 219 tokens, can batching reach the compute roof; at 128 tokens that
+  happens near 1,352 sequences. At realistic context the levers are the KV bytes themselves
+  (FP8 KV, fewer KV heads, shared prefixes), not the batch size.

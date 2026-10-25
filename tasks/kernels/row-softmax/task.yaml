@@ -1,0 +1,9 @@
+id: row-softmax
+title: Row softmax that survives large logits and bf16
+area: kernels
+kind: code
+difficulty: 2
+target: "Pallas TPU kernel, JAX 0.12.0.1, run in TPU interpret mode on CPU"
+skills: [pallas, numerics, bf16, reductions]
+modes: [softmax-unstable, output-dtype, narrow-distribution, kernel-bypass, shape-special-case]
+time_limit_s: 180

@@ -1,0 +1,3 @@
+modes:
+- missing-collective
+note: Reports the largest shard loss (pmax) instead of the full-batch mean.

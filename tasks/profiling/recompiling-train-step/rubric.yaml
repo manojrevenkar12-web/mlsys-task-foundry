@@ -1,0 +1,21 @@
+criteria:
+  - id: names-recompilation
+    weight: 30
+    text: States that the jitted step is compiled again for each new padded batch width
+    pass: '"every batch has a new sequence length, so jit_step is traced and compiled again"'
+    fail: '"the step is slow" or "the model is too big", with no mention of compilation'
+  - id: cites-the-trace
+    weight: 25
+    text: Points to trace events that show it (backend_compile_and_load or jit_step pass events inside train steps)
+    pass: '"each of the first steps contains a 20-60 ms backend_compile_and_load and the jit_step HLO passes"'
+    fail: describes the problem without naming any event in the trace
+  - id: fix-and-why-loss-is-unchanged
+    weight: 25
+    text: Describes padding to a few fixed bucket widths and says why the masked loss does not change
+    pass: '"pad to powers of two; padded positions have mask 0, so they add nothing to the sum or the count"'
+    fail: suggests padding to the maximum length, or removes the mask
+  - id: trade-off
+    weight: 20
+    text: Names the trade-off between the number of compilations and wasted padded compute
+    pass: '"fewer buckets mean fewer compiles but more padding; powers of two cap the waste below 2x"'
+    fail: no trade-off is mentioned

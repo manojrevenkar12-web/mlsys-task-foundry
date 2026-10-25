@@ -1,0 +1,27 @@
+# Settings for grading and validating tasks. Task-specific tolerances live in each task.yaml.
+runner:
+  timeout_s: 120              # a whole grading run (one task, one submission)
+  memory_mb: 4096             # address-space limit of the grading process
+  check_timeout_s: 60         # one check
+  python_hash_seed: 0         # graders and solutions see the same hash order every run
+
+forge:
+  determinism_runs: 2         # the reference is graded this many times; results must agree
+  reference_time_share: 0.34  # the reference must finish within this share of the task's time limit
+  leak_min_chars: 60          # a run of reference code this long found in the prompt is a leak
+  require_all_mutants_killed: true
+
+inputs:
+  # Hidden input distributions every numeric check runs on, after KernelBench-Verified
+  # (graders that test one distribution let shape-matched bypasses through).
+  distributions: [uniform, scaled_up, scaled_down, negated, normal]
+  scale_up: 100.0
+  scale_down: 0.01
+
+rubric:
+  weight_total: 100
+  max_criteria: 8
+  vague_words: [good, proper, properly, appropriate, appropriately, reasonable, nice, clean, correctly, well]
+
+review:
+  kappa_ok: 0.6               # inter-reviewer agreement below this flags a rubric for rewording

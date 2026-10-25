@@ -1,0 +1,3 @@
+modes:
+- wrong-partition-spec
+note: Gathers the whole vocabulary onto every device and computes the loss there.

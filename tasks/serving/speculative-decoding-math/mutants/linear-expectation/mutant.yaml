@@ -1,0 +1,3 @@
+modes:
+- spec-decode-math
+note: Expects k * alpha accepted tokens plus one.

@@ -1,0 +1,3 @@
+modes:
+- api-removed
+note: Uses pltpu.TPUCompilerParams, removed in JAX 0.8.1 (the kernel never runs).

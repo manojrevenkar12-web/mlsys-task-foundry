@@ -1,0 +1,3 @@
+modes:
+- prefix-hash
+note: Serialises tokens by concatenating their decimal strings, losing the boundaries between tokens.

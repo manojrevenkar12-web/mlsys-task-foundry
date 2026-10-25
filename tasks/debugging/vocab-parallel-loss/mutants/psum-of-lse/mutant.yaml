@@ -1,0 +1,3 @@
+modes:
+- missing-collective
+note: Adds up each shard's own logsumexp instead of combining exponentials.

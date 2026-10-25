@@ -1,0 +1,9 @@
+id: rmsnorm-residual-ragged
+title: Fused residual add and RMSNorm when rows do not fill the last block
+area: kernels
+kind: code
+difficulty: 3
+target: "Pallas TPU kernel, JAX 0.12.0.1, run in TPU interpret mode on CPU"
+skills: [pallas, ragged-blocks, fusion, multiple-outputs, numerics]
+modes: [ragged-tail, output-dtype, narrow-distribution, kernel-bypass, shape-special-case]
+time_limit_s: 180

@@ -1,0 +1,3 @@
+modes:
+- accumulator-init
+note: The accumulator is zeroed on every K step, so only the last block of K counts.

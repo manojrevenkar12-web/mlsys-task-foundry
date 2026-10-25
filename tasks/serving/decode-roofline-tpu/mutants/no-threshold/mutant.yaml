@@ -1,0 +1,3 @@
+modes:
+- decode-roofline
+note: Takes the ridge of the chip (560 FLOP/byte) as the context threshold.

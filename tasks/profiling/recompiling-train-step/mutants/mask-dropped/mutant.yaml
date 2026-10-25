@@ -1,0 +1,3 @@
+modes:
+- shape-special-case
+note: Buckets the batches but averages the loss over every position, padding included.

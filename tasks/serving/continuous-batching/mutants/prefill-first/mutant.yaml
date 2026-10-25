@@ -1,0 +1,3 @@
+modes:
+- preemption-order
+note: Spends the token budget on prefill before decodes, so running sequences stall while prompts arrive.

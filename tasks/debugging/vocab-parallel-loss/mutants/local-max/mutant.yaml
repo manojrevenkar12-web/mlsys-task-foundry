@@ -1,0 +1,4 @@
+modes:
+- softmax-unstable
+- missing-collective
+note: Shifts each shard by its own max before the psum of exponentials, so shards are summed on different scales.

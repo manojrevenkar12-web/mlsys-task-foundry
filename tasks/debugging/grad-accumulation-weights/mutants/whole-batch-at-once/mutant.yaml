@@ -1,0 +1,3 @@
+modes:
+- loss-normalisation
+note: Computes the full-batch gradient in one go, giving up accumulation.

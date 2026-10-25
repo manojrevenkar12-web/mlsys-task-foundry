@@ -1,0 +1,3 @@
+modes:
+- copy-on-write
+note: Writes into a shared last block without copying it.

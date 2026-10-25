@@ -1,0 +1,3 @@
+modes:
+- narrow-distribution
+note: Returns (y, h) instead of (h, y).

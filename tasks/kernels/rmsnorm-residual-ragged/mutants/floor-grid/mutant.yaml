@@ -1,0 +1,3 @@
+modes:
+- ragged-tail
+note: Uses R // br blocks, so the rows of a partial last block are never computed.

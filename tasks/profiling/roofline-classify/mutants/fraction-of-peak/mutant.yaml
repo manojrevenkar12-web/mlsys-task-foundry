@@ -1,0 +1,4 @@
+modes:
+- roofline-misclassified
+note: Divides achieved FLOP/s by the compute peak for every op, so memory-bound ops
+  look far below their roof.

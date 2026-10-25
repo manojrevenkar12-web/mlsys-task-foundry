@@ -1,0 +1,13 @@
+bottleneck: launch_bound
+gpu_busy_share: 0.89
+kernels_per_iteration: 602
+optimizer_busy_share: 0.45
+explanation: >
+  Each 5.4 ms iteration runs two GEMMs (~1.2 ms, the GPU busy throughout) and then 600 tiny
+  elementwise kernels for the optimizer, each 2-4.5 us long but each behind a cudaLaunchKernel of
+  ~8 us plus Python overhead on the CPU. The GPU finishes every kernel before the next one arrives,
+  so during the optimizer phase it is busy only ~45% of the time and the iteration is limited by the
+  launch rate, not by the GPU. Overall it is busy ~57% of the time. Fix: use a fused (or foreach)
+  optimizer, which updates all parameters in a few kernels, or capture the step in a CUDA graph or
+  compile it, so launches stop costing CPU time per kernel. The optimizer phase should fall from
+  ~4.2 ms to a few hundred microseconds, and the iteration from ~5.4 ms to roughly 1.5-2 ms.

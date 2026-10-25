@@ -1,0 +1,3 @@
+modes:
+- decode-roofline
+note: Takes the compute time as the step time at batch 1.

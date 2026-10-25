@@ -1,0 +1,9 @@
+id: add-one
+title: Add one (a fixture for the runner's tests)
+area: kernels
+kind: code
+difficulty: 1
+target: "plain Python"
+modes: [narrow-distribution]
+time_limit_s: 30
+api_scan: false

@@ -1,0 +1,3 @@
+modes:
+- prefix-hash
+note: Hashes each block's tokens alone, so equal blocks after different prefixes collide.

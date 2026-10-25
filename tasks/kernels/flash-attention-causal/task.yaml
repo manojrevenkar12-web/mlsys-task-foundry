@@ -1,0 +1,9 @@
+id: flash-attention-causal
+title: Flash attention forward with a causal mask and online softmax
+area: kernels
+kind: code
+difficulty: 4
+target: "Pallas TPU kernel, JAX 0.12.0.1, run in TPU interpret mode on CPU"
+skills: [pallas, online-softmax, causal-mask, scratch-buffers, dimension-semantics]
+modes: [online-softmax-rescale, mask-off-by-one, softmax-unstable, reduction-axis-parallel, accumulator-init, narrow-distribution, kernel-bypass]
+time_limit_s: 300

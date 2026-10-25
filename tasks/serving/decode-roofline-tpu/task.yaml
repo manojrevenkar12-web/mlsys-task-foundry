@@ -1,0 +1,9 @@
+id: decode-roofline-tpu
+title: When does decoding on a TPU v6e stop being memory-bound?
+area: serving
+kind: answer
+difficulty: 3
+target: "Roofline arithmetic for decoding an 8B model on one TPU v6e chip"
+skills: [roofline, decode, batching, tpu]
+modes: [decode-roofline, units]
+time_limit_s: 60

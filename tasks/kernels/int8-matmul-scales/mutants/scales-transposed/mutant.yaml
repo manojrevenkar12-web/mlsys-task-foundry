@@ -1,0 +1,3 @@
+modes:
+- quant-scale-axis
+note: Applies the activation scale per column and the weight scale per row (works only when they broadcast by accident).

@@ -1,0 +1,3 @@
+modes:
+- kernel-bypass
+note: Dequantises both operands in XLA and multiplies with jnp.dot, outside any kernel.

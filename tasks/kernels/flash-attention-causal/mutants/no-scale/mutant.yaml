@@ -1,0 +1,3 @@
+modes:
+- narrow-distribution
+note: Forgets the 1/sqrt(d) scale.

@@ -1,0 +1,3 @@
+modes:
+- kernel-bypass
+note: Skips the kernel and calls jnp.dot on the whole arrays.

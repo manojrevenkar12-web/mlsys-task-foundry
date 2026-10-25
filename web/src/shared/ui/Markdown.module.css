@@ -1,0 +1,49 @@
+.md {
+  max-width: var(--measure);
+  line-height: var(--leading);
+}
+
+.md h1 {
+  font-family: var(--font-serif);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  margin: 0 0 var(--space-4);
+}
+
+.md h2,
+.md h3 {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  margin: var(--space-5) 0 var(--space-2);
+}
+
+.md p,
+.md ul,
+.md ol {
+  margin: 0 0 var(--space-3);
+}
+
+.md li {
+  margin-bottom: var(--space-1);
+}
+
+.md code {
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunk);
+}
+
+.md pre {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  overflow-x: auto;
+  background: var(--surface-sunk);
+  border-radius: var(--radius-md);
+  line-height: 1.45;
+}
+
+.md pre code {
+  padding: 0;
+  background: none;
+}

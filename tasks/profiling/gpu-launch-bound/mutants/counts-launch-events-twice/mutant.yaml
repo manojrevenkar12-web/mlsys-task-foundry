@@ -1,0 +1,3 @@
+modes:
+- launch-bound
+note: Counts launches and kernels together.

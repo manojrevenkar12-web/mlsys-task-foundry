@@ -1,0 +1,3 @@
+modes:
+- softmax-unstable
+note: 'Drops the max shift: exp overflows for large logits.'

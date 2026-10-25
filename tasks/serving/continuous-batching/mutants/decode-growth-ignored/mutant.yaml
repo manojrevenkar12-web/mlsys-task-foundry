@@ -1,0 +1,3 @@
+modes:
+- kv-capacity
+note: Checks block fit without the block a decode may need for its new token.

@@ -1,0 +1,3 @@
+modes:
+- launch-bound
+note: Reports the whole-iteration busy share for the optimizer phase.

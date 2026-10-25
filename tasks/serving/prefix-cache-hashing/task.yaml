@@ -1,0 +1,9 @@
+id: prefix-cache-hashing
+title: Prefix caching by chained block hashes
+area: serving
+kind: code
+difficulty: 3
+target: "Python 3.11+, no framework; graded with prompts designed to collide"
+skills: [prefix-caching, hashing, kv-cache, lru]
+modes: [prefix-hash, block-leak]
+time_limit_s: 60

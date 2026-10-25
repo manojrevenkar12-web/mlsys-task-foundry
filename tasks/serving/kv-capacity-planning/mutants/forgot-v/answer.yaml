@@ -1,0 +1,12 @@
+kv_bytes_per_token: 65536
+kv_blocks: 49533
+seqs_at_8k: 96
+seqs_at_8k_fp8: 193
+explanation: >
+  Per token the cache stores K and V for every layer and every KV head (not query head):
+  2 x 32 layers x 8 KV heads x 128 dims x 2 bytes = 131,072 bytes (128 KiB). The KV budget is
+  0.9 x 80e9 - 8.03e9 x 2 bytes of weights - 4e9 reserved = 51.94e9 bytes, which is 24,766 whole
+  blocks of 16 tokens (2 MiB each). An 8,192-token sequence needs 512 blocks, so 48 such
+  conversations fit at once; with FP8 KV the per-token cost halves and 96 fit. So at full 8k
+  context the decode batch is capped at 48 sequences by memory, long before compute limits
+  it; shorter conversations, prefix sharing or FP8 KV raise it.

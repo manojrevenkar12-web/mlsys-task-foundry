@@ -1,0 +1,3 @@
+modes:
+- output-dtype
+note: Computes in the input dtype, so bf16 rows are summed in bf16.

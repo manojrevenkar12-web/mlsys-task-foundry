@@ -1,0 +1,21 @@
+criteria:
+  - id: per-token-formula
+    weight: 35
+    text: Writes bytes per token as 2 (K and V) x layers x KV heads x head dimension x bytes per value, using the 8 KV heads
+    pass: '"2 x 32 x 8 x 128 x 2 = 131,072 bytes"'
+    fail: uses the 32 query heads or leaves out V
+  - id: budget
+    weight: 25
+    text: Subtracts the weights and the reserve from 90% of HBM in decimal bytes before dividing
+    pass: '"72e9 - 16.06e9 - 4e9 = 51.94e9 bytes for KV"'
+    fail: divides all of HBM, or mixes GB and GiB
+  - id: whole-units
+    weight: 15
+    text: Rounds down to whole blocks and whole sequences
+    pass: '"24,766 blocks; 512 per sequence; 48 sequences"'
+    fail: reports fractional sequences
+  - id: consequence
+    weight: 25
+    text: States what the number means for serving (the decode batch at 8k context is capped at 48 by memory; FP8 KV, prefix sharing or shorter contexts raise it)
+    pass: '"at 8k context the server can batch at most 48 conversations, so throughput is memory-capped"'
+    fail: no consequence drawn

@@ -1,0 +1,3 @@
+modes:
+- loss-normalisation
+note: 'Uses the summed gradient as it comes back: an 8x step on 8 devices.'

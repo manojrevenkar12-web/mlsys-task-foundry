@@ -1,0 +1,3 @@
+modes:
+- copy-on-write
+note: 'Forks by copying every block: correct contents, but it takes blocks and data copies fork must not.'

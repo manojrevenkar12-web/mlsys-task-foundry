@@ -1,0 +1,3 @@
+modes:
+- loss-normalisation
+note: Weights microbatch means by their token counts, but a microbatch with none divides 0 by 0.

@@ -1,0 +1,3 @@
+modes:
+- accumulator-init
+note: Moves the wait after the multiply, so the buffer is read before the copy lands.

@@ -1,0 +1,9 @@
+id: nan-from-padding
+title: NaN loss from a batch with an empty sequence
+area: debugging
+kind: code
+difficulty: 3
+target: "JAX 0.12.0.1 on CPU, forward and backward"
+skills: [numerics, masking, autodiff, nan-debugging]
+modes: [nan-all-masked, softmax-unstable]
+time_limit_s: 120

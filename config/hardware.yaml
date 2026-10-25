@@ -1,0 +1,24 @@
+# Per-chip peak numbers used by the roofline model and the numeric tasks. Dense (not sparse)
+# figures. Sources are cited so a reviewer can check every number a task depends on.
+accelerators:
+  tpu_v5e:
+    bf16_tflops: 197
+    int8_tops: 393
+    hbm_gb: 16
+    hbm_gbps: 858.99          # 800 GiB/s
+    ici_gbps_bidir: 400
+    source: https://docs.cloud.google.com/tpu/docs/v5e
+  tpu_v6e:
+    bf16_tflops: 918
+    int8_tops: 1836
+    hbm_gb: 32
+    hbm_gbps: 1638
+    ici_gbps_bidir: 800
+    source: https://docs.cloud.google.com/tpu/docs/v6e
+  h100_sxm:
+    bf16_tflops: 989.4
+    fp8_tflops: 1978.9
+    hbm_gb: 80
+    hbm_gbps: 3350
+    nvlink_gbps_per_direction: 450
+    source: https://glennklockwood.com/garden/processors/H100

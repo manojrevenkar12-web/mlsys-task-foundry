@@ -1,0 +1,4 @@
+modes:
+- softmax-unstable
+- narrow-distribution
+note: 'Shifts by the row mean instead of the max: fine for small logits, overflows when one logit dominates.'

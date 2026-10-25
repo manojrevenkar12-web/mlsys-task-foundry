@@ -1,0 +1,3 @@
+modes:
+- api-removed
+note: Ports everything but pl.dot, which JAX 0.11.2 removed.

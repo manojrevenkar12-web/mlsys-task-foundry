@@ -1,0 +1,3 @@
+modes:
+- reduction-axis-parallel
+note: Declares the K axis parallel.

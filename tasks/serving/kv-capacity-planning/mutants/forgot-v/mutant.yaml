@@ -1,0 +1,3 @@
+modes:
+- kv-capacity
+note: Counts only K, not K and V.

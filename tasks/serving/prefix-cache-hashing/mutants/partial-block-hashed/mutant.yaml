@@ -1,0 +1,3 @@
+modes:
+- prefix-hash
+note: Hashes a partial last block too, so a 10-token prompt gets a digest for tokens 9-10.

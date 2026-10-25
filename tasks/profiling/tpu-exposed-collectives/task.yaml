@@ -1,0 +1,9 @@
+id: tpu-exposed-collectives
+title: How much FSDP communication is exposed, and which collective is to blame?
+area: profiling
+kind: answer
+difficulty: 3
+target: "Synthetic xprof-style TPU trace (Chrome trace format) of FSDP training steps"
+skills: [trace-reading, collectives, overlap-analysis, fsdp]
+modes: [exposed-communication, units]
+time_limit_s: 60

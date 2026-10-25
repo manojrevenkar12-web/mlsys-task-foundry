@@ -1,0 +1,3 @@
+modes:
+- loss-normalisation
+note: Divides by every target position, padding included.

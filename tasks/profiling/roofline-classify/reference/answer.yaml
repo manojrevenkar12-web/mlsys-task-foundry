@@ -1,0 +1,33 @@
+ridge_flop_per_byte: 295.3
+ops:
+  prefill_gemm_4096x4096x4096:
+    bound: compute
+    roof_fraction: 0.84
+  prefill_gemm_512x4096x4096:
+    bound: compute
+    roof_fraction: 0.7
+  prefill_gemm_256x4096x4096:
+    bound: memory
+    roof_fraction: 0.75
+  decode_gemm_8x4096x4096:
+    bound: memory
+    roof_fraction: 0.86
+  decode_attention_b32_ctx2048:
+    bound: memory
+    roof_fraction: 0.8
+  rmsnorm_8192x4096:
+    bound: memory
+    roof_fraction: 0.67
+  rope_8192x4096:
+    bound: memory
+    roof_fraction: 0.55
+  lm_head_64x128256x4096:
+    bound: memory
+    roof_fraction: 0.81
+explanation: 'The ridge is 989.4e12 / 3.35e12 = 295 FLOP/byte (dense BF16, decimal TB/s). Two GEMMs are memory-bound:
+  the 256-row prefill GEMM has intensity ~228 and the 64-row LM head ~63, both below the ridge, so their weight
+  reads dominate; only the 4096- and 512-row GEMMs are compute-bound. Decode ops sit at intensity 1-8: the 8-row
+  GEMM and KV-cache attention read every byte for about one FLOP and are limited by HBM bandwidth, as are rmsnorm
+  and rope. The two furthest below their roof are rope (55%) and rmsnorm (67%): first check whether they run as
+  separate passes over HBM that could be fused into the neighbouring projection or residual add, and whether their
+  loads are vectorised and contiguous.'

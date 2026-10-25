@@ -1,0 +1,4 @@
+modes:
+- block-leak
+- copy-on-write
+note: Copies on write but never drops the writer's reference to the old block.

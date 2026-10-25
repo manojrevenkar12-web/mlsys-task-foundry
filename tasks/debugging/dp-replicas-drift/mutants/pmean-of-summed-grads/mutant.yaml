@@ -1,0 +1,4 @@
+modes:
+- loss-normalisation
+note: Averages gradients with pmean, as older unchecked shard_map code did; with checks on the gradient is already summed,
+  so this is an 8x step.

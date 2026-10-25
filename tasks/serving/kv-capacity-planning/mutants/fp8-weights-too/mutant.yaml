@@ -1,0 +1,3 @@
+modes:
+- kv-capacity
+note: Halves the weights too when switching the KV cache to FP8.

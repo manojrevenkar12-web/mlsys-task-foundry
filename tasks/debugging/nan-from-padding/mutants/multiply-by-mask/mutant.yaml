@@ -1,0 +1,3 @@
+modes:
+- nan-all-masked
+note: Zeroes masked scores by multiplying with the mask, so padding tokens get weight exp(0).

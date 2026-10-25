@@ -1,0 +1,3 @@
+modes:
+- narrow-distribution
+note: Normalises x before adding the residual.

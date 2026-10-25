@@ -1,0 +1,4 @@
+modes:
+- preemption-order
+note: Admits new requests before finishing the prompt it already started, so a half-prefilled request holds its blocks while
+  newer ones go ahead.

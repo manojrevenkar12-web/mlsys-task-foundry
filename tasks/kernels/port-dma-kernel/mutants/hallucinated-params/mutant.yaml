@@ -1,0 +1,3 @@
+modes:
+- api-hallucinated
+note: Invents pl.CompilerParams, which Pallas never had.

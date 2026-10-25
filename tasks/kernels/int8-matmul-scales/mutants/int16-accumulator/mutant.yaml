@@ -1,0 +1,3 @@
+modes:
+- int-accum-overflow
+note: Accumulates in int16, which wraps past 32767.

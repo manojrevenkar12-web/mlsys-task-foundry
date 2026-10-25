@@ -1,0 +1,21 @@
+criteria:
+  - id: memory-bound-small-batch
+    weight: 25
+    text: States that at batch 1 the step is the time to read 16 GB of weights plus one sequence's KV cache at HBM bandwidth
+    pass: '"16.06 GB of weights + 0.54 GB of KV at 1.638 TB/s = 10.1 ms"'
+    fail: computes the step from FLOPs
+  - id: kv-reads-grow-with-batch
+    weight: 30
+    text: Explains that KV reads grow with batch while weight reads do not, so at long context more batch adds memory time as fast as compute time
+    pass: '"each extra sequence adds 0.54 GB of KV reads (0.33 ms) but only 0.017 ms of compute"'
+    fail: assumes batching always amortises memory traffic
+  - id: context-threshold
+    weight: 25
+    text: Gives the context length (~219 tokens) above which no batch size makes decode compute-bound in this model, and why
+    pass: '"above ~219 tokens per-sequence KV reads cost more than per-sequence compute, so the crossover disappears"'
+    fail: no context threshold
+  - id: what-it-means
+    weight: 20
+    text: Draws a serving consequence (KV quantisation, paged or shared KV, shorter context, or attention kernels that cut KV reads matter more than batch size here)
+    pass: '"FP8 KV or grouped KV reads raise throughput at 4k context more than raising the batch"'
+    fail: no consequence for how to serve the model

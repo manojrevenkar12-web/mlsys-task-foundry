@@ -1,0 +1,3 @@
+modes:
+- recompilation
+note: Reads the long PjitFunction(step) events as slow device compute.

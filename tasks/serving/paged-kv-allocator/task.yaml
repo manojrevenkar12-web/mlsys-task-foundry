@@ -1,0 +1,9 @@
+id: paged-kv-allocator
+title: A paged KV-cache block allocator with forking and copy-on-write
+area: serving
+kind: code
+difficulty: 3
+target: "Python 3.11+, no framework; graded by randomised workloads against invariants"
+skills: [paged-attention, kv-cache, reference-counting, copy-on-write]
+modes: [block-leak, copy-on-write, kv-capacity]
+time_limit_s: 120

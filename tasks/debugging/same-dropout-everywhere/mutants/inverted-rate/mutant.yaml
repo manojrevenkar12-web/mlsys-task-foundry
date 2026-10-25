@@ -1,0 +1,3 @@
+modes:
+- rng-key-reuse
+note: Uses rate as the keep probability.

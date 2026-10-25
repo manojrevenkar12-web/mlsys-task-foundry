@@ -1,0 +1,3 @@
+modes:
+- reduction-axis-parallel
+note: Declares the key/value axis parallel although every step updates the same scratch and output block.

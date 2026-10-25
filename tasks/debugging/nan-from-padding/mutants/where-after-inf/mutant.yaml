@@ -1,0 +1,3 @@
+modes:
+- nan-all-masked
+note: 'Keeps -inf and masks only the output with where(): going forward where() picks the zeros, but the backward pass multiplies a zero cotangent by NaN weights, so d loss / d values is NaN.'

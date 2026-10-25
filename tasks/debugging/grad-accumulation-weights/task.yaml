@@ -1,0 +1,9 @@
+id: grad-accumulation-weights
+title: Gradient accumulation that does not match the big batch
+area: debugging
+kind: code
+difficulty: 3
+target: "JAX 0.12.0.1 on CPU"
+skills: [gradient-accumulation, loss-normalisation, lax-scan, masking]
+modes: [loss-normalisation]
+time_limit_s: 120

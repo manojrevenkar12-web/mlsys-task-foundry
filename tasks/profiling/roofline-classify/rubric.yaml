@@ -1,0 +1,21 @@
+criteria:
+  - id: names-the-traps
+    weight: 35
+    text: Names the GEMMs that are memory-bound despite being matmuls (256-row prefill GEMM and the 64-row LM head) and gives their intensities against the ridge
+    pass: '"the 256x4096x4096 GEMM has intensity ~228, below the ridge of ~295, so it is memory-bound"'
+    fail: calls every GEMM compute-bound
+  - id: decode-memory
+    weight: 20
+    text: States that decode-time ops (small-batch GEMM, KV-cache attention) sit at intensity ~1-8 and are limited by HBM bandwidth
+    pass: '"decode attention reads every KV byte once for 1 FLOP per byte"'
+    fail: no mention of why decode is memory-bound
+  - id: what-to-check
+    weight: 25
+    text: For the two ops furthest below their roof (rope and rmsnorm) names a concrete thing to check, such as fusion with neighbours, extra HBM passes or uncoalesced or non-vector loads
+    pass: '"rope at 55%: check it is fused into the QKV projection epilogue rather than a separate pass over HBM"'
+    fail: '"optimise them" with no mechanism'
+  - id: units-stated
+    weight: 20
+    text: Works in decimal TB/s and dense BF16 peak, and says so
+    pass: '"3.35e12 bytes/s, 989.4e12 FLOP/s dense, ridge = 295 FLOP/byte"'
+    fail: mixes GiB and GB, or uses the sparse peak

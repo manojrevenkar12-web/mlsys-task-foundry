@@ -1,0 +1,9 @@
+id: speculative-decoding-math
+title: Is speculative decoding worth it here, and with how many draft tokens?
+area: serving
+kind: answer
+difficulty: 2
+target: "Expected-speedup arithmetic for speculative decoding (Leviathan et al., 2023)"
+skills: [speculative-decoding, probability, latency-modelling]
+modes: [spec-decode-math]
+time_limit_s: 60

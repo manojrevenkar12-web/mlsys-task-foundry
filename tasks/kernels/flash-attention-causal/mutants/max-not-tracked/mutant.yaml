@@ -1,0 +1,4 @@
+modes:
+- online-softmax-rescale
+- softmax-unstable
+note: Uses each block's own max but never stores the running max, so blocks are combined on different scales.

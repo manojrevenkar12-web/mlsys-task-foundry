@@ -1,0 +1,10 @@
+id: dp-replicas-drift
+title: Data-parallel replicas that drift apart (and the check someone turned off)
+area: debugging
+kind: code
+difficulty: 2
+target: "JAX 0.12.0.1, jax.shard_map over 8 simulated CPU devices"
+skills: [shard-map, data-parallelism, collectives, vma-checks]
+modes: [missing-collective, loss-normalisation]
+devices: 8
+time_limit_s: 180

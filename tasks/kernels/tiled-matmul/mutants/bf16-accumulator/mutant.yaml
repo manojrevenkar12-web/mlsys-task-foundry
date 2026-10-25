@@ -1,0 +1,3 @@
+modes:
+- output-dtype
+note: The scratch accumulator has the input dtype, so bf16 inputs accumulate in bf16.

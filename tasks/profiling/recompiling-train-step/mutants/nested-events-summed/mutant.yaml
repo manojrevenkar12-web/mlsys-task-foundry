@@ -1,0 +1,4 @@
+modes:
+- recompilation
+- units
+note: Adds up nested compile, lowering and XLA pass events, counting the same time several times.

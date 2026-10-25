@@ -1,0 +1,14 @@
+cause: recompilation
+step_compiles: 44
+compile_share: 0.82
+explanation: >
+  Every train step contains a backend_compile_and_load of tens to hundreds of milliseconds, and the
+  XLA pass events inside it carry module jit_step: step is compiled again on each of the 12 batches,
+  and compilation is about 82% of the time inside the train annotations, while the computation
+  itself (ThunkExecutor::Execute) is a few milliseconds. The cause is the batching: each batch is
+  padded to its own longest sequence, so the token array has a new width almost every batch, and
+  jit caches one executable per input shape. I pad to a power-of-two bucket between 16 and 512
+  instead: at most six shapes, so at most six compilations, then cache hits. Padded positions have
+  mask 0, so they add nothing to the loss sum or to the token count and the loss is unchanged. The
+  trade-off is padding: fewer, wider buckets compile less but compute more on padding; powers of two
+  keep the waste under 2x.

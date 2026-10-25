@@ -1,0 +1,3 @@
+modes:
+- kv-capacity
+note: Decides a new block is needed one token too late (n % block_size == 1).

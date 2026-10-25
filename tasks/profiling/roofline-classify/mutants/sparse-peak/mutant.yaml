@@ -1,0 +1,5 @@
+modes:
+- units
+- roofline-misclassified
+note: Uses the 1978.9 TFLOP/s sparse peak, which moves the ridge to 591 and the 512-row
+  GEMM below it.

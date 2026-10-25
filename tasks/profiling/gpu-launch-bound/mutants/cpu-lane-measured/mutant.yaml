@@ -1,0 +1,3 @@
+modes:
+- launch-bound
+note: Measures the busy share of the CPU thread's launch calls, not of the GPU stream.

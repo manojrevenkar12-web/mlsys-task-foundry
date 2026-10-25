@@ -1,0 +1,14 @@
+bottleneck: host_input
+device_busy_share: 0.0
+largest_host_phase: decode_images
+overlapped_step_ms: 16.6
+explanation: >
+  In steps 1-9 the device runs for about 2 ms of a 20 ms step (busy share about 0.11); load_batch
+  takes about 16.6 ms of it, almost all in decode_images (per-image Python and NumPy work), with
+  augment a small remainder. The step is host-bound, and the device waits for every batch because
+  loading and the update run one after the other. First, overlap: load the next batch on a
+  background thread (or with an input library that prefetches) while the device runs; with perfect
+  overlap a step takes max(load, rest), about 16.6 ms, so this alone gains only ~20% because loading
+  is the long pole. Second, make the host work itself cheaper: decode in several worker processes
+  and vectorise it, and move flips and shifts onto the device with jax.random so augment leaves the
+  host. Only then would the device's 2 ms of compute start to matter.

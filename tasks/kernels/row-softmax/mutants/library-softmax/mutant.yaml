@@ -1,0 +1,3 @@
+modes:
+- kernel-bypass
+note: Calls jax.nn.softmax on the whole array instead of writing the kernel.

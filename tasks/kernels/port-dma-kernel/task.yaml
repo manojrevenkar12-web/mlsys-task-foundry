@@ -1,0 +1,10 @@
+id: port-dma-kernel
+title: Port a manual-DMA kernel from old Pallas to JAX 0.12
+area: kernels
+kind: code
+difficulty: 3
+target: "Pallas TPU kernel, JAX 0.12.0.1, run in TPU interpret mode on CPU"
+skills: [pallas, api-migration, manual-dma, semaphores, memory-spaces]
+modes: [api-removed, api-hallucinated, accumulator-init, kernel-bypass, narrow-distribution]
+time_limit_s: 180
+expects_old_api_in_starter: true

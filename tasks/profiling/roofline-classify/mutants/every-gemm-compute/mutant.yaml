@@ -1,0 +1,3 @@
+modes:
+- roofline-misclassified
+note: Calls every GEMM compute-bound without computing its intensity.

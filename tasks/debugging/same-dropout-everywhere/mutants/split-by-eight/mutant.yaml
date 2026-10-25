@@ -1,0 +1,3 @@
+modes:
+- rng-key-reuse
+note: Splits the key into 8 and takes the first on every shard (split outside the shard's index).

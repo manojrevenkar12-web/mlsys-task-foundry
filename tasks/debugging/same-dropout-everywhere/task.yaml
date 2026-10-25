@@ -1,0 +1,10 @@
+id: same-dropout-everywhere
+title: Every data-parallel shard draws the same dropout mask
+area: debugging
+kind: code
+difficulty: 3
+target: "JAX 0.12.0.1, jax.shard_map over 8 simulated CPU devices"
+skills: [shard-map, prng, data-parallelism, reproducibility]
+modes: [rng-key-reuse]
+devices: 8
+time_limit_s: 120

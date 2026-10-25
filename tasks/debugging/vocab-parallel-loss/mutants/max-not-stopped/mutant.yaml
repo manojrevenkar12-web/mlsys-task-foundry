@@ -1,0 +1,3 @@
+modes:
+- missing-collective
+note: Differentiates through pmax, which has no gradient rule.

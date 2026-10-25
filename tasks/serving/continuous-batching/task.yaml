@@ -1,0 +1,9 @@
+id: continuous-batching
+title: A continuous-batching scheduler with chunked prefill and preemption
+area: serving
+kind: code
+difficulty: 4
+target: "Python 3.11+, no framework; graded by simulating request traces step by step"
+skills: [continuous-batching, chunked-prefill, preemption, kv-cache-accounting, fairness]
+modes: [preemption-order, block-leak, kv-capacity]
+time_limit_s: 180

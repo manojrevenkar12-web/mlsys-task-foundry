@@ -1,0 +1,24 @@
+# Names a solution must not use with the pinned JAX (0.12.0.1). "removed" names raise
+# AttributeError or ImportError on 0.12.0.1 (tests/test_apiscan.py checks every one against the
+# installed JAX); "deprecated" ones still work but are on their way out. Models trained on older
+# code reach for all of them. Sources: the Pallas changelog
+# (https://docs.jax.dev/en/latest/pallas/CHANGELOG.html) and the installed package itself.
+removed:
+  pltpu.ANY: "removed in 0.10.0; use pl.ANY"
+  pltpu.TPUCompilerParams: "removed in 0.8.1; use pltpu.CompilerParams"
+  pltpu.TPUMemorySpace: "removed in 0.8.1; use pltpu.MemorySpace"
+  pltpu.KernelType: "removed in 0.10.2; use pltpu.CoreType"
+  pltpu.repeat: "removed in 0.10.2"
+  pltpu.HOST: "removed in 0.11.2; use pl.HOST"
+  pltpu.delay: "moved to pl.delay in 0.10.0"
+  pltpu.semaphore: "moved to pl.semaphore in 0.10.0"
+  pltpu.semaphore_signal: "moved to pl.semaphore_signal in 0.10.0"
+  pltpu.semaphore_wait: "moved to pl.semaphore_wait in 0.10.0"
+  pl.dot: "removed in 0.11.2; use jnp.dot or jax.lax.dot_general"
+  pl.debug_checks_enabled: "removed in 0.11.2; use pl.enable_debug_checks.value"
+  plgpu.TritonCompilerParams: "removed in 0.8.1; use plgpu.CompilerParams"
+  jax.experimental.maps: "removed (xmap); use jax.shard_map or jit with shardings"
+deprecated:
+  jax.experimental.shard_map: "use jax.shard_map"
+  jax.experimental.pjit: "use jax.jit with in_shardings/out_shardings"
+  pl.reciprocal: "moved to pltpu.reciprocal in 0.11.2"

@@ -1,0 +1,3 @@
+modes:
+- launch-bound
+note: Sees the GEMMs at the start of each iteration and calls the step compute-bound.

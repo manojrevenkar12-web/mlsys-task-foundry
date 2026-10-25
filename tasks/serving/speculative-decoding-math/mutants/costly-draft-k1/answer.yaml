@@ -1,0 +1,15 @@
+expected_tokens_a08_k4: 3.3616
+speedup_a08_k4_c005: 2.80
+best_k_a08_c005: 8
+best_k_a06_c02: 1
+speedup_a06_c02_best: 1.33
+explanation: >
+  With independent acceptance probability alpha, the target pass yields 1 + alpha + ... + alpha^k
+  tokens on average (the accepted prefix plus its own token), (1 - alpha^(k+1)) / (1 - alpha):
+  3.36 for alpha 0.8, k 4. A pass costs k draft steps plus one target step, k c + 1 = 1.2 target
+  steps, so the speedup is 3.36 / 1.2 = 2.80. Scanning k = 1..10 with alpha 0.8 and a cheap draft
+  (c 0.05), the optimum is k = 8 (3.09x): late draft tokens are rarely accepted, but they are cheap.
+  With alpha 0.6 and a costly draft (c 0.2) the optimum is k = 2 at only 1.40x, and from k = 8 on it
+  is slower than plain decoding. It stops paying when the acceptance rate falls or the draft gets
+  expensive relative to the target, and in practice also when the target is compute-bound at large
+  batch, where verifying k extra tokens is no longer free.

@@ -1,0 +1,3 @@
+modes:
+- prefix-hash
+note: 'Uses Python''s hash() of a tuple: different in every process unless PYTHONHASHSEED is fixed.'

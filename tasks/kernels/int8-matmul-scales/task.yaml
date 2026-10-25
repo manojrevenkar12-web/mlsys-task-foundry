@@ -1,0 +1,9 @@
+id: int8-matmul-scales
+title: int8 x int8 matmul with per-row and per-channel scales
+area: kernels
+kind: code
+difficulty: 3
+target: "Pallas TPU kernel, JAX 0.12.0.1, run in TPU interpret mode on CPU"
+skills: [pallas, quantisation, integer-accumulation, scales, epilogue-fusion]
+modes: [int-accum-overflow, quant-scale-axis, reduction-axis-parallel, accumulator-init, kernel-bypass, narrow-distribution]
+time_limit_s: 240

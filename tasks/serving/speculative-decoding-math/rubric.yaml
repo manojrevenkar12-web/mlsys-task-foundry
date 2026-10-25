@@ -1,0 +1,21 @@
+criteria:
+  - id: formula
+    weight: 35
+    text: Gives the expected tokens per pass as the geometric sum (1 - alpha^(k+1)) / (1 - alpha), counting the target's own token
+    pass: '"1 + alpha + alpha^2 + ... + alpha^k"'
+    fail: uses k * alpha, or forgets the target's token
+  - id: cost
+    weight: 25
+    text: Divides by the cost of a pass, k draft steps plus one target step
+    pass: '"speedup = E[tokens] / (k c + 1)"'
+    fail: ignores the draft's cost
+  - id: optimum-shape
+    weight: 20
+    text: Explains why the best k is larger for a cheap draft with high acceptance than for a costly draft with low acceptance
+    pass: '"late draft tokens are accepted with probability alpha^i; worth drafting only while that exceeds their cost"'
+    fail: no reason for the different optimum
+  - id: when-it-stops
+    weight: 20
+    text: Names a condition where it stops paying, such as low acceptance, a costly draft, or a compute-bound target at large batch
+    pass: '"at large batch verifying k extra tokens costs real compute, so the gain disappears"'
+    fail: no limit given

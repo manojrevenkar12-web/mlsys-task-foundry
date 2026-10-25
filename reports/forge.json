@@ -1,0 +1,2381 @@
+{
+ "seconds": 17.4,
+ "tasks": [
+  {
+   "id": "dp-replicas-drift",
+   "area": "debugging",
+   "kind": "code",
+   "difficulty": 2,
+   "title": "Data-parallel replicas that drift apart (and the check someone turned off)",
+   "reference_passed": true,
+   "deterministic": true,
+   "reference_seconds": 1.55,
+   "checks": [
+    "matches_full_batch_gradient_descent",
+    "weights_are_identical_on_every_device",
+    "independent_of_the_device_count",
+    "shard_map_checks_are_on"
+   ],
+   "check_targets": {
+    "matches_full_batch_gradient_descent": [
+     "missing-collective"
+    ],
+    "weights_are_identical_on_every_device": [
+     "missing-collective"
+    ],
+    "independent_of_the_device_count": [
+     "missing-collective",
+     "loss-normalisation"
+    ],
+    "shard_map_checks_are_on": [
+     "missing-collective"
+    ]
+   },
+   "mutants": {
+    "checks-off-again": {
+     "modes": [
+      "missing-collective"
+     ],
+     "note": "Divides by the shard count but turns the check back off, so each device's gradient is its own: replicas drift.",
+     "killed_by": [
+      "matches_full_batch_gradient_descent",
+      "weights_are_identical_on_every_device",
+      "independent_of_the_device_count",
+      "shard_map_checks_are_on"
+     ],
+     "crashed": null,
+     "seconds": 1.2
+    },
+    "loss-max-not-mean": {
+     "modes": [
+      "missing-collective"
+     ],
+     "note": "Reports the largest shard loss (pmax) instead of the full-batch mean.",
+     "killed_by": [
+      "matches_full_batch_gradient_descent"
+     ],
+     "crashed": null,
+     "seconds": 1.35
+    },
+    "pmean-of-summed-grads": {
+     "modes": [
+      "loss-normalisation"
+     ],
+     "note": "Averages gradients with pmean, as older unchecked shard_map code did; with checks on the gradient is already summed, so this is an 8x step.",
+     "killed_by": [
+      "matches_full_batch_gradient_descent",
+      "independent_of_the_device_count"
+     ],
+     "crashed": null,
+     "seconds": 1.34
+    },
+    "summed-gradient": {
+     "modes": [
+      "loss-normalisation"
+     ],
+     "note": "Uses the summed gradient as it comes back: an 8x step on 8 devices.",
+     "killed_by": [
+      "matches_full_batch_gradient_descent",
+      "independent_of_the_device_count"
+     ],
+     "crashed": null,
+     "seconds": 1.28
+    }
+   },
+   "idle_checks": [],
+   "api_findings": [],
+   "leaks": [],
+   "rubric_issues": [],
+   "problems": [],
+   "ok": true,
+   "killed": 4
+  },
+  {
+   "id": "grad-accumulation-weights",
+   "area": "debugging",
+   "kind": "code",
+   "difficulty": 3,
+   "title": "Gradient accumulation that does not match the big batch",
+   "reference_passed": true,
+   "deterministic": true,
+   "reference_seconds": 3.32,
+   "checks": [
+    "equal_microbatches_match",
+    "unequal_microbatches_match",
+    "an_empty_microbatch_is_harmless",
+    "still_accumulates_with_scan"
+   ],
+   "check_targets": {
+    "equal_microbatches_match": [
+     "loss-normalisation"
+    ],
+    "unequal_microbatches_match": [
+     "loss-normalisation"
+    ],
+    "an_empty_microbatch_is_harmless": [
+     "loss-normalisation"
+    ],
+    "still_accumulates_with_scan": [
+     "loss-normalisation"
+    ]
+   },
+   "mutants": {
+    "counts-first-token": {
+     "modes": [
+      "loss-normalisation"
+     ],
+     "note": "Counts real tokens including position 0, which is never a target.",
+     "killed_by": [
+      "equal_microbatches_match",
+      "unequal_microbatches_match",
+      "an_empty_microbatch_is_harmless"
+     ],
+     "crashed": null,
+     "seconds": 3.21
+    },
+    "counts-padding": {
+     "modes": [
+      "loss-normalisation"
+     ],
+     "note": "Divides by every target position, padding included.",
+     "killed_by": [
+      "equal_microbatches_match",
+      "unequal_microbatches_match",
+      "an_empty_microbatch_is_harmless"
+     ],
+     "crashed": null,
+     "seconds": 3.35
+    },
+    "mean-of-means": {
+     "modes": [
+      "loss-normalisation"
+     ],
+     "note": "Averages per-microbatch mean gradients (the starter's bug).",
+     "killed_by": [
+      "unequal_microbatches_match",
+      "an_empty_microbatch_is_harmless"
+     ],
+     "crashed": null,
+     "seconds": 3.31
+    },
+    "weighted-but-nan": {
+     "modes": [
+      "loss-normalisation"
+     ],
+     "note": "Weights microbatch means by their token counts, but a microbatch with none divides 0 by 0.",
+     "killed_by": [
+      "an_empty_microbatch_is_harmless"
+     ],
+     "crashed": null,
+     "seconds": 3.35
+    },
+    "whole-batch-at-once": {
+     "modes": [
+      "loss-normalisation"
+     ],
+     "note": "Computes the full-batch gradient in one go, giving up accumulation.",
+     "killed_by": [
+      "still_accumulates_with_scan"
+     ],
+     "crashed": null,
+     "seconds": 2.93
+    }
+   },
+   "idle_checks": [],
+   "api_findings": [],
+   "leaks": [],
+   "rubric_issues": [],
+   "problems": [],
+   "ok": true,
+   "killed": 5
+  },
+  {
+   "id": "nan-from-padding",
+   "area": "debugging",
+   "kind": "code",
+   "difficulty": 3,
+   "title": "NaN loss from a batch with an empty sequence",
+   "reference_passed": true,
+   "deterministic": true,
+   "reference_seconds": 2.25,
+   "checks": [
+    "pool_is_right_including_empty_sequences",
+    "gradients_are_finite_with_an_empty_sequence",
+    "same_gradients_as_starter_without_empty_sequences",
+    "masked_positions_get_no_gradient",
+    "exact_for_large_scores"
+   ],
+   "check_targets": {
+    "pool_is_right_including_empty_sequences": [
+     "nan-all-masked"
+    ],
+    "gradients_are_finite_with_an_empty_sequence": [
+     "nan-all-masked"
+    ],
+    "same_gradients_as_starter_without_empty_sequences": [
+     "nan-all-masked"
+    ],
+    "masked_positions_get_no_gradient": [
+     "nan-all-masked"
+    ],
+    "exact_for_large_scores": [
+     "softmax-unstable"
+    ]
+   },
+   "mutants": {
+    "multiply-by-mask": {
+     "modes": [
+      "nan-all-masked"
+     ],
+     "note": "Zeroes masked scores by multiplying with the mask, so padding tokens get weight exp(0).",
+     "killed_by": [
+      "pool_is_right_including_empty_sequences",
+      "same_gradients_as_starter_without_empty_sequences"
+     ],
+     "crashed": null,
+     "seconds": 2.25
+    },
+    "nan-to-num-output": {
+     "modes": [
+      "nan-all-masked"
+     ],
+     "note": "Keeps -inf, leaves the weights unmasked and replaces NaN in the output: the forward pass looks fixed, but the NaN weights still multiply the gradient of the values.",
+     "killed_by": [
+      "gradients_are_finite_with_an_empty_sequence"
+     ],
+     "crashed": null,
+     "seconds": 2.23
+    },
+    "no-max-shift": {
+     "modes": [
+      "softmax-unstable"
+     ],
+     "note": "Drops the max subtraction to avoid -inf - -inf: finite for small scores, overflows for large ones.",
+     "killed_by": [
+      "exact_for_large_scores"
+     ],
+     "crashed": null,
+     "seconds": 2.18
+    },
+    "uniform-for-empty": {
+     "modes": [
+      "nan-all-masked"
+     ],
+     "note": "Uses a finite fill but returns the uniform average of padding values for an empty sequence instead of zeros.",
+     "killed_by": [
+      "pool_is_right_including_empty_sequences",
+      "masked_positions_get_no_gradient",
+      "exact_for_large_scores"
+     ],
+     "crashed": null,
+     "seconds": 2.14
+    },
+    "where-after-inf": {
+     "modes": [
+      "nan-all-masked"
+     ],
+     "note": "Keeps -inf and masks only the output with where(): going forward where() picks the zeros, but the backward pass multiplies a zero cotangent by NaN weights, so d loss / d values is NaN.",
+     "killed_by": [
+      "gradients_are_finite_with_an_empty_sequence"
+     ],
+     "crashed": null,
+     "seconds": 2.26
+    }
+   },
+   "idle_checks": [],
+   "api_findings": [],
+   "leaks": [],
+   "rubric_issues": [],
+   "problems": [],
+   "ok": true,
+   "killed": 5
+  },
+  {
+   "id": "same-dropout-everywhere",
+   "area": "debugging",
+   "kind": "code",
+   "difficulty": 3,
+   "title": "Every data-parallel shard draws the same dropout mask",
+   "reference_passed": true,
+   "deterministic": true,
+   "reference_seconds": 2.71,
+   "checks": [
+    "shards_get_different_masks",
+    "steps_get_different_masks",
+    "determined_by_key_and_step",
+    "keep_rate_and_scaling"
+   ],
+   "check_targets": {
+    "shards_get_different_masks": [
+     "rng-key-reuse"
+    ],
+    "steps_get_different_masks": [
+     "rng-key-reuse"
+    ],
+    "determined_by_key_and_step": [
+     "rng-key-reuse"
+    ],
+    "keep_rate_and_scaling": [
+     "rng-key-reuse"
+    ]
+   },
+   "mutants": {
+    "host-random": {
+     "modes": [
+      "rng-key-reuse"
+     ],
+     "note": "Draws the mask from NumPy's global generator on the host: different on every call, unrelated to the key.",
+     "killed_by": [
+      "shards_get_different_masks",
+      "determined_by_key_and_step"
+     ],
+     "crashed": null,
+     "seconds": 1.21
+    },
+    "inverted-rate": {
+     "modes": [
+      "rng-key-reuse"
+     ],
+     "note": "Uses rate as the keep probability.",
+     "killed_by": [
+      "keep_rate_and_scaling"
+     ],
+     "crashed": null,
+     "seconds": 2.85
+    },
+    "shard-only": {
+     "modes": [
+      "rng-key-reuse"
+     ],
+     "note": "Folds in the shard but not the step: the same mask every step.",
+     "killed_by": [
+      "steps_get_different_masks"
+     ],
+     "crashed": null,
+     "seconds": 2.6
+    },
+    "split-by-eight": {
+     "modes": [
+      "rng-key-reuse"
+     ],
+     "note": "Splits the key into 8 and takes the first on every shard (split outside the shard's index).",
+     "killed_by": [
+      "shards_get_different_masks"
+     ],
+     "crashed": null,
+     "seconds": 3.27
+    },
+    "step-only": {
+     "modes": [
+      "rng-key-reuse"
+     ],
+     "note": "Folds in the step but not the shard: every shard still draws the same mask.",
+     "killed_by": [
+      "shards_get_different_masks"
+     ],
+     "crashed": null,
+     "seconds": 2.45
+    }
+   },
+   "idle_checks": [],
+   "api_findings": [],
+   "leaks": [],
+   "rubric_issues": [],
+   "problems": [],
+   "ok": true,
+   "killed": 5
+  },
+  {
+   "id": "vocab-parallel-loss",
+   "area": "debugging",
+   "kind": "code",
+   "difficulty": 4,
+   "title": "Cross-entropy over a vocabulary sharded across devices",
+   "reference_passed": true,
+   "deterministic": true,
+   "reference_seconds": 7.09,
+   "checks": [
+    "equals_single_device_cross_entropy",
+    "exact_for_large_logits",
+    "gradient_is_softmax_minus_onehot",
+    "vocabulary_stays_sharded"
+   ],
+   "check_targets": {
+    "equals_single_device_cross_entropy": [
+     "missing-collective",
+     "wrong-partition-spec"
+    ],
+    "exact_for_large_logits": [
+     "softmax-unstable"
+    ],
+    "gradient_is_softmax_minus_onehot": [
+     "missing-collective"
+    ],
+    "vocabulary_stays_sharded": [
+     "wrong-partition-spec"
+    ]
+   },
+   "mutants": {
+    "gather-the-vocab": {
+     "modes": [
+      "wrong-partition-spec"
+     ],
+     "note": "Gathers the whole vocabulary onto every device and computes the loss there.",
+     "killed_by": [
+      "equals_single_device_cross_entropy",
+      "exact_for_large_logits",
+      "gradient_is_softmax_minus_onehot",
+      "vocabulary_stays_sharded"
+     ],
+     "crashed": null,
+     "seconds": 3.97
+    },
+    "local-max": {
+     "modes": [
+      "softmax-unstable",
+      "missing-collective"
+     ],
+     "note": "Shifts each shard by its own max before the psum of exponentials, so shards are summed on different scales.",
+     "killed_by": [
+      "equals_single_device_cross_entropy",
+      "exact_for_large_logits",
+      "gradient_is_softmax_minus_onehot"
+     ],
+     "crashed": null,
+     "seconds": 3.94
+    },
+    "max-not-stopped": {
+     "modes": [
+      "missing-collective"
+     ],
+     "note": "Differentiates through pmax, which has no gradient rule.",
+     "killed_by": [
+      "gradient_is_softmax_minus_onehot"
+     ],
+     "crashed": null,
+     "seconds": 4.76
+    },
+    "no-shift": {
+     "modes": [
+      "softmax-unstable"
+     ],
+     "note": "Drops the max shift: exp overflows for large logits.",
+     "killed_by": [
+      "exact_for_large_logits"
+     ],
+     "crashed": null,
+     "seconds": 7.1
+    },
+    "psum-of-lse": {
+     "modes": [
+      "missing-collective"
+     ],
+     "note": "Adds up each shard's own logsumexp instead of combining exponentials.",
+     "killed_by": [
+      "equals_single_device_cross_entropy",
+      "exact_for_large_logits",
+      "gradient_is_softmax_minus_onehot"
+     ],
+     "crashed": null,
+     "seconds": 5.93
+    },
+    "target-not-offset": {
+     "modes": [
+      "wrong-partition-spec"
+     ],
+     "note": "Indexes the local shard with the global target id modulo the shard size, as the starter did.",
+     "killed_by": [
+      "equals_single_device_cross_entropy",
+      "exact_for_large_logits",
+      "gradient_is_softmax_minus_onehot"
+     ],
+     "crashed": null,
+     "seconds": 4.64
+    }
+   },
+   "idle_checks": [],
+   "api_findings": [],
+   "leaks": [],
+   "rubric_issues": [],
+   "problems": [],
+   "ok": true,
+   "killed": 6
+  },
+  {
+   "id": "flash-attention-causal",
+   "area": "kernels",
+   "kind": "code",
+   "difficulty": 4,
+   "title": "Flash attention forward with a causal mask and online softmax",
+   "reference_passed": true,
+   "deterministic": true,
+   "reference_seconds": 5.83,
+   "checks": [
+    "uses_current_api",
+    "runs_a_pallas_kernel",
+    "full_attention_matches",
+    "causal_attention_matches",
+    "exact_on_every_distribution_and_large_scores",
+    "correct_on_two_cores_in_random_order"
+   ],
+   "check_targets": {
+    "uses_current_api": [
+     "api-removed",
+     "api-hallucinated"
+    ],
+    "runs_a_pallas_kernel": [
+     "kernel-bypass"
+    ],
+    "full_attention_matches": [
+     "online-softmax-rescale",
+     "accumulator-init"
+    ],
+    "causal_attention_matches": [
+     "mask-off-by-one",
+     "online-softmax-rescale"
+    ],
+    "exact_on_every_distribution_and_large_scores": [
+     "softmax-unstable",
+     "online-softmax-rescale",
+     "narrow-distribution"
+    ],
+    "correct_on_two_cores_in_random_order": [
+     "reduction-axis-parallel",
+     "accumulator-init"
+    ]
+   },
+   "mutants": {
+    "kv-axis-parallel": {
+     "modes": [
+      "reduction-axis-parallel"
+     ],
+     "note": "Declares the key/value axis parallel although every step updates the same scratch and output block.",
+     "killed_by": [
+      "full_attention_matches",
+      "causal_attention_matches",
+      "exact_on_every_distribution_and_large_scores",
+      "correct_on_two_cores_in_random_order"
+     ],
+     "crashed": null,
+     "seconds": 4.32
+    },
+    "max-not-tracked": {
+     "modes": [
+      "online-softmax-rescale",
+      "softmax-unstable"
+     ],
+     "note": "Uses each block's own max but never stores the running max, so blocks are combined on different scales.",
+     "killed_by": [
+      "full_attention_matches",
+      "causal_attention_matches",
+      "exact_on_every_distribution_and_large_scores",
+      "correct_on_two_cores_in_random_order"
+     ],
+     "crashed": null,
+     "seconds": 4.32
+    },
+    "no-acc-rescale": {
+     "modes": [
+      "online-softmax-rescale"
+     ],
+     "note": "Rescales the running sum but not the output accumulator when the max grows.",
+     "killed_by": [
+      "full_attention_matches",
+      "causal_attention_matches",
+      "exact_on_every_distribution_and_large_scores",
+      "correct_on_two_cores_in_random_order"
+     ],
+     "crashed": null,
+     "seconds": 4.15
+    },
+    "no-scale": {
+     "modes": [
+      "narrow-distribution"
+     ],
+     "note": "Forgets the 1/sqrt(d) scale.",
+     "killed_by": [
+      "full_attention_matches",
+      "causal_attention_matches",
+      "exact_on_every_distribution_and_large_scores",
+      "correct_on_two_cores_in_random_order"
+     ],
+     "crashed": null,
+     "seconds": 4.24
+    },
+    "no-sum-rescale": {
+     "modes": [
+      "online-softmax-rescale"
+     ],
+     "note": "Rescales the accumulator but not the running sum.",
+     "killed_by": [
+      "full_attention_matches",
+      "causal_attention_matches",
+      "exact_on_every_distribution_and_large_scores",
+      "correct_on_two_cores_in_random_order"
+     ],
+     "crashed": null,
+     "seconds": 4.31
+    },
+    "normalise-every-step": {
+     "modes": [
+      "accumulator-init"
+     ],
+     "note": "Writes acc/l after every key block, but the write happens at the first block only.",
+     "killed_by": [
+      "full_attention_matches",
+      "causal_attention_matches",
+      "exact_on_every_distribution_and_large_scores",
+      "correct_on_two_cores_in_random_order"
+     ],
+     "crashed": null,
+     "seconds": 4.15
+    },
+    "strict-causal": {
+     "modes": [
+      "mask-off-by-one"
+     ],
+     "note": "Masks the diagonal too (j < i): every query loses itself, and query 0 attends to nothing.",
+     "killed_by": [
+      "causal_attention_matches",
+      "exact_on_every_distribution_and_large_scores",
+      "correct_on_two_cores_in_random_order"
+     ],
+     "crashed": null,
+     "seconds": 5.05
+    }
+   },
+   "idle_checks": [
+    "uses_current_api",
+    "runs_a_pallas_kernel"
+   ],
+   "api_findings": [],
+   "leaks": [],
+   "rubric_issues": [],
+   "problems": [],
+   "ok": true,
+   "killed": 7
+  },
+  {
+   "id": "int8-matmul-scales",
+   "area": "kernels",
+   "kind": "code",
+   "difficulty": 3,
+   "title": "int8 x int8 matmul with per-row and per-channel scales",
+   "reference_passed": true,
+   "deterministic": true,
+   "reference_seconds": 6.28,
+   "checks": [
+    "uses_current_api",
+    "runs_a_pallas_kernel",
+    "matches_with_distinct_row_and_channel_scales",
+    "exact_integer_sums_with_long_k",
+    "correct_on_two_cores_in_random_order",
+    "one_sided_and_sparse_values"
+   ],
+   "check_targets": {
+    "uses_current_api": [
+     "api-removed",
+     "api-hallucinated"
+    ],
+    "runs_a_pallas_kernel": [
+     "kernel-bypass"
+    ],
+    "matches_with_distinct_row_and_channel_scales": [
+     "quant-scale-axis",
+     "narrow-distribution"
+    ],
+    "exact_integer_sums_with_long_k": [
+     "int-accum-overflow"
+    ],
+    "correct_on_two_cores_in_random_order": [
+     "reduction-axis-parallel",
+     "accumulator-init"
+    ],
+    "one_sided_and_sparse_values": [
+     "narrow-distribution"
+    ]
+   },
+   "mutants": {
+    "dequant-first": {
+     "modes": [
+      "kernel-bypass"
+     ],
+     "note": "Dequantises both operands in XLA and multiplies with jnp.dot, outside any kernel.",
+     "killed_by": [
+      "runs_a_pallas_kernel",
+      "matches_with_distinct_row_and_channel_scales",
+      "exact_integer_sums_with_long_k",
+      "correct_on_two_cores_in_random_order",
+      "one_sided_and_sparse_values"
+     ],
+     "crashed": null,
+     "seconds": 1.89
+    },
+    "float32-accumulator": {
+     "modes": [
+      "int-accum-overflow"
+     ],
+     "note": "Accumulates in float32: exact only up to 2^24, so long K loses the low digits.",
+     "killed_by": [
+      "exact_integer_sums_with_long_k"
+     ],
+     "crashed": null,
+     "seconds": 5.35
+    },
+    "int16-accumulator": {
+     "modes": [
+      "int-accum-overflow"
+     ],
+     "note": "Accumulates in int16, which wraps past 32767.",
+     "killed_by": [
+      "matches_with_distinct_row_and_channel_scales",
+      "exact_integer_sums_with_long_k",
+      "correct_on_two_cores_in_random_order",
+      "one_sided_and_sparse_values"
+     ],
+     "crashed": null,
+     "seconds": 4.68
+    },
+    "k-parallel": {
+     "modes": [
+      "reduction-axis-parallel"
+     ],
+     "note": "Declares the K axis parallel.",
+     "killed_by": [
+      "matches_with_distinct_row_and_channel_scales",
+      "exact_integer_sums_with_long_k",
+      "correct_on_two_cores_in_random_order",
+      "one_sided_and_sparse_values"
+     ],
+     "crashed": null,
+     "seconds": 5.35
+    },
+    "scales-transposed": {
+     "modes": [
+      "quant-scale-axis"
+     ],
+     "note": "Applies the activation scale per column and the weight scale per row (works only when they broadcast by accident).",
+     "killed_by": [
+      "correct_on_two_cores_in_random_order",
+      "one_sided_and_sparse_values"
+     ],
+     "crashed": null,
+     "seconds": 4.73
+    }
+   },
+   "idle_checks": [
+    "uses_current_api"
+   ],
+   "api_findings": [],
+   "leaks": [],
+   "rubric_issues": [],
+   "problems": [],
+   "ok": true,
+   "killed": 5
+  },
+  {
+   "id": "port-dma-kernel",
+   "area": "kernels",
+   "kind": "code",
+   "difficulty": 3,
+   "title": "Port a manual-DMA kernel from old Pallas to JAX 0.12",
+   "reference_passed": true,
+   "deterministic": true,
+   "reference_seconds": 3.4,
+   "checks": [
+    "uses_current_api",
+    "keeps_the_manual_dma",
+    "matches_on_every_distribution",
+    "data_is_used_only_after_the_wait",
+    "bf16_in_bf16_out"
+   ],
+   "check_targets": {
+    "uses_current_api": [
+     "api-removed",
+     "api-hallucinated"
+    ],
+    "keeps_the_manual_dma": [
+     "kernel-bypass",
+     "api-removed"
+    ],
+    "matches_on_every_distribution": [
+     "narrow-distribution",
+     "accumulator-init"
+    ],
+    "data_is_used_only_after_the_wait": [
+     "accumulator-init"
+    ],
+    "bf16_in_bf16_out": [
+     "narrow-distribution"
+    ]
+   },
+   "mutants": {
+    "blockspec-instead": {
+     "modes": [
+      "kernel-bypass"
+     ],
+     "note": "Replaces the manual copy with a blocked input: correct numbers, but not the kernel asked for.",
+     "killed_by": [
+      "keeps_the_manual_dma"
+     ],
+     "crashed": null,
+     "seconds": 3.18
+    },
+    "hallucinated-params": {
+     "modes": [
+      "api-hallucinated"
+     ],
+     "note": "Invents pl.CompilerParams, which Pallas never had.",
+     "killed_by": [
+      "keeps_the_manual_dma",
+      "matches_on_every_distribution",
+      "data_is_used_only_after_the_wait",
+      "bf16_in_bf16_out"
+     ],
+     "crashed": null,
+     "seconds": 1.02
+    },
+    "kept-pl-dot": {
+     "modes": [
+      "api-removed"
+     ],
+     "note": "Ports everything but pl.dot, which JAX 0.11.2 removed.",
+     "killed_by": [
+      "uses_current_api",
+      "keeps_the_manual_dma",
+      "matches_on_every_distribution",
+      "data_is_used_only_after_the_wait",
+      "bf16_in_bf16_out"
+     ],
+     "crashed": null,
+     "seconds": 1.1
+    },
+    "kept-pltpu-any": {
+     "modes": [
+      "api-removed"
+     ],
+     "note": "Keeps pltpu.ANY (removed in 0.10.0) for the HBM input.",
+     "killed_by": [
+      "uses_current_api",
+      "keeps_the_manual_dma",
+      "matches_on_every_distribution",
+      "data_is_used_only_after_the_wait",
+      "bf16_in_bf16_out"
+     ],
+     "crashed": null,
+     "seconds": 1.04
+    },
+    "wait-after-use": {
+     "modes": [
+      "accumulator-init"
+     ],
+     "note": "Moves the wait after the multiply, so the buffer is read before the copy lands.",
+     "killed_by": [
+      "matches_on_every_distribution",
+      "data_is_used_only_after_the_wait",
+      "bf16_in_bf16_out"
+     ],
+     "crashed": null,
+     "seconds": 3.21
+    },
+    "wrong-row-offset": {
+     "modes": [
+      "narrow-distribution"
+     ],
+     "note": "Copies rows starting at i instead of i * rows.",
+     "killed_by": [
+      "matches_on_every_distribution",
+      "data_is_used_only_after_the_wait",
+      "bf16_in_bf16_out"
+     ],
+     "crashed": null,
+     "seconds": 2.67
+    }
+   },
+   "idle_checks": [],
+   "api_findings": [
+    "starter.py:17 jax.experimental.pallas.dot (removed: removed in 0.11.2; use jnp.dot or jax.lax.dot_general)",
+    "starter.py:28 jax.experimental.pallas.tpu.ANY (removed: removed in 0.10.0; use pl.ANY)",
+    "starter.py:34 jax.experimental.pallas.tpu.TPUCompilerParams (removed: removed in 0.8.1; use pltpu.CompilerParams)"
+   ],
+   "leaks": [],
+   "rubric_issues": [],
+   "problems": [],
+   "ok": true,
+   "killed": 6
+  },
+  {
+   "id": "rmsnorm-residual-ragged",
+   "area": "kernels",
+   "kind": "code",
+   "difficulty": 3,
+   "title": "Fused residual add and RMSNorm when rows do not fill the last block",
+   "reference_passed": true,
+   "deterministic": true,
+   "reference_seconds": 4.78,
+   "checks": [
+    "uses_current_api",
+    "runs_a_pallas_kernel",
+    "full_blocks_on_every_distribution",
+    "every_row_right_when_the_last_block_is_partial",
+    "bf16_in_bf16_out_computed_in_f32",
+    "eps_is_inside_the_square_root"
+   ],
+   "check_targets": {
+    "uses_current_api": [
+     "api-removed",
+     "api-hallucinated"
+    ],
+    "runs_a_pallas_kernel": [
+     "kernel-bypass"
+    ],
+    "full_blocks_on_every_distribution": [
+     "narrow-distribution"
+    ],
+    "every_row_right_when_the_last_block_is_partial": [
+     "ragged-tail",
+     "shape-special-case"
+    ],
+    "bf16_in_bf16_out_computed_in_f32": [
+     "output-dtype"
+    ],
+    "eps_is_inside_the_square_root": [
+     "narrow-distribution"
+    ]
+   },
+   "mutants": {
+    "eps-outside": {
+     "modes": [
+      "narrow-distribution"
+     ],
+     "note": "Adds eps after the square root.",
+     "killed_by": [
+      "full_blocks_on_every_distribution",
+      "eps_is_inside_the_square_root"
+     ],
+     "crashed": null,
+     "seconds": 4.66
+    },
+    "floor-grid": {
+     "modes": [
+      "ragged-tail"
+     ],
+     "note": "Uses R // br blocks, so the rows of a partial last block are never computed.",
+     "killed_by": [
+      "every_row_right_when_the_last_block_is_partial"
+     ],
+     "crashed": null,
+     "seconds": 3.65
+    },
+    "norm-before-add": {
+     "modes": [
+      "narrow-distribution"
+     ],
+     "note": "Normalises x before adding the residual.",
+     "killed_by": [
+      "full_blocks_on_every_distribution",
+      "every_row_right_when_the_last_block_is_partial",
+      "bf16_in_bf16_out_computed_in_f32"
+     ],
+     "crashed": null,
+     "seconds": 3.56
+    },
+    "outputs-swapped": {
+     "modes": [
+      "narrow-distribution"
+     ],
+     "note": "Returns (y, h) instead of (h, y).",
+     "killed_by": [
+      "full_blocks_on_every_distribution",
+      "every_row_right_when_the_last_block_is_partial",
+      "bf16_in_bf16_out_computed_in_f32",
+      "eps_is_inside_the_square_root"
+     ],
+     "crashed": null,
+     "seconds": 3.63
+    },
+    "pad-to-block": {
+     "modes": [
+      "ragged-tail",
+      "shape-special-case"
+     ],
+     "note": "Pads R up to a multiple of br and returns the padded arrays.",
+     "killed_by": [
+      "every_row_right_when_the_last_block_is_partial"
+     ],
+     "crashed": null,
+     "seconds": 3.34
+    }
+   },
+   "idle_checks": [
+    "uses_current_api",
+    "runs_a_pallas_kernel"
+   ],
+   "api_findings": [],
+   "leaks": [],
+   "rubric_issues": [],
+   "problems": [],
+   "ok": true,
+   "killed": 5
+  },
+  {
+   "id": "row-softmax",
+   "area": "kernels",
+   "kind": "code",
+   "difficulty": 2,
+   "title": "Row softmax that survives large logits and bf16",
+   "reference_passed": true,
+   "deterministic": true,
+   "reference_seconds": 3.02,
+   "checks": [
+    "uses_current_api",
+    "runs_a_pallas_kernel",
+    "matches_on_every_input_distribution",
+    "finite_and_exact_for_logits_in_the_hundreds",
+    "bf16_in_bf16_out_computed_in_f32",
+    "other_shapes_and_row_blocks"
+   ],
+   "check_targets": {
+    "uses_current_api": [
+     "api-removed",
+     "api-hallucinated"
+    ],
+    "runs_a_pallas_kernel": [
+     "kernel-bypass"
+    ],
+    "matches_on_every_input_distribution": [
+     "narrow-distribution",
+     "softmax-unstable"
+    ],
+    "finite_and_exact_for_logits_in_the_hundreds": [
+     "softmax-unstable"
+    ],
+    "bf16_in_bf16_out_computed_in_f32": [
+     "output-dtype"
+    ],
+    "other_shapes_and_row_blocks": [
+     "shape-special-case"
+    ]
+   },
+   "mutants": {
+    "bf16-math": {
+     "modes": [
+      "output-dtype"
+     ],
+     "note": "Computes in the input dtype, so bf16 rows are summed in bf16.",
+     "killed_by": [
+      "bf16_in_bf16_out_computed_in_f32"
+     ],
+     "crashed": null,
+     "seconds": 3.2
+    },
+    "column-max": {
+     "modes": [
+      "softmax-unstable"
+     ],
+     "note": "Takes the max down each column of the block instead of along each row: the shift is not constant within a row.",
+     "killed_by": [
+      "matches_on_every_input_distribution",
+      "finite_and_exact_for_logits_in_the_hundreds",
+      "bf16_in_bf16_out_computed_in_f32",
+      "other_shapes_and_row_blocks"
+     ],
+     "crashed": null,
+     "seconds": 2.45
+    },
+    "fixed-rows": {
+     "modes": [
+      "shape-special-case"
+     ],
+     "note": "The grid covers the 32 rows of the example, whatever R is.",
+     "killed_by": [
+      "finite_and_exact_for_logits_in_the_hundreds",
+      "bf16_in_bf16_out_computed_in_f32",
+      "other_shapes_and_row_blocks"
+     ],
+     "crashed": null,
+     "seconds": 2.74
+    },
+    "library-softmax": {
+     "modes": [
+      "kernel-bypass"
+     ],
+     "note": "Calls jax.nn.softmax on the whole array instead of writing the kernel.",
+     "killed_by": [
+      "runs_a_pallas_kernel"
+     ],
+     "crashed": null,
+     "seconds": 1.32
+    },
+    "log-domain-shift": {
+     "modes": [
+      "softmax-unstable",
+      "narrow-distribution"
+     ],
+     "note": "Shifts by the row mean instead of the max: fine for small logits, overflows when one logit dominates.",
+     "killed_by": [
+      "finite_and_exact_for_logits_in_the_hundreds"
+     ],
+     "crashed": null,
+     "seconds": 3.04
+    },
+    "no-max-subtraction": {
+     "modes": [
+      "softmax-unstable"
+     ],
+     "note": "Exponentiates the raw logits; exp overflows to inf for logits above ~88.",
+     "killed_by": [
+      "matches_on_every_input_distribution",
+      "finite_and_exact_for_logits_in_the_hundreds"
+     ],
+     "crashed": null,
+     "seconds": 2.95
+    }
+   },
+   "idle_checks": [
+    "uses_current_api"
+   ],
+   "api_findings": [],
+   "leaks": [],
+   "rubric_issues": [],
+   "problems": [],
+   "ok": true,
+   "killed": 6
+  },
+  {
+   "id": "tiled-matmul",
+   "area": "kernels",
+   "kind": "code",
+   "difficulty": 2,
+   "title": "Tiled matmul with an f32 accumulator, ready for two TensorCores",
+   "reference_passed": true,
+   "deterministic": true,
+   "reference_seconds": 7.76,
+   "checks": [
+    "uses_current_api",
+    "runs_a_pallas_kernel",
+    "matches_on_every_input_distribution",
+    "handles_other_shapes_and_blocks",
+    "bf16_in_bf16_out_with_f32_accumulation",
+    "correct_when_parallel_axes_run_on_two_cores_in_random_order"
+   ],
+   "check_targets": {
+    "uses_current_api": [
+     "api-removed",
+     "api-hallucinated"
+    ],
+    "runs_a_pallas_kernel": [
+     "kernel-bypass"
+    ],
+    "matches_on_every_input_distribution": [
+     "accumulator-init",
+     "narrow-distribution"
+    ],
+    "handles_other_shapes_and_blocks": [
+     "shape-special-case"
+    ],
+    "bf16_in_bf16_out_with_f32_accumulation": [
+     "output-dtype"
+    ],
+    "correct_when_parallel_axes_run_on_two_cores_in_random_order": [
+     "reduction-axis-parallel",
+     "accumulator-init"
+    ]
+   },
+   "mutants": {
+    "bf16-accumulator": {
+     "modes": [
+      "output-dtype"
+     ],
+     "note": "The scratch accumulator has the input dtype, so bf16 inputs accumulate in bf16.",
+     "killed_by": [
+      "bf16_in_bf16_out_with_f32_accumulation"
+     ],
+     "crashed": null,
+     "seconds": 7.54
+    },
+    "f32-output": {
+     "modes": [
+      "output-dtype"
+     ],
+     "note": "Returns the f32 accumulator dtype instead of the inputs' dtype.",
+     "killed_by": [
+      "bf16_in_bf16_out_with_f32_accumulation"
+     ],
+     "crashed": null,
+     "seconds": 7.31
+    },
+    "fixed-grid": {
+     "modes": [
+      "shape-special-case"
+     ],
+     "note": "The grid is computed for the 256x512x256 example shapes, not from the arguments.",
+     "killed_by": [
+      "handles_other_shapes_and_blocks",
+      "bf16_in_bf16_out_with_f32_accumulation",
+      "correct_when_parallel_axes_run_on_two_cores_in_random_order"
+     ],
+     "crashed": null,
+     "seconds": 4.51
+    },
+    "flush-at-first-step": {
+     "modes": [
+      "accumulator-init"
+     ],
+     "note": "Writes the output on the first K step instead of the last.",
+     "killed_by": [
+      "matches_on_every_input_distribution",
+      "handles_other_shapes_and_blocks",
+      "bf16_in_bf16_out_with_f32_accumulation",
+      "correct_when_parallel_axes_run_on_two_cores_in_random_order"
+     ],
+     "crashed": null,
+     "seconds": 4.17
+    },
+    "jnp-bypass": {
+     "modes": [
+      "kernel-bypass"
+     ],
+     "note": "Skips the kernel and calls jnp.dot on the whole arrays.",
+     "killed_by": [
+      "runs_a_pallas_kernel"
+     ],
+     "crashed": null,
+     "seconds": 1.44
+    },
+    "parallel-k": {
+     "modes": [
+      "reduction-axis-parallel"
+     ],
+     "note": "The K axis, which accumulates into the same output block, is declared parallel.",
+     "killed_by": [
+      "matches_on_every_input_distribution",
+      "handles_other_shapes_and_blocks",
+      "bf16_in_bf16_out_with_f32_accumulation",
+      "correct_when_parallel_axes_run_on_two_cores_in_random_order"
+     ],
+     "crashed": null,
+     "seconds": 4.76
+    },
+    "removed-api": {
+     "modes": [
+      "api-removed"
+     ],
+     "note": "Uses pltpu.TPUCompilerParams, removed in JAX 0.8.1 (the kernel never runs).",
+     "killed_by": [
+      "uses_current_api",
+      "runs_a_pallas_kernel",
+      "matches_on_every_input_distribution",
+      "handles_other_shapes_and_blocks",
+      "bf16_in_bf16_out_with_f32_accumulation",
+      "correct_when_parallel_axes_run_on_two_cores_in_random_order"
+     ],
+     "crashed": null,
+     "seconds": 1.07
+    },
+    "zero-every-step": {
+     "modes": [
+      "accumulator-init"
+     ],
+     "note": "The accumulator is zeroed on every K step, so only the last block of K counts.",
+     "killed_by": [
+      "matches_on_every_input_distribution",
+      "handles_other_shapes_and_blocks",
+      "bf16_in_bf16_out_with_f32_accumulation",
+      "correct_when_parallel_axes_run_on_two_cores_in_random_order"
+     ],
+     "crashed": null,
+     "seconds": 4.01
+    }
+   },
+   "idle_checks": [],
+   "api_findings": [],
+   "leaks": [],
+   "rubric_issues": [],
+   "problems": [],
+   "ok": true,
+   "killed": 8
+  },
+  {
+   "id": "gpu-launch-bound",
+   "area": "profiling",
+   "kind": "answer",
+   "difficulty": 2,
+   "title": "A GPU that waits for Python to launch its kernels",
+   "reference_passed": true,
+   "deterministic": true,
+   "reference_seconds": 0.26,
+   "checks": [
+    "names_the_bottleneck",
+    "measures_gpu_busy_share",
+    "counts_kernels",
+    "measures_the_optimizer_phase"
+   ],
+   "check_targets": {
+    "names_the_bottleneck": [
+     "launch-bound"
+    ],
+    "measures_gpu_busy_share": [
+     "launch-bound"
+    ],
+    "counts_kernels": [
+     "launch-bound"
+    ],
+    "measures_the_optimizer_phase": [
+     "launch-bound",
+     "units"
+    ]
+   },
+   "mutants": {
+    "calls-it-compute-bound": {
+     "modes": [
+      "launch-bound"
+     ],
+     "note": "Sees the GEMMs at the start of each iteration and calls the step compute-bound.",
+     "killed_by": [
+      "names_the_bottleneck"
+     ],
+     "crashed": null,
+     "seconds": 0.28
+    },
+    "counts-launch-events-twice": {
+     "modes": [
+      "launch-bound"
+     ],
+     "note": "Counts launches and kernels together.",
+     "killed_by": [
+      "counts_kernels"
+     ],
+     "crashed": null,
+     "seconds": 0.31
+    },
+    "cpu-lane-measured": {
+     "modes": [
+      "launch-bound"
+     ],
+     "note": "Measures the busy share of the CPU thread's launch calls, not of the GPU stream.",
+     "killed_by": [
+      "measures_gpu_busy_share"
+     ],
+     "crashed": null,
+     "seconds": 0.28
+    },
+    "whole-iteration-for-optimizer": {
+     "modes": [
+      "launch-bound"
+     ],
+     "note": "Reports the whole-iteration busy share for the optimizer phase.",
+     "killed_by": [
+      "measures_the_optimizer_phase"
+     ],
+     "crashed": null,
+     "seconds": 0.29
+    }
+   },
+   "idle_checks": [],
+   "api_findings": [],
+   "leaks": [],
+   "rubric_issues": [],
+   "problems": [],
+   "ok": true,
+   "killed": 4
+  },
+  {
+   "id": "host-bound-input",
+   "area": "profiling",
+   "kind": "answer",
+   "difficulty": 2,
+   "title": "Where does a training step's time go when the device is mostly idle?",
+   "reference_passed": true,
+   "deterministic": true,
+   "reference_seconds": 0.18,
+   "checks": [
+    "names_the_bottleneck",
+    "measures_device_busy_share",
+    "finds_the_largest_host_phase",
+    "bounds_the_step_with_perfect_overlap"
+   ],
+   "check_targets": {
+    "names_the_bottleneck": [
+     "host-bound"
+    ],
+    "measures_device_busy_share": [
+     "host-bound"
+    ],
+    "finds_the_largest_host_phase": [
+     "host-bound"
+    ],
+    "bounds_the_step_with_perfect_overlap": [
+     "host-bound",
+     "units"
+    ]
+   },
+   "mutants": {
+    "blames-the-device": {
+     "modes": [
+      "host-bound"
+     ],
+     "note": "Calls it device-bound because update is the only jitted work.",
+     "killed_by": [
+      "names_the_bottleneck"
+     ],
+     "crashed": null,
+     "seconds": 0.18
+    },
+    "container-not-phase": {
+     "modes": [
+      "host-bound"
+     ],
+     "note": "Names the enclosing load_batch annotation rather than the phase inside it.",
+     "killed_by": [
+      "finds_the_largest_host_phase"
+     ],
+     "crashed": null,
+     "seconds": 0.17
+    },
+    "counted-compile-step": {
+     "modes": [
+      "host-bound"
+     ],
+     "note": "Includes step 0, whose compilation dilutes the busy share.",
+     "killed_by": [
+      "measures_device_busy_share"
+     ],
+     "crashed": null,
+     "seconds": 0.2
+    },
+    "overlap-ignored": {
+     "modes": [
+      "host-bound",
+      "units"
+     ],
+     "note": "Reports today's step time as the overlapped bound.",
+     "killed_by": [
+      "bounds_the_step_with_perfect_overlap"
+     ],
+     "crashed": null,
+     "seconds": 0.19
+    },
+    "python-thread-events": {
+     "modes": [
+      "host-bound"
+     ],
+     "note": "Measures the zero-length Execute markers on the python thread instead of the execute threads.",
+     "killed_by": [
+      "measures_device_busy_share"
+     ],
+     "crashed": null,
+     "seconds": 0.19
+    }
+   },
+   "idle_checks": [],
+   "api_findings": [],
+   "leaks": [],
+   "rubric_issues": [],
+   "problems": [],
+   "ok": true,
+   "killed": 5
+  },
+  {
+   "id": "recompiling-train-step",
+   "area": "profiling",
+   "kind": "code+answer",
+   "difficulty": 2,
+   "title": "A training step that recompiles every batch",
+   "reference_passed": true,
+   "deterministic": true,
+   "reference_seconds": 8.13,
+   "checks": [
+    "names_the_cause",
+    "counts_the_compilations_in_the_trace",
+    "measures_the_compile_share",
+    "fixed_train_compiles_step_at_most_six_times",
+    "losses_are_unchanged_by_padding",
+    "padding_stays_below_twice_the_longest_sequence"
+   ],
+   "check_targets": {
+    "names_the_cause": [
+     "recompilation"
+    ],
+    "counts_the_compilations_in_the_trace": [
+     "recompilation"
+    ],
+    "measures_the_compile_share": [
+     "recompilation"
+    ],
+    "fixed_train_compiles_step_at_most_six_times": [
+     "recompilation"
+    ],
+    "losses_are_unchanged_by_padding": [
+     "shape-special-case"
+    ],
+    "padding_stays_below_twice_the_longest_sequence": [
+     "shape-special-case"
+    ]
+   },
+   "mutants": {
+    "blames-the-device": {
+     "modes": [
+      "recompilation"
+     ],
+     "note": "Reads the long PjitFunction(step) events as slow device compute.",
+     "killed_by": [
+      "names_the_cause"
+     ],
+     "crashed": null,
+     "seconds": 7.82
+    },
+    "counted-every-compile": {
+     "modes": [
+      "recompilation"
+     ],
+     "note": "Counts every backend_compile_and_load in the trace (including helper computations) as a compile of step.",
+     "killed_by": [
+      "counts_the_compilations_in_the_trace"
+     ],
+     "crashed": null,
+     "seconds": 7.63
+    },
+    "mask-dropped": {
+     "modes": [
+      "shape-special-case"
+     ],
+     "note": "Buckets the batches but averages the loss over every position, padding included.",
+     "killed_by": [
+      "losses_are_unchanged_by_padding"
+     ],
+     "crashed": null,
+     "seconds": 7.54
+    },
+    "multiple-of-eight": {
+     "modes": [
+      "recompilation"
+     ],
+     "note": "Rounds widths up to a multiple of 8: still a new shape for most batches.",
+     "killed_by": [
+      "fixed_train_compiles_step_at_most_six_times"
+     ],
+     "crashed": null,
+     "seconds": 14.11
+    },
+    "nested-events-summed": {
+     "modes": [
+      "recompilation",
+      "units"
+     ],
+     "note": "Adds up nested compile, lowering and XLA pass events, counting the same time several times.",
+     "killed_by": [
+      "measures_the_compile_share"
+     ],
+     "crashed": null,
+     "seconds": 8.1
+    },
+    "pad-to-max": {
+     "modes": [
+      "shape-special-case"
+     ],
+     "note": "Pads every batch to 512: one compilation, but 8x the compute on padding.",
+     "killed_by": [
+      "padding_stays_below_twice_the_longest_sequence"
+     ],
+     "crashed": null,
+     "seconds": 7.65
+    }
+   },
+   "idle_checks": [],
+   "api_findings": [],
+   "leaks": [],
+   "rubric_issues": [],
+   "problems": [],
+   "ok": true,
+   "killed": 6
+  },
+  {
+   "id": "roofline-classify",
+   "area": "profiling",
+   "kind": "answer",
+   "difficulty": 3,
+   "title": "Which LLM ops are memory-bound on an H100, and how close to the roof do they run?",
+   "reference_passed": true,
+   "deterministic": true,
+   "reference_seconds": 0.23,
+   "checks": [
+    "ridge_point",
+    "classifies_every_op",
+    "roof_fraction_of_every_op"
+   ],
+   "check_targets": {
+    "ridge_point": [
+     "roofline-misclassified",
+     "units"
+    ],
+    "classifies_every_op": [
+     "roofline-misclassified"
+    ],
+    "roof_fraction_of_every_op": [
+     "roofline-misclassified",
+     "units"
+    ]
+   },
+   "mutants": {
+    "every-gemm-compute": {
+     "modes": [
+      "roofline-misclassified"
+     ],
+     "note": "Calls every GEMM compute-bound without computing its intensity.",
+     "killed_by": [
+      "classifies_every_op"
+     ],
+     "crashed": null,
+     "seconds": 0.2
+    },
+    "fraction-of-peak": {
+     "modes": [
+      "roofline-misclassified"
+     ],
+     "note": "Divides achieved FLOP/s by the compute peak for every op, so memory-bound ops look far below their roof.",
+     "killed_by": [
+      "roof_fraction_of_every_op"
+     ],
+     "crashed": null,
+     "seconds": 0.17
+    },
+    "gib-bandwidth": {
+     "modes": [
+      "units"
+     ],
+     "note": "Reads 3.35 TB/s as 3.35 TiB/s.",
+     "killed_by": [
+      "ridge_point",
+      "roof_fraction_of_every_op"
+     ],
+     "crashed": null,
+     "seconds": 0.17
+    },
+    "sparse-peak": {
+     "modes": [
+      "units",
+      "roofline-misclassified"
+     ],
+     "note": "Uses the 1978.9 TFLOP/s sparse peak, which moves the ridge to 591 and the 512-row GEMM below it.",
+     "killed_by": [
+      "ridge_point",
+      "classifies_every_op",
+      "roof_fraction_of_every_op"
+     ],
+     "crashed": null,
+     "seconds": 0.16
+    }
+   },
+   "idle_checks": [],
+   "api_findings": [],
+   "leaks": [],
+   "rubric_issues": [],
+   "problems": [],
+   "ok": true,
+   "killed": 4
+  },
+  {
+   "id": "tpu-exposed-collectives",
+   "area": "profiling",
+   "kind": "answer",
+   "difficulty": 3,
+   "title": "How much FSDP communication is exposed, and which collective is to blame?",
+   "reference_passed": true,
+   "deterministic": true,
+   "reference_seconds": 0.18,
+   "checks": [
+    "measures_exposed_share",
+    "measures_hidden_share",
+    "finds_the_most_exposed_collective",
+    "exposed_time_per_step"
+   ],
+   "check_targets": {
+    "measures_exposed_share": [
+     "exposed-communication"
+    ],
+    "measures_hidden_share": [
+     "exposed-communication"
+    ],
+    "finds_the_most_exposed_collective": [
+     "exposed-communication"
+    ],
+    "exposed_time_per_step": [
+     "exposed-communication",
+     "units"
+    ]
+   },
+   "mutants": {
+    "hidden-inverted": {
+     "modes": [
+      "exposed-communication"
+     ],
+     "note": "Reports the exposed share of collective time as the hidden share.",
+     "killed_by": [
+      "measures_hidden_share"
+     ],
+     "crashed": null,
+     "seconds": 0.18
+    },
+    "no-overlap-assumed": {
+     "modes": [
+      "exposed-communication"
+     ],
+     "note": "Counts all collective time as exposed.",
+     "killed_by": [
+      "measures_exposed_share"
+     ],
+     "crashed": null,
+     "seconds": 0.18
+    },
+    "ranked-by-total": {
+     "modes": [
+      "exposed-communication"
+     ],
+     "note": "Ranks collectives by total time, which picks all-gather.",
+     "killed_by": [
+      "finds_the_most_exposed_collective"
+     ],
+     "crashed": null,
+     "seconds": 0.21
+    },
+    "total-not-per-step": {
+     "modes": [
+      "units"
+     ],
+     "note": "Reports exposed time summed over all 8 steps.",
+     "killed_by": [
+      "exposed_time_per_step"
+     ],
+     "crashed": null,
+     "seconds": 0.19
+    }
+   },
+   "idle_checks": [],
+   "api_findings": [],
+   "leaks": [],
+   "rubric_issues": [],
+   "problems": [],
+   "ok": true,
+   "killed": 4
+  },
+  {
+   "id": "continuous-batching",
+   "area": "serving",
+   "kind": "code",
+   "difficulty": 4,
+   "title": "A continuous-batching scheduler with chunked prefill and preemption",
+   "reference_passed": true,
+   "deterministic": true,
+   "reference_seconds": 0.25,
+   "checks": [
+    "roomy_pool_traces",
+    "tight_pool_traces_with_preemption",
+    "rejects_requests_that_can_never_fit"
+   ],
+   "check_targets": {
+    "roomy_pool_traces": [
+     "preemption-order",
+     "kv-capacity",
+     "block-leak"
+    ],
+    "tight_pool_traces_with_preemption": [
+     "preemption-order",
+     "block-leak",
+     "kv-capacity"
+    ],
+    "rejects_requests_that_can_never_fit": [
+     "kv-capacity"
+    ]
+   },
+   "mutants": {
+    "decode-growth-ignored": {
+     "modes": [
+      "kv-capacity"
+     ],
+     "note": "Checks block fit without the block a decode may need for its new token.",
+     "killed_by": [
+      "tight_pool_traces_with_preemption"
+     ],
+     "crashed": null,
+     "seconds": 0.25
+    },
+    "preempt-oldest": {
+     "modes": [
+      "preemption-order"
+     ],
+     "note": "Evicts the oldest request instead of the newest, so long-waiting requests are the ones that lose their work.",
+     "killed_by": [
+      "tight_pool_traces_with_preemption"
+     ],
+     "crashed": null,
+     "seconds": 0.23
+    },
+    "preempted-keeps-progress": {
+     "modes": [
+      "block-leak"
+     ],
+     "note": "Puts a preempted request back in the queue but keeps its counters, so its blocks are counted as freed while it still claims them.",
+     "killed_by": [
+      "tight_pool_traces_with_preemption"
+     ],
+     "crashed": null,
+     "seconds": 0.19
+    },
+    "prefill-first": {
+     "modes": [
+      "preemption-order"
+     ],
+     "note": "Spends the token budget on prefill before decodes, so running sequences stall while prompts arrive.",
+     "killed_by": [
+      "roomy_pool_traces",
+      "tight_pool_traces_with_preemption"
+     ],
+     "crashed": null,
+     "seconds": 0.22
+    },
+    "readmit-same-step": {
+     "modes": [
+      "preemption-order"
+     ],
+     "note": "Lets a request preempted this step start prefilling again in the same step.",
+     "killed_by": [
+      "tight_pool_traces_with_preemption"
+     ],
+     "crashed": null,
+     "seconds": 0.2
+    },
+    "waiting-before-partial": {
+     "modes": [
+      "preemption-order"
+     ],
+     "note": "Admits new requests before finishing the prompt it already started, so a half-prefilled request holds its blocks while newer ones go ahead.",
+     "killed_by": [
+      "roomy_pool_traces",
+      "tight_pool_traces_with_preemption"
+     ],
+     "crashed": null,
+     "seconds": 0.21
+    }
+   },
+   "idle_checks": [
+    "rejects_requests_that_can_never_fit"
+   ],
+   "api_findings": [],
+   "leaks": [],
+   "rubric_issues": [],
+   "problems": [],
+   "ok": true,
+   "killed": 6
+  },
+  {
+   "id": "decode-roofline-tpu",
+   "area": "serving",
+   "kind": "answer",
+   "difficulty": 3,
+   "title": "When does decoding on a TPU v6e stop being memory-bound?",
+   "reference_passed": true,
+   "deterministic": true,
+   "reference_seconds": 0.19,
+   "checks": [
+    "step_time_at_batch_one",
+    "tokens_per_second_at_batch_one",
+    "crossover_batch_at_short_context",
+    "longest_context_with_a_crossover",
+    "throughput_at_batch_256"
+   ],
+   "check_targets": {
+    "step_time_at_batch_one": [
+     "decode-roofline",
+     "units"
+    ],
+    "tokens_per_second_at_batch_one": [
+     "decode-roofline"
+    ],
+    "crossover_batch_at_short_context": [
+     "decode-roofline"
+    ],
+    "longest_context_with_a_crossover": [
+     "decode-roofline"
+    ],
+    "throughput_at_batch_256": [
+     "decode-roofline",
+     "units"
+    ]
+   },
+   "mutants": {
+    "compute-time": {
+     "modes": [
+      "decode-roofline"
+     ],
+     "note": "Takes the compute time as the step time at batch 1.",
+     "killed_by": [
+      "step_time_at_batch_one",
+      "tokens_per_second_at_batch_one"
+     ],
+     "crashed": null,
+     "seconds": 0.18
+    },
+    "gib-bandwidth": {
+     "modes": [
+      "units"
+     ],
+     "note": "Reads 1,638 GB/s as GiB/s.",
+     "killed_by": [
+      "step_time_at_batch_one",
+      "tokens_per_second_at_batch_one",
+      "throughput_at_batch_256"
+     ],
+     "crashed": null,
+     "seconds": 0.23
+    },
+    "kv-ignored": {
+     "modes": [
+      "decode-roofline"
+     ],
+     "note": "Leaves out the KV-cache reads: decode looks compute-bound past batch ~560 at any context.",
+     "killed_by": [
+      "step_time_at_batch_one",
+      "tokens_per_second_at_batch_one",
+      "crossover_batch_at_short_context",
+      "throughput_at_batch_256"
+     ],
+     "crashed": null,
+     "seconds": 0.2
+    },
+    "no-threshold": {
+     "modes": [
+      "decode-roofline"
+     ],
+     "note": "Takes the ridge of the chip (560 FLOP/byte) as the context threshold.",
+     "killed_by": [
+      "longest_context_with_a_crossover"
+     ],
+     "crashed": null,
+     "seconds": 0.18
+    }
+   },
+   "idle_checks": [],
+   "api_findings": [],
+   "leaks": [],
+   "rubric_issues": [],
+   "problems": [],
+   "ok": true,
+   "killed": 4
+  },
+  {
+   "id": "kv-capacity-planning",
+   "area": "serving",
+   "kind": "answer",
+   "difficulty": 2,
+   "title": "How many 8k-token conversations fit on one H100?",
+   "reference_passed": true,
+   "deterministic": true,
+   "reference_seconds": 0.18,
+   "checks": [
+    "bytes_per_token",
+    "blocks_that_fit",
+    "sequences_that_fit",
+    "sequences_that_fit_with_fp8_kv"
+   ],
+   "check_targets": {
+    "bytes_per_token": [
+     "kv-capacity"
+    ],
+    "blocks_that_fit": [
+     "kv-capacity",
+     "units"
+    ],
+    "sequences_that_fit": [
+     "kv-capacity",
+     "units"
+    ],
+    "sequences_that_fit_with_fp8_kv": [
+     "kv-capacity"
+    ]
+   },
+   "mutants": {
+    "forgot-v": {
+     "modes": [
+      "kv-capacity"
+     ],
+     "note": "Counts only K, not K and V.",
+     "killed_by": [
+      "bytes_per_token",
+      "blocks_that_fit",
+      "sequences_that_fit",
+      "sequences_that_fit_with_fp8_kv"
+     ],
+     "crashed": null,
+     "seconds": 0.17
+    },
+    "fp8-weights-too": {
+     "modes": [
+      "kv-capacity"
+     ],
+     "note": "Halves the weights too when switching the KV cache to FP8.",
+     "killed_by": [
+      "sequences_that_fit_with_fp8_kv"
+     ],
+     "crashed": null,
+     "seconds": 0.17
+    },
+    "gib-hbm": {
+     "modes": [
+      "units"
+     ],
+     "note": "Reads 80 GB as 80 GiB.",
+     "killed_by": [
+      "blocks_that_fit",
+      "sequences_that_fit"
+     ],
+     "crashed": null,
+     "seconds": 0.19
+    },
+    "query-heads": {
+     "modes": [
+      "kv-capacity"
+     ],
+     "note": "Uses the 32 query heads, ignoring grouped-query attention.",
+     "killed_by": [
+      "bytes_per_token",
+      "blocks_that_fit",
+      "sequences_that_fit",
+      "sequences_that_fit_with_fp8_kv"
+     ],
+     "crashed": null,
+     "seconds": 0.19
+    }
+   },
+   "idle_checks": [],
+   "api_findings": [],
+   "leaks": [],
+   "rubric_issues": [],
+   "problems": [],
+   "ok": true,
+   "killed": 4
+  },
+  {
+   "id": "paged-kv-allocator",
+   "area": "serving",
+   "kind": "code",
+   "difficulty": 3,
+   "title": "A paged KV-cache block allocator with forking and copy-on-write",
+   "reference_passed": true,
+   "deterministic": true,
+   "reference_seconds": 0.25,
+   "checks": [
+    "random_workloads_keep_the_books",
+    "writing_into_a_shared_block_copies_it_first",
+    "a_new_block_is_never_a_copy",
+    "out_of_blocks_changes_nothing",
+    "freeing_a_parent_keeps_the_childs_blocks"
+   ],
+   "check_targets": {
+    "random_workloads_keep_the_books": [
+     "block-leak",
+     "kv-capacity"
+    ],
+    "writing_into_a_shared_block_copies_it_first": [
+     "copy-on-write"
+    ],
+    "a_new_block_is_never_a_copy": [
+     "copy-on-write"
+    ],
+    "out_of_blocks_changes_nothing": [
+     "block-leak"
+    ],
+    "freeing_a_parent_keeps_the_childs_blocks": [
+     "block-leak"
+    ]
+   },
+   "mutants": {
+    "cow-leaks-ref": {
+     "modes": [
+      "block-leak",
+      "copy-on-write"
+     ],
+     "note": "Copies on write but never drops the writer's reference to the old block.",
+     "killed_by": [
+      "random_workloads_keep_the_books",
+      "writing_into_a_shared_block_copies_it_first"
+     ],
+     "crashed": null,
+     "seconds": 0.17
+    },
+    "fork-copies": {
+     "modes": [
+      "copy-on-write"
+     ],
+     "note": "Forks by copying every block: correct contents, but it takes blocks and data copies fork must not.",
+     "killed_by": [
+      "writing_into_a_shared_block_copies_it_first",
+      "a_new_block_is_never_a_copy",
+      "out_of_blocks_changes_nothing"
+     ],
+     "crashed": null,
+     "seconds": 0.24
+    },
+    "free-ignores-refs": {
+     "modes": [
+      "block-leak"
+     ],
+     "note": "Frees every block of a sequence, even those its fork still uses.",
+     "killed_by": [
+      "random_workloads_keep_the_books",
+      "freeing_a_parent_keeps_the_childs_blocks"
+     ],
+     "crashed": null,
+     "seconds": 0.17
+    },
+    "no-cow": {
+     "modes": [
+      "copy-on-write"
+     ],
+     "note": "Writes into a shared last block without copying it.",
+     "killed_by": [
+      "writing_into_a_shared_block_copies_it_first"
+     ],
+     "crashed": null,
+     "seconds": 0.38
+    },
+    "off-by-one-boundary": {
+     "modes": [
+      "kv-capacity"
+     ],
+     "note": "Decides a new block is needed one token too late (n % block_size == 1).",
+     "killed_by": [
+      "random_workloads_keep_the_books",
+      "a_new_block_is_never_a_copy"
+     ],
+     "crashed": null,
+     "seconds": 0.17
+    },
+    "partial-allocate": {
+     "modes": [
+      "block-leak"
+     ],
+     "note": "Takes blocks one at a time and raises midway, keeping the ones it took.",
+     "killed_by": [
+      "random_workloads_keep_the_books",
+      "out_of_blocks_changes_nothing"
+     ],
+     "crashed": null,
+     "seconds": 0.18
+    }
+   },
+   "idle_checks": [],
+   "api_findings": [],
+   "leaks": [],
+   "rubric_issues": [],
+   "problems": [],
+   "ok": true,
+   "killed": 6
+  },
+  {
+   "id": "prefix-cache-hashing",
+   "area": "serving",
+   "kind": "code",
+   "difficulty": 3,
+   "title": "Prefix caching by chained block hashes",
+   "reference_passed": true,
+   "deterministic": true,
+   "reference_seconds": 0.21,
+   "checks": [
+    "same_block_different_prefix_differs",
+    "equal_prefixes_share_digests_and_partial_blocks_are_ignored",
+    "boundaries_matter",
+    "digests_are_the_same_in_another_process",
+    "match_returns_the_longest_cached_prefix_and_stops_at_a_miss",
+    "evicts_least_recently_used_leaves_never_in_use",
+    "never_holds_more_than_its_capacity"
+   ],
+   "check_targets": {
+    "same_block_different_prefix_differs": [
+     "prefix-hash"
+    ],
+    "equal_prefixes_share_digests_and_partial_blocks_are_ignored": [
+     "prefix-hash"
+    ],
+    "boundaries_matter": [
+     "prefix-hash"
+    ],
+    "digests_are_the_same_in_another_process": [
+     "prefix-hash"
+    ],
+    "match_returns_the_longest_cached_prefix_and_stops_at_a_miss": [
+     "prefix-hash"
+    ],
+    "evicts_least_recently_used_leaves_never_in_use": [
+     "block-leak",
+     "prefix-hash"
+    ],
+    "never_holds_more_than_its_capacity": [
+     "block-leak"
+    ]
+   },
+   "mutants": {
+    "content-only": {
+     "modes": [
+      "prefix-hash"
+     ],
+     "note": "Hashes each block's tokens alone, so equal blocks after different prefixes collide.",
+     "killed_by": [
+      "same_block_different_prefix_differs"
+     ],
+     "crashed": null,
+     "seconds": 0.2
+    },
+    "evict-plain-lru": {
+     "modes": [
+      "block-leak"
+     ],
+     "note": "Evicts the least recently used block whether or not it is in use or has cached children.",
+     "killed_by": [
+      "evicts_least_recently_used_leaves_never_in_use"
+     ],
+     "crashed": null,
+     "seconds": 0.22
+    },
+    "partial-block-hashed": {
+     "modes": [
+      "prefix-hash"
+     ],
+     "note": "Hashes a partial last block too, so a 10-token prompt gets a digest for tokens 9-10.",
+     "killed_by": [
+      "equal_prefixes_share_digests_and_partial_blocks_are_ignored"
+     ],
+     "crashed": null,
+     "seconds": 0.22
+    },
+    "python-hash": {
+     "modes": [
+      "prefix-hash"
+     ],
+     "note": "Uses Python's hash() of a tuple: different in every process unless PYTHONHASHSEED is fixed.",
+     "killed_by": [
+      "digests_are_the_same_in_another_process"
+     ],
+     "crashed": null,
+     "seconds": 0.2
+    },
+    "string-join": {
+     "modes": [
+      "prefix-hash"
+     ],
+     "note": "Serialises tokens by concatenating their decimal strings, losing the boundaries between tokens.",
+     "killed_by": [
+      "boundaries_matter"
+     ],
+     "crashed": null,
+     "seconds": 0.22
+    }
+   },
+   "idle_checks": [
+    "match_returns_the_longest_cached_prefix_and_stops_at_a_miss",
+    "never_holds_more_than_its_capacity"
+   ],
+   "api_findings": [],
+   "leaks": [],
+   "rubric_issues": [],
+   "problems": [],
+   "ok": true,
+   "killed": 5
+  },
+  {
+   "id": "speculative-decoding-math",
+   "area": "serving",
+   "kind": "answer",
+   "difficulty": 2,
+   "title": "Is speculative decoding worth it here, and with how many draft tokens?",
+   "reference_passed": true,
+   "deterministic": true,
+   "reference_seconds": 0.21,
+   "checks": [
+    "expected_tokens",
+    "speedup_at_k4",
+    "best_draft_length_cheap_draft",
+    "best_draft_length_costly_draft"
+   ],
+   "check_targets": {
+    "expected_tokens": [
+     "spec-decode-math"
+    ],
+    "speedup_at_k4": [
+     "spec-decode-math"
+    ],
+    "best_draft_length_cheap_draft": [
+     "spec-decode-math"
+    ],
+    "best_draft_length_costly_draft": [
+     "spec-decode-math"
+    ]
+   },
+   "mutants": {
+    "costly-draft-k1": {
+     "modes": [
+      "spec-decode-math"
+     ],
+     "note": "Picks k = 1 for the costly draft by intuition rather than computing.",
+     "killed_by": [
+      "best_draft_length_costly_draft"
+     ],
+     "crashed": null,
+     "seconds": 0.17
+    },
+    "draft-free": {
+     "modes": [
+      "spec-decode-math"
+     ],
+     "note": "Ignores the draft's cost, so a longer draft always looks better.",
+     "killed_by": [
+      "speedup_at_k4",
+      "best_draft_length_cheap_draft",
+      "best_draft_length_costly_draft"
+     ],
+     "crashed": null,
+     "seconds": 0.17
+    },
+    "linear-expectation": {
+     "modes": [
+      "spec-decode-math"
+     ],
+     "note": "Expects k * alpha accepted tokens plus one.",
+     "killed_by": [
+      "expected_tokens",
+      "speedup_at_k4"
+     ],
+     "crashed": null,
+     "seconds": 0.16
+    },
+    "no-bonus-token": {
+     "modes": [
+      "spec-decode-math"
+     ],
+     "note": "Forgets the target's own token: alpha (1 - alpha^k) / (1 - alpha).",
+     "killed_by": [
+      "expected_tokens",
+      "speedup_at_k4"
+     ],
+     "crashed": null,
+     "seconds": 0.16
+    }
+   },
+   "idle_checks": [],
+   "api_findings": [],
+   "leaks": [],
+   "rubric_issues": [],
+   "problems": [],
+   "ok": true,
+   "killed": 4
+  }
+ ],
+ "summary": {
+  "tasks": 22,
+  "ok": 22,
+  "mutants": 114,
+  "killed": 114,
+  "checks": 105,
+  "idle_checks": 9
+ }
+}

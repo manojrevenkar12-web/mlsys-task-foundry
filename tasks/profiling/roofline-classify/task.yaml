@@ -1,0 +1,9 @@
+id: roofline-classify
+title: Which LLM ops are memory-bound on an H100, and how close to the roof do they run?
+area: profiling
+kind: answer
+difficulty: 3
+target: "Op timings on an H100 SXM (constructed table) and the roofline model"
+skills: [roofline, arithmetic-intensity, llm-inference-ops]
+modes: [roofline-misclassified, units]
+time_limit_s: 60

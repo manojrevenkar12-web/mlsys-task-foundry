@@ -1,0 +1,9 @@
+id: gpu-launch-bound
+title: A GPU that waits for Python to launch its kernels
+area: profiling
+kind: answer
+difficulty: 2
+target: "Synthetic Kineto-style (torch.profiler) trace of training iterations on an H100"
+skills: [trace-reading, kernel-launch-overhead, cuda-graphs, kernel-fusion]
+modes: [launch-bound, units]
+time_limit_s: 60

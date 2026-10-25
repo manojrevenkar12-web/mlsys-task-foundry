@@ -1,0 +1,3 @@
+modes:
+- missing-collective
+note: 'Divides by the shard count but turns the check back off, so each device''s gradient is its own: replicas drift.'

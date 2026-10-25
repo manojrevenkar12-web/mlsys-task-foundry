@@ -1,0 +1,3 @@
+modes:
+- reduction-axis-parallel
+note: The K axis, which accumulates into the same output block, is declared parallel.

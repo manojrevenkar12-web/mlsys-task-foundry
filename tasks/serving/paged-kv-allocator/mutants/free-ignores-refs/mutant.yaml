@@ -1,0 +1,3 @@
+modes:
+- block-leak
+note: Frees every block of a sequence, even those its fork still uses.

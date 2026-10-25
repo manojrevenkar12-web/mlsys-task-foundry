@@ -1,0 +1,10 @@
+id: vocab-parallel-loss
+title: Cross-entropy over a vocabulary sharded across devices
+area: debugging
+kind: code
+difficulty: 4
+target: "JAX 0.12.0.1, jax.shard_map over 8 simulated CPU devices"
+skills: [shard-map, tensor-parallelism, collectives, numerics, autodiff]
+modes: [wrong-partition-spec, missing-collective, softmax-unstable]
+devices: 8
+time_limit_s: 180

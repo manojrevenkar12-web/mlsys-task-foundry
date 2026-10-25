@@ -1,0 +1,3 @@
+modes:
+- shape-special-case
+note: 'Pads every batch to 512: one compilation, but 8x the compute on padding.'

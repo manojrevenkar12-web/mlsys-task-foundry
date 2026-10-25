@@ -1,0 +1,3 @@
+modes:
+- loss-normalisation
+note: Averages per-microbatch mean gradients (the starter's bug).

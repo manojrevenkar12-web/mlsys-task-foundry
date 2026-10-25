@@ -1,0 +1,9 @@
+id: host-bound-input
+title: Where does a training step's time go when the device is mostly idle?
+area: profiling
+kind: answer
+difficulty: 2
+target: "JAX 0.12.0.1 on CPU; a real jax.profiler trace of the starter"
+skills: [trace-reading, host-device-overlap, input-pipelines]
+modes: [host-bound, units]
+time_limit_s: 60

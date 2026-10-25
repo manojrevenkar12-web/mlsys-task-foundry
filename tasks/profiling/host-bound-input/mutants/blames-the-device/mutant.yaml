@@ -1,0 +1,3 @@
+modes:
+- host-bound
+note: Calls it device-bound because update is the only jitted work.

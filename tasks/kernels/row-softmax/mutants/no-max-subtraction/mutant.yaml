@@ -1,0 +1,3 @@
+modes:
+- softmax-unstable
+note: Exponentiates the raw logits; exp overflows to inf for logits above ~88.

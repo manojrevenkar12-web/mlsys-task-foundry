@@ -1,0 +1,3 @@
+modes:
+- host-bound
+note: Names the enclosing load_batch annotation rather than the phase inside it.

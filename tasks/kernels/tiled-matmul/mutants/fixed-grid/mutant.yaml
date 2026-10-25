@@ -1,0 +1,3 @@
+modes:
+- shape-special-case
+note: The grid is computed for the 256x512x256 example shapes, not from the arguments.

@@ -1,0 +1,3 @@
+modes:
+- spec-decode-math
+note: Picks k = 1 for the costly draft by intuition rather than computing.

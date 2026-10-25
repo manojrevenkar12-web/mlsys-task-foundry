@@ -1,0 +1,3 @@
+modes:
+- rng-key-reuse
+note: 'Folds in the step but not the shard: every shard still draws the same mask.'

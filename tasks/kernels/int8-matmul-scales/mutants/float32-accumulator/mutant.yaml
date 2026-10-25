@@ -1,0 +1,3 @@
+modes:
+- int-accum-overflow
+note: 'Accumulates in float32: exact only up to 2^24, so long K loses the low digits.'

@@ -1,0 +1,3 @@
+modes:
+- exposed-communication
+note: Ranks collectives by total time, which picks all-gather.

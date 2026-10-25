@@ -1,0 +1,103 @@
+/* Design tokens. Components use these names only; no raw colours, sizes or timings elsewhere.
+   A cool slate page, ink type, and one hue per area of ML systems work: kernels in cobalt,
+   profiling in teal, debugging in rose, serving in ochre. Proof is green; a failing proof red. */
+:root {
+  --font-serif: "Source Serif 4", Georgia, serif;
+  --font-sans: "Source Sans 3", system-ui, sans-serif;
+  --font-mono: "Source Code Pro", ui-monospace, monospace;
+
+  --ground: #eef0f3;
+  --surface: #ffffff;
+  --surface-sunk: #e4e7ec;
+  --ink: #1b1f2a;
+  --ink-muted: #5b6270;
+  --ink-faint: #8a909c;
+  --rule: #d6dae1;
+
+  --kernels: #1d4ed8;
+  --kernels-soft: #dde6fb;
+  --profiling: #0f766e;
+  --profiling-soft: #d5eeeb;
+  --debugging: #be123c;
+  --debugging-soft: #f8dbe2;
+  --serving: #a16207;
+  --serving-soft: #f5e9cf;
+
+  --proven: #15803d;
+  --proven-soft: #dcf2e3;
+  --broken: #b91c1c;
+  --broken-soft: #f9dede;
+  --cell-on: #1b1f2a;
+  --cell-off: #e4e7ec;
+  --focus: #1d4ed8;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.1875rem;
+  --text-xl: 1.625rem;
+  --text-display: 2.25rem;
+  --leading: 1.55;
+  --leading-tight: 1.15;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --tracking-tight: -0.015em;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --hairline: 1px;
+  --rule-weight: 3px;
+
+  --measure: 70ch;
+  --rail: 19rem;
+  --bar-h: 3.25rem;
+  --cell: 1.25rem;
+  --cell-gap: 3px;
+  --matrix-label: 16rem;
+  --tick: 0.5rem;
+  --touch: 2.75rem;
+  --lane-h: 1.75rem;
+  --lane-label: 14rem;
+  --skeleton-short: 55%;
+
+  --dur-fast: 120ms;
+  --dur-base: 220ms;
+  --dur-shimmer: 1.4s;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #12151c;
+    --surface: #1a1e27;
+    --surface-sunk: #232834;
+    --ink: #e6e8ee;
+    --ink-muted: #a3a9b6;
+    --ink-faint: #707787;
+    --rule: #2e3443;
+    --kernels: #7aa2ff;
+    --kernels-soft: #1f2b4d;
+    --profiling: #4fd1c5;
+    --profiling-soft: #153a37;
+    --debugging: #fb7192;
+    --debugging-soft: #44192a;
+    --serving: #e3b341;
+    --serving-soft: #3d3016;
+    --proven: #4ade80;
+    --proven-soft: #173823;
+    --broken: #f87171;
+    --broken-soft: #451c1c;
+    --cell-on: #e6e8ee;
+    --cell-off: #2a303d;
+    --focus: #7aa2ff;
+  }
+}

@@ -1,0 +1,3 @@
+modes:
+- rng-key-reuse
+note: 'Draws the mask from NumPy''s global generator on the host: different on every call, unrelated to the key.'

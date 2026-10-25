@@ -1,0 +1,4 @@
+modes:
+- ragged-tail
+- shape-special-case
+note: Pads R up to a multiple of br and returns the padded arrays.

@@ -1,0 +1,3 @@
+modes:
+- nan-all-masked
+note: Uses a finite fill but returns the uniform average of padding values for an empty sequence instead of zeros.

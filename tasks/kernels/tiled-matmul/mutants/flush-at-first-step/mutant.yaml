@@ -1,0 +1,3 @@
+modes:
+- accumulator-init
+note: Writes the output on the first K step instead of the last.

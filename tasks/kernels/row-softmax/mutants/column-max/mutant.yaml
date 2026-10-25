@@ -1,0 +1,3 @@
+modes:
+- softmax-unstable
+note: 'Takes the max down each column of the block instead of along each row: the shift is not constant within a row.'

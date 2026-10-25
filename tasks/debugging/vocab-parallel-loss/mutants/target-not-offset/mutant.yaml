@@ -1,0 +1,3 @@
+modes:
+- wrong-partition-spec
+note: Indexes the local shard with the global target id modulo the shard size, as the starter did.

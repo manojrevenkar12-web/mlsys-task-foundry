@@ -1,0 +1,3 @@
+modes:
+- host-bound
+note: Measures the zero-length Execute markers on the python thread instead of the execute threads.

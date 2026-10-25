@@ -1,0 +1,3 @@
+modes:
+- mask-off-by-one
+note: 'Masks the diagonal too (j < i): every query loses itself, and query 0 attends to nothing.'

@@ -1,0 +1,21 @@
+criteria:
+  - id: launch-evidence
+    weight: 30
+    text: Shows that kernel durations (2-4.5 us) are shorter than the launch cost (~8 us of cudaLaunchKernel each), so the GPU idles between kernels
+    pass: '"600 elementwise kernels of ~3 us, each behind an ~8 us launch: the stream has gaps after every kernel"'
+    fail: says the GPU is slow without comparing kernel and launch times
+  - id: phase-split
+    weight: 20
+    text: Separates the matmul phase (GPU busy) from the optimizer phase (GPU idle most of the time)
+    pass: '"the two GEMMs keep the GPU busy for ~1.2 ms; the next ~4.2 ms are optimizer launches"'
+    fail: reports only the whole-iteration average
+  - id: fewer-launches
+    weight: 30
+    text: Proposes cutting launches (a fused or foreach optimizer, torch.compile, or CUDA graphs) and says which part of the time it removes
+    pass: '"fused AdamW turns 600 launches into a few; CUDA graphs replay them without per-kernel CPU cost"'
+    fail: proposes a bigger GPU or mixed precision only
+  - id: expected-gain
+    weight: 20
+    text: Estimates the iteration time after the change from the trace (about the GEMM time plus a fused optimizer's few hundred microseconds)
+    pass: '"from ~5.4 ms to roughly 1.5-2 ms per iteration"'
+    fail: no estimate

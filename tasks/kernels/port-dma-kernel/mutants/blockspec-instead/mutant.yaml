@@ -1,0 +1,3 @@
+modes:
+- kernel-bypass
+note: 'Replaces the manual copy with a blocked input: correct numbers, but not the kernel asked for.'

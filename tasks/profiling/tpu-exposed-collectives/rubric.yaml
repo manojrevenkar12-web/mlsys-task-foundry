@@ -1,0 +1,21 @@
+criteria:
+  - id: locates-the-exposure
+    weight: 30
+    text: Locates exposed time at the start of the step (first all-gather) and at the end (last reduce-scatter and the all-reduce before the optimizer)
+    pass: '"~400 us at the start waiting for layer 0 weights, ~740 us at the end for the layer-0 gradient reduce-scatter"'
+    fail: '"communication is slow" with no position in the step'
+  - id: total-is-not-exposed
+    weight: 20
+    text: Distinguishes total collective time from exposed time (all-gathers take as long in total but hide better)
+    pass: '"all-gathers and reduce-scatters each take ~48 ms in total, but ~90% of all-gather time is hidden"'
+    fail: ranks collectives by total time only
+  - id: why-it-cannot-hide
+    weight: 20
+    text: Explains why the end of the step cannot hide its reduce-scatter (no backward compute left; the optimizer needs every shard)
+    pass: '"after the last backward layer nothing remains to overlap, and the update needs all gradient shards"'
+    fail: no reason is given
+  - id: concrete-fix
+    weight: 30
+    text: Proposes a concrete change aimed at that exposure, with its expected effect (prefetch layer 0 during the previous update, per-layer optimizer updates as shards arrive, or gradient accumulation over microbatches)
+    pass: '"update each layer as its reduce-scatter completes; saves most of ~1.2 ms of a 14.6 ms step"'
+    fail: generic advice ("use a faster interconnect") with no expected effect

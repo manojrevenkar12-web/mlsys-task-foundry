@@ -1,0 +1,3 @@
+modes:
+- preemption-order
+note: Evicts the oldest request instead of the newest, so long-waiting requests are the ones that lose their work.

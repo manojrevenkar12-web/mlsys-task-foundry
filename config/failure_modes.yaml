@@ -1,0 +1,37 @@
+# Where solutions to ML-systems tasks go wrong. Every mutant (a plausible wrong solution) and
+# every grader check names the modes it represents or catches. Sources: JAXBench (2026),
+# KernelBench-Verified (2026), the Pallas changelog, and the tasks' own expert notes.
+modes:
+  api-hallucinated: {area: kernels, text: "Calls a Pallas/JAX API that does not exist, or with arguments it does not take", source: "JAXBench: API and runtime errors are over half of agent failures"}
+  api-removed: {area: kernels, text: "Uses an API removed in the pinned JAX (pltpu.ANY, TPUCompilerParams, pl.dot, ...)", source: "Pallas changelog 0.7-0.12"}
+  reduction-axis-parallel: {area: kernels, text: "Marks a grid axis that accumulates into the same output block as parallel", source: expert}
+  accumulator-init: {area: kernels, text: "Initialises or flushes a scratch accumulator on the wrong grid step", source: expert}
+  output-dtype: {area: kernels, text: "Accumulates or returns in the wrong dtype (bf16 accumulation, missing cast)", source: expert}
+  softmax-unstable: {area: kernels, text: "Exponentiates without subtracting the running max; overflows on large logits", source: expert}
+  online-softmax-rescale: {area: kernels, text: "Forgets to rescale the running sum or accumulator when the running max changes", source: expert}
+  mask-off-by-one: {area: kernels, text: "Causal or padding mask off by one position", source: expert}
+  ragged-tail: {area: kernels, text: "Reads or writes past the logical end when the size is not a multiple of the block", source: expert}
+  quant-scale-axis: {area: kernels, text: "Applies per-channel quantisation scales along the wrong axis or at the wrong time", source: expert}
+  int-accum-overflow: {area: kernels, text: "Accumulates int8 products in a narrow integer type", source: expert}
+  kernel-bypass: {area: kernels, text: "Computes the answer with plain jnp/XLA instead of the kernel the task asks for", source: "KernelBench: fallback to library calls"}
+  shape-special-case: {area: any, text: "Hard-codes the shapes or values the visible tests use", source: "KernelBench-Verified: shape-matched bypasses"}
+  narrow-distribution: {area: any, text: "Correct only on the input distribution the visible tests use", source: "KernelBench-Verified: four-distribution hidden suite"}
+  missing-collective: {area: debugging, text: "Leaves out a psum/pmean, so shards drift apart", source: expert}
+  wrong-partition-spec: {area: debugging, text: "Shards the wrong axis, or reduces over a sharded axis without a collective", source: expert}
+  rng-key-reuse: {area: debugging, text: "Reuses one PRNG key where independent randomness is needed (across shards or steps)", source: expert}
+  nan-all-masked: {area: debugging, text: "A fully masked row produces NaN (softmax over -inf only)", source: expert}
+  loss-normalisation: {area: debugging, text: "Averages per-microbatch means when token counts differ", source: expert}
+  donated-buffer: {area: debugging, text: "Reads an array after donating it to a jitted call", source: expert}
+  recompilation: {area: profiling, text: "Misses that a function recompiles every step (changing static values or shapes)", source: expert}
+  host-bound: {area: profiling, text: "Blames the device when the step is waiting on the host", source: expert}
+  exposed-communication: {area: profiling, text: "Misreads how much collective time overlaps with compute", source: expert}
+  launch-bound: {area: profiling, text: "Misses that many small kernels leave the GPU idle between launches", source: expert}
+  roofline-misclassified: {area: profiling, text: "Calls a memory-bound op compute-bound or the reverse", source: expert}
+  units: {area: any, text: "Mixes GB and GiB, bits and bytes, or per-direction and bidirectional bandwidth", source: expert}
+  kv-capacity: {area: serving, text: "Gets KV-cache size per token wrong (layers, K and V, GQA heads, dtype)", source: expert}
+  block-leak: {area: serving, text: "Loses KV blocks: freed sequences or preemptions do not return them", source: expert}
+  copy-on-write: {area: serving, text: "Writes into a KV block another sequence still shares", source: expert}
+  preemption-order: {area: serving, text: "Preempts or resumes in an order that starves early requests", source: expert}
+  prefix-hash: {area: serving, text: "Hashes a block without its prefix, so different prompts share a cache block", source: expert}
+  decode-roofline: {area: serving, text: "Treats decode as compute-bound at small batch, or ignores KV reads", source: expert}
+  spec-decode-math: {area: serving, text: "Gets the expected accepted tokens of speculative decoding wrong", source: "Leviathan et al. 2023"}
