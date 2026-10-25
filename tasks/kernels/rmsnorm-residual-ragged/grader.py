@@ -80,3 +80,31 @@ def lowers_for_a_real_tpu(sol, ctx: Ctx):
     """The interpreter is lenient; a chip is not. Lower with the solution's own defaults, no TPU needed."""
     SD = jax.ShapeDtypeStruct
     lowers_for_tpu(lambda x, r, w: sol.add_rmsnorm(x, r, w), SD((100, 256), jnp.float32), SD((100, 256), jnp.float32), SD((256,), jnp.float32), what="add_rmsnorm")
+
+
+_OUTSIDE = {"rsqrt", "sqrt", "div", "reduce_sum", "concatenate"}
+
+
+def _ops_outside_kernels(jaxpr, out):
+    for e in jaxpr.eqns:
+        if e.primitive.name == "pallas_call":
+            continue
+        out.add(e.primitive.name)
+        for v in e.params.values():
+            inner = getattr(v, "jaxpr", None)
+            if inner is not None:
+                _ops_outside_kernels(inner if hasattr(inner, "eqns") else inner.jaxpr, out)
+    return out
+
+
+@check(targets=["ragged-tail", "kernel-bypass"])
+def every_row_is_computed_in_the_kernel(sol, ctx: Ctx):
+    """The ragged last block is the point of the task: computing it (or anything) outside the
+    kernel and stitching it on dodges it."""
+    w = jnp.ones((256,), jnp.float32)
+    for rows in (100, 7):
+        x = jnp.ones((rows, 256), jnp.float32)
+        jaxpr = jax.make_jaxpr(lambda a: sol.add_rmsnorm(a, a, w, interpret=_interp()))(x).jaxpr
+        math = sorted(_ops_outside_kernels(jaxpr, set()) & _OUTSIDE)
+        if math:
+            fail(f"with {rows} rows, {', '.join(math)} run outside the Pallas kernel")

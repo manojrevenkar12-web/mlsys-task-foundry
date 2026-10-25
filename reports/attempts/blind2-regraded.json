@@ -1,0 +1,293 @@
+{
+ "label": "blind2-regraded",
+ "recorded_at": "2026-10-25T11:29:12+00:00",
+ "forced": false,
+ "submissions": "blind2",
+ "tasks": [
+  {
+   "task": "continuous-batching",
+   "area": "serving",
+   "difficulty": 4,
+   "passed": false,
+   "score": 0.6667,
+   "crashed": null,
+   "failed_checks": [
+    {
+     "name": "tight_pool_traces_with_preemption",
+     "message": "step 6: prefill [], expected first-come-first-served [('r6', 4)]",
+     "targets": [
+      "preemption-order",
+      "block-leak",
+      "kv-capacity"
+     ]
+    }
+   ],
+   "modes": {
+    "preemption-order": 1,
+    "block-leak": 1,
+    "kv-capacity": 1
+   },
+   "seconds": 0.17
+  },
+  {
+   "task": "decode-roofline-tpu",
+   "area": "serving",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.16
+  },
+  {
+   "task": "dp-replicas-drift",
+   "area": "debugging",
+   "difficulty": 2,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 1.42
+  },
+  {
+   "task": "flash-attention-causal",
+   "area": "kernels",
+   "difficulty": 4,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 9.66
+  },
+  {
+   "task": "gpu-launch-bound",
+   "area": "profiling",
+   "difficulty": 2,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.26
+  },
+  {
+   "task": "grad-accumulation-weights",
+   "area": "debugging",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 3.26
+  },
+  {
+   "task": "host-bound-input",
+   "area": "profiling",
+   "difficulty": 2,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.18
+  },
+  {
+   "task": "int8-matmul-scales",
+   "area": "kernels",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 5.59
+  },
+  {
+   "task": "kv-capacity-planning",
+   "area": "serving",
+   "difficulty": 2,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.16
+  },
+  {
+   "task": "nan-from-padding",
+   "area": "debugging",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 2.24
+  },
+  {
+   "task": "paged-kv-allocator",
+   "area": "serving",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.32
+  },
+  {
+   "task": "port-dma-kernel",
+   "area": "kernels",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 3.92
+  },
+  {
+   "task": "prefix-cache-hashing",
+   "area": "serving",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.2
+  },
+  {
+   "task": "recompiling-train-step",
+   "area": "profiling",
+   "difficulty": 2,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 7.83
+  },
+  {
+   "task": "rmsnorm-residual-ragged",
+   "area": "kernels",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 6.12
+  },
+  {
+   "task": "roofline-classify",
+   "area": "profiling",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.23
+  },
+  {
+   "task": "row-softmax",
+   "area": "kernels",
+   "difficulty": 2,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 4.55
+  },
+  {
+   "task": "same-dropout-everywhere",
+   "area": "debugging",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 2.85
+  },
+  {
+   "task": "speculative-decoding-math",
+   "area": "serving",
+   "difficulty": 2,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.17
+  },
+  {
+   "task": "tiled-matmul",
+   "area": "kernels",
+   "difficulty": 2,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 9.39
+  },
+  {
+   "task": "tpu-exposed-collectives",
+   "area": "profiling",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.19
+  },
+  {
+   "task": "vocab-parallel-loss",
+   "area": "debugging",
+   "difficulty": 4,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 7.12
+  }
+ ],
+ "missing": [],
+ "summary": {
+  "attempted": 22,
+  "passed": 21,
+  "not_attempted": 0,
+  "by_area": {
+   "debugging": {
+    "passed": 5,
+    "of": 5
+   },
+   "kernels": {
+    "passed": 6,
+    "of": 6
+   },
+   "profiling": {
+    "passed": 5,
+    "of": 5
+   },
+   "serving": {
+    "passed": 5,
+    "of": 6
+   }
+  },
+  "failure_modes": {
+   "preemption-order": 1,
+   "block-leak": 1,
+   "kv-capacity": 1
+  }
+ }
+}

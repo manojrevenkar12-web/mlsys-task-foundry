@@ -1,0 +1,1 @@
+wrong: "A preempted request is re-queued as if it had just arrived (given a new, latest arrival order), so it waits behind requests that arrived after it and is treated as the newest for later preemptions, violating 'goes back to waiting, ahead of every request that arrived after it'; plans are identical until a preemption happens with later arrivals waiting."

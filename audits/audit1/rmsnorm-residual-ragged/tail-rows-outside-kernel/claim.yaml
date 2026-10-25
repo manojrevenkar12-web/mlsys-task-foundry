@@ -1,0 +1,1 @@
+wrong: "Only the full br-row blocks go through the Pallas kernel; the rows of the last partial block (and all rows when R < br) are computed with plain jnp outside the kernel and concatenated, so the ragged case is not handled by the one kernel the prompt asks for (the numbers are right, the implementation dodges the requirement)."

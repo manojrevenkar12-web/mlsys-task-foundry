@@ -1,0 +1,1 @@
+wrong: "The shares and per-step time are right, but the collective with the most exposed time is the reduce-scatter (the layer-0 reduce-scatter after the last backward fusion, ~0.72 ms per step, ~5.8 ms in total), not the all-gather (~0.40 ms per step, ~3.2 ms in total)."

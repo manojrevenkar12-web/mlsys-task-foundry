@@ -1,0 +1,1 @@
+wrong: "The KV bytes per token omit the factor 2 for K and V (65,536 instead of 131,072 bytes), so every KV-dependent answer is off: step_ms 9.97 vs 10.13, crossover batch 792 vs 1,352, max context 437 vs 219, and B=256 throughput 4,946 vs 2,732 tokens/s."

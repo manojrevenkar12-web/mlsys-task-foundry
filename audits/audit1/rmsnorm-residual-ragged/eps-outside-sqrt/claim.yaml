@@ -1,0 +1,1 @@
+wrong: "It normalises by sqrt(mean(h**2)) + eps instead of sqrt(mean(h**2) + eps); for activations of ordinary magnitude the difference is ~1e-6 relative, but for small-magnitude rows (mean square comparable to eps, e.g. inputs ~1e-3) y is off by tens of percent, so it does not compute the specified formula."

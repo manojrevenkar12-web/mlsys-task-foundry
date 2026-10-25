@@ -1,0 +1,1 @@
+wrong: "The numbers are right but the bottleneck is mislabelled memory_bound: the 600 optimizer kernels each run ~3 us while each cudaLaunchKernel takes ~8 us, so the GPU idles between kernels waiting for launches (busy only ~45% in that phase), which is launch_bound, and halving bytes moved would not shorten the iteration."

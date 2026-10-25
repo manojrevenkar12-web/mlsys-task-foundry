@@ -83,3 +83,14 @@ def lowers_for_a_real_tpu(sol, ctx: Ctx):
     """The interpreter is lenient; a chip is not. Lower with the solution's own defaults, no TPU needed."""
     SD = jax.ShapeDtypeStruct
     lowers_for_tpu(lambda q, k, v: sol.attention(q, k, v, causal=True), *[SD((2, 512, 64), jnp.float32)] * 3, what="causal attention")
+
+
+@check(targets=["mask-off-by-one"])
+def causal_with_unequal_query_and_key_blocks(sol, ctx: Ctx):
+    """bq and bk are separate parameters: the causal mask (and any block skipping) must use each
+    one where it belongs, not assume square blocks."""
+    q, k, v = _qkv(ctx.make("normal", 6), bh=1)
+    want = _ref(q, k, v, True)
+    for bq, bk in ((128, 64), (64, 128)):
+        got = sol.attention(*(jnp.asarray(t) for t in (q, k, v)), causal=True, bq=bq, bk=bk, interpret=_interp())
+        ctx.close(got, want, rtol=1e-4, atol=1e-5, what=f"causal with bq={bq}, bk={bk}")

@@ -1,0 +1,5 @@
+modes:
+- ragged-tail
+- kernel-bypass
+note: 'Runs the kernel over the full blocks only and computes the leftover rows with jnp outside it, then concatenates: the
+  numbers are right, the ragged block is never handled by the kernel.'

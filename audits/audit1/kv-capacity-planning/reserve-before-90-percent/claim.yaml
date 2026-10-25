@@ -1,0 +1,1 @@
+wrong: "It subtracts the 4e9-byte reserve before applying the 90% limit (0.9 x (80e9 - 4e9)) instead of taking the reserve out of the 90% (0.9 x 80e9 - weights - 4e9), giving 0.4e9 bytes too much KV: kv_blocks 24,957 instead of 24,766 and FP8 sequences 97 instead of 96, while kv_bytes_per_token and seqs_at_8k happen to stay right."

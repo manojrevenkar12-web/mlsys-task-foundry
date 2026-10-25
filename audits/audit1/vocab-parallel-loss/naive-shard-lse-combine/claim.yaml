@@ -1,0 +1,1 @@
+wrong: "Shards are combined as log(psum(exp(local_logsumexp))) with no global max shift, so the loss is right for ordinary logits but overflows to inf (and the gradient to NaN) once logits reach ~90 or more, violating 'stays exact for logits in the hundreds'."

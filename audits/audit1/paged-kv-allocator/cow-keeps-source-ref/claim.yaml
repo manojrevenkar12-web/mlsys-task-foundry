@@ -1,0 +1,1 @@
+wrong: "On copy-on-write the writer gets a private copy but the shared source block's reference count is not decremented, so the remaining owner still looks shared (its next append does a needless copy and takes another block) and the source block never returns to the free pool after both sequences are freed."

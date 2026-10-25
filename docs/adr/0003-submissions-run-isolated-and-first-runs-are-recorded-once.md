@@ -10,8 +10,8 @@ same attempts it reports has measured nothing.
 
 The runner grades in a child process that receives a nonce on stdin and must print exactly one
 result line carrying it. It limits memory (RLIMIT_AS) and time, points HOME at a temporary folder, and
-strips the environment to a handful of variables (no proxy settings, so no network where egress
-goes through a proxy; this is not a network sandbox). It checks before and after every check that the grader's helpers
+strips the environment to a handful of variables, with the proxy variables pointing at a closed
+port (a solver that honours them has no network; this is not a network sandbox). It checks before and after every check that the grader's helpers
 (`Ctx.close`, `np.isclose`, `np.allclose`, `fail`) are the same objects; a patched helper voids the
 run.
 

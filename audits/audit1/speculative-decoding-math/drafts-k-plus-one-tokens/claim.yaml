@@ -1,0 +1,1 @@
+wrong: "It charges (k + 1) draft steps per round instead of the k the prompt describes, so the cost is (k + 1)c + 1; expected tokens and both best-k labels come out right, but the speedups are wrong (2.689 instead of 2.801 for alpha=0.8, k=4, c=0.05, and 1.225 instead of 1.400 for alpha=0.6, c=0.2)."

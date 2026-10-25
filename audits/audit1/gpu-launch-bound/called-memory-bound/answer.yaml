@@ -1,0 +1,12 @@
+bottleneck: memory_bound
+gpu_busy_share: 0.568
+kernels_per_iteration: 602
+optimizer_busy_share: 0.445
+explanation: >-
+  Each ~5.4 ms iteration runs 602 kernels on stream 7: two bf16 GEMMs (~1.2 ms together) and 600
+  vectorized_elementwise kernels (mul/add/lerp/sqrt_div) for the optimizer update. The GPU is busy
+  ~57% of the iteration and only ~45% during the optimizer phase. The elementwise optimizer
+  kernels each read and write whole parameter and moment tensors with almost no arithmetic, so
+  the step is limited by HBM bandwidth in the optimizer: fusing the update (a fused/foreach Adam
+  that reads each tensor once) and keeping optimizer state in bf16 to halve the bytes moved should
+  cut the optimizer phase roughly in half, from ~4.2 ms to ~2 ms per iteration.

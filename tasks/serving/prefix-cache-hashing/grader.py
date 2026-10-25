@@ -94,3 +94,13 @@ def never_holds_more_than_its_capacity(sol, ctx: Ctx):
         fail(f"{len(cached)} blocks cached with a capacity of 8")
     if cached != list(range(12, 20)):
         fail(f"expected the 8 most recently inserted blocks to remain, found {cached}")
+
+
+@check(targets=["prefix-hash"])
+def large_token_ids_keep_their_identity(sol, ctx: Ctx):
+    """Vocabularies of 128k-256k tokens are common: an encoding that narrows ids (to 16 bits, say)
+    makes different prompts share a digest, and so share someone else's KV cache."""
+    pairs = [([5, 6, 7, 8], [65541, 6, 7, 8]), ([1, 2, 3, 4], [1, 2, 3, 4 + 2**32]), ([200_000, 1, 2, 3], [200_000 - 65536, 1, 2, 3])]
+    for a, b in pairs:
+        if sol.block_hashes(a, 4) == sol.block_hashes(b, 4):
+            fail(f"{a} and {b} get the same digest")

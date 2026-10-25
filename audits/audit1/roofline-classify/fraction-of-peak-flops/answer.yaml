@@ -1,0 +1,19 @@
+ridge_flop_per_byte: 295.34
+ops:
+  prefill_gemm_4096x4096x4096: {bound: compute, roof_fraction: 0.84}
+  prefill_gemm_512x4096x4096: {bound: compute, roof_fraction: 0.70}
+  prefill_gemm_256x4096x4096: {bound: memory, roof_fraction: 0.578}
+  decode_gemm_8x4096x4096: {bound: memory, roof_fraction: 0.0232}
+  decode_attention_b32_ctx2048: {bound: memory, roof_fraction: 0.0027}
+  rmsnorm_8192x4096: {bound: memory, roof_fraction: 0.0023}
+  rope_8192x4096: {bound: memory, roof_fraction: 0.0027}
+  lm_head_64x128256x4096: {bound: memory, roof_fraction: 0.173}
+explanation: >-
+  Ridge = 989.4e12 / 3.35e12 = 295 FLOP/byte. Only the 4096- and 512-token prefill GEMMs are
+  above it; the 256-token GEMM (228 FLOP/byte) and the 64-row LM head (63 FLOP/byte) are
+  memory-bound, which is the surprise: a GEMM is not automatically compute-bound when one
+  dimension is small. Measured against the chip's 989 TFLOP/s, the memory-bound ops reach only a
+  small fraction of peak; the furthest below are rmsnorm (0.2%) and decode attention / rope
+  (0.3%). For those I would look first at fusing them into neighbouring kernels to avoid the HBM
+  round trip and at whether the KV-cache reads in attention are coalesced and use the full
+  bandwidth.

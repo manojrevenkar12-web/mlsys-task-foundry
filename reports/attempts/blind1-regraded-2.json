@@ -1,0 +1,287 @@
+{
+ "label": "blind1-regraded-2",
+ "recorded_at": "2026-10-25T11:28:06+00:00",
+ "forced": false,
+ "submissions": "blind1",
+ "tasks": [
+  {
+   "task": "continuous-batching",
+   "area": "serving",
+   "difficulty": 4,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.23
+  },
+  {
+   "task": "decode-roofline-tpu",
+   "area": "serving",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.2
+  },
+  {
+   "task": "dp-replicas-drift",
+   "area": "debugging",
+   "difficulty": 2,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 1.48
+  },
+  {
+   "task": "flash-attention-causal",
+   "area": "kernels",
+   "difficulty": 4,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 7.02
+  },
+  {
+   "task": "gpu-launch-bound",
+   "area": "profiling",
+   "difficulty": 2,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.24
+  },
+  {
+   "task": "grad-accumulation-weights",
+   "area": "debugging",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 3.17
+  },
+  {
+   "task": "host-bound-input",
+   "area": "profiling",
+   "difficulty": 2,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.18
+  },
+  {
+   "task": "int8-matmul-scales",
+   "area": "kernels",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 5.13
+  },
+  {
+   "task": "kv-capacity-planning",
+   "area": "serving",
+   "difficulty": 2,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.19
+  },
+  {
+   "task": "nan-from-padding",
+   "area": "debugging",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 2.46
+  },
+  {
+   "task": "paged-kv-allocator",
+   "area": "serving",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.27
+  },
+  {
+   "task": "port-dma-kernel",
+   "area": "kernels",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 2.95
+  },
+  {
+   "task": "prefix-cache-hashing",
+   "area": "serving",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.21
+  },
+  {
+   "task": "recompiling-train-step",
+   "area": "profiling",
+   "difficulty": 2,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 7.96
+  },
+  {
+   "task": "rmsnorm-residual-ragged",
+   "area": "kernels",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 4.51
+  },
+  {
+   "task": "roofline-classify",
+   "area": "profiling",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.18
+  },
+  {
+   "task": "row-softmax",
+   "area": "kernels",
+   "difficulty": 2,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 3.39
+  },
+  {
+   "task": "same-dropout-everywhere",
+   "area": "debugging",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 2.98
+  },
+  {
+   "task": "speculative-decoding-math",
+   "area": "serving",
+   "difficulty": 2,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.19
+  },
+  {
+   "task": "tiled-matmul",
+   "area": "kernels",
+   "difficulty": 2,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 7.43
+  },
+  {
+   "task": "tpu-exposed-collectives",
+   "area": "profiling",
+   "difficulty": 3,
+   "passed": false,
+   "score": 0.75,
+   "crashed": null,
+   "failed_checks": [
+    {
+     "name": "measures_hidden_share",
+     "message": "hidden_share: 0.902 is not within 0.02 of the correct value",
+     "targets": [
+      "exposed-communication"
+     ]
+    }
+   ],
+   "modes": {
+    "exposed-communication": 1
+   },
+   "seconds": 0.18
+  },
+  {
+   "task": "vocab-parallel-loss",
+   "area": "debugging",
+   "difficulty": 4,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 6.98
+  }
+ ],
+ "missing": [],
+ "summary": {
+  "attempted": 22,
+  "passed": 21,
+  "not_attempted": 0,
+  "by_area": {
+   "debugging": {
+    "passed": 5,
+    "of": 5
+   },
+   "kernels": {
+    "passed": 6,
+    "of": 6
+   },
+   "profiling": {
+    "passed": 4,
+    "of": 5
+   },
+   "serving": {
+    "passed": 6,
+    "of": 6
+   }
+  },
+  "failure_modes": {
+   "exposed-communication": 1
+  }
+ }
+}

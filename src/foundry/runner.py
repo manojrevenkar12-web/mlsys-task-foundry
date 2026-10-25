@@ -92,21 +92,21 @@ def _env(task: Task, home: Path) -> dict[str, str]:
             "HTTPS_PROXY": "http://127.0.0.1:9",
             "NO_PROXY": "",
             "TF_CPP_MIN_LOG_LEVEL": "3",
+            "FOUNDRY_MEMORY_MB": str(config.settings()["runner"]["memory_mb"]),
         }
     )
     return keep
 
 
-def _limits(memory_mb: int) -> Any:
-    def apply() -> None:  # runs in the child before exec
-        import resource
+def _apply_limits() -> None:
+    """Called first thing in the child, before the solution loads: hard limits it cannot raise.
+    (Setting them here rather than in a preexec_fn lets the parent spawn without forking a
+    multithreaded JAX process.)"""
+    import resource
 
-        lim = memory_mb * 1024 * 1024
-        resource.setrlimit(resource.RLIMIT_AS, (lim, lim))
-        resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
-        os.setsid()
-
-    return apply
+    lim = int(os.environ.get("FOUNDRY_MEMORY_MB", "4096")) * 1024 * 1024
+    resource.setrlimit(resource.RLIMIT_AS, (lim, lim))
+    resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
 
 
 def grade(task: Task, submission: Path, timeout_s: float | None = None) -> Grade:
@@ -134,7 +134,7 @@ def grade(task: Task, submission: Path, timeout_s: float | None = None) -> Grade
                 capture_output=True,
                 text=True,
                 timeout=timeout,
-                preexec_fn=_limits(int(st["memory_mb"])),
+                start_new_session=True,
             )
             lines = [ln for ln in p.stdout.splitlines() if ln.startswith(MARK)]
             mine = [ln[len(MARK) + len(token) :] for ln in lines if ln[len(MARK) :].startswith(token)]
@@ -293,6 +293,7 @@ def _child(task_dir: Path, work: Path) -> dict[str, Any]:
 
 
 def main() -> None:
+    _apply_limits()
     task_dir, work = Path(sys.argv[1]), Path(sys.argv[2])
     token = sys.stdin.readline().strip()
     t0 = time.monotonic()

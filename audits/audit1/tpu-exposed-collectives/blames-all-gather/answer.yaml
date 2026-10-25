@@ -1,0 +1,12 @@
+exposed_share: 0.0804
+hidden_share: 0.902
+most_exposed_collective: all-gather
+exposed_us_per_step: 1170.9
+explanation: >-
+  About 1.17 ms of each ~14.55 ms step (8.0%) is collective time with no compute under it, while
+  90% of all collective time hides under the fusions. The step cannot begin computing until the
+  first layer's weights are all-gathered: that gather is fully on the critical path at the start
+  of every step, and in the backward each layer's all-gather has to finish before its fusion can
+  start, so the gathers are what keeps the TPU waiting. The tail reduce-scatter and the small
+  all-reduce add the rest. Fix: prefetch the all-gathers one layer further ahead (and the first
+  one during the previous step's optimizer), which should remove most of the exposed time.

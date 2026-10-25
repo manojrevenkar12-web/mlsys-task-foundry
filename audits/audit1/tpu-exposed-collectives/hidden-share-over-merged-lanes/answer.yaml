@@ -1,0 +1,14 @@
+exposed_share: 0.0804
+hidden_share: 0.878
+most_exposed_collective: reduce-scatter
+exposed_us_per_step: 1170.9
+explanation: >-
+  Across the 8 steps (~14.55 ms each) about 1.17 ms per step of collective time has no compute
+  under it, 8.0% of the step. It sits at the two ends of the step: the layer-0 all-gather at the
+  start of the forward (~0.39 ms) has nothing earlier to overlap with, and in the backward the
+  layer-0 reduce-scatter (~0.73 ms) and the gradient-norm all-reduce (~0.05 ms) run after the last
+  backward fusion, before the optimizer that needs their results. Every other all-gather and
+  reduce-scatter hides under the neighbouring layer's fusion. Fixes: prefetch the next step's
+  layer-0 all-gather during the previous optimizer step, and split the last reduce-scatter or
+  overlap it with the optimizer update of the layers whose gradients are already reduced; that
+  should recover most of the ~1.1 ms, about 7-8% of step time.

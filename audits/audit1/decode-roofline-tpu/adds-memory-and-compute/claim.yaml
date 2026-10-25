@@ -1,0 +1,1 @@
+wrong: "It models the step as memory time plus compute time instead of the longer of the two, as the prompt specifies, so step_ms (10.150 vs 10.132), tokens_per_s_b1 (98.5 vs 98.7) and especially tokens_per_s_b256_l4096 (2,607 vs 2,732) are wrong, while the crossover and max-context values (defined by equality) are right."

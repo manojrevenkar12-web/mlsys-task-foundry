@@ -23,6 +23,34 @@ def keeps_the_manual_dma(sol, ctx: Ctx):
         fail("the kernel no longer copies x by hand (no dma_start/dma_wait)")
 
 
+def _pallas_eqn(jaxpr):
+    for e in jaxpr.eqns:
+        if e.primitive.name == "pallas_call":
+            return e
+        for v in e.params.values():
+            inner = getattr(v, "jaxpr", None)
+            if inner is not None:
+                found = _pallas_eqn(inner if hasattr(inner, "eqns") else inner.jaxpr)
+                if found is not None:
+                    return found
+    return None
+
+
+@check(targets=["kernel-bypass"])
+def x_stays_in_hbm(sol, ctx: Ctx):
+    """A manual-DMA kernel takes x unblocked in HBM (memory space ANY). Blocking x with a BlockSpec
+    hands the HBM-to-VMEM copy back to the pipeline, whatever the kernel copies afterwards."""
+    x = jnp.ones((64, 128), jnp.float32)
+    w = jnp.ones((128, 128), jnp.float32)
+    e = _pallas_eqn(jax.make_jaxpr(lambda a, b: sol.project(a, b, interpret=_interp()))(x, w).jaxpr)
+    if e is None:
+        fail("no pallas_call in the computation")
+    first = e.params["grid_mapping"].block_mappings[0]
+    space = str(getattr(first.transformed_block_aval, "memory_space", "")).lower()
+    if not any(k in space for k in ("any", "hbm")):
+        fail(f"x reaches the kernel as a pipelined block in {space or 'VMEM'}, not in HBM: the copy is no longer manual")
+
+
 @check(targets=["narrow-distribution", "accumulator-init"])
 def matches_on_every_distribution(sol, ctx: Ctx):
     for name, (x, w) in ctx.inputs(lambda mk: (mk((128, 256)), mk((256, 128)))):

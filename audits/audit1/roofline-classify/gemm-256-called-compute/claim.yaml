@@ -1,0 +1,1 @@
+wrong: "prefill_gemm_256x4096x4096 has arithmetic intensity 227.6 FLOP/byte, below the 295 ridge, so it is memory-bound with roof_fraction 0.75 (vs bandwidth x intensity); the answer labels it compute-bound and gives 0.578 of peak FLOP/s, and so also picks the wrong op as one of the two furthest below their roofs (rmsnorm at 0.67 is second, not this GEMM)."

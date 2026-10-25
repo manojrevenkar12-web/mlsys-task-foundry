@@ -1,0 +1,12 @@
+kv_bytes_per_token: 524288
+kv_blocks: 6191
+seqs_at_8k: 12
+seqs_at_8k_fp8: 24
+explanation: >-
+  KV per token = 2 (K and V) x 32 layers x 32 heads x 128 dims x 2 bytes = 524,288 bytes.
+  Usable HBM = 0.9 x 80e9 = 72e9 bytes; weights = 8.03e9 x 2 = 16.06e9 bytes; minus 4e9 reserved
+  leaves 51.94e9 bytes for KV. A 16-token block is 16 x 524,288 = 8,388,608 bytes, so
+  floor(51.94e9 / 8,388,608) = 6,191 blocks. An 8,192-token sequence needs 512 blocks, so
+  floor(6,191 / 512) = 12 sequences. With FP8 KV each block is half the size: 12,382 blocks,
+  24 sequences. At 8k context the server can batch only about a dozen conversations at once, so
+  decode batches stay small and the GPU is badly underused; FP8 KV doubles that.

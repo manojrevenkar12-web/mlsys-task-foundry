@@ -1,0 +1,18 @@
+ridge_flop_per_byte: 295.34
+ops:
+  prefill_gemm_4096x4096x4096: {bound: compute, roof_fraction: 0.84}
+  prefill_gemm_512x4096x4096: {bound: compute, roof_fraction: 0.70}
+  prefill_gemm_256x4096x4096: {bound: compute, roof_fraction: 0.578}
+  decode_gemm_8x4096x4096: {bound: memory, roof_fraction: 0.86}
+  decode_attention_b32_ctx2048: {bound: memory, roof_fraction: 0.80}
+  rmsnorm_8192x4096: {bound: memory, roof_fraction: 0.67}
+  rope_8192x4096: {bound: memory, roof_fraction: 0.55}
+  lm_head_64x128256x4096: {bound: memory, roof_fraction: 0.81}
+explanation: >-
+  Ridge = 989.4e12 / 3.35e12 = 295 FLOP/byte. The prefill GEMMs are compute-bound; decode GEMM,
+  attention, rmsnorm, rope and the LM head are memory-bound. The surprise is the LM head: with
+  only 64 rows its 128,256 x 4,096 weight read dominates and it sits at 63 FLOP/byte, far left of
+  the ridge, yet it reaches 81% of its bandwidth roof. The two furthest below their roofs are
+  rope (55%) and the 256-token prefill GEMM (58% of peak): for rope I would fuse it into the QKV
+  projection epilogue to avoid a separate HBM pass; for the small GEMM I would check tile sizes
+  and wave quantisation, since 256 rows give too few output tiles to fill the SMs.

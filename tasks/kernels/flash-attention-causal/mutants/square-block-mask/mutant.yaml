@@ -1,0 +1,4 @@
+modes:
+- mask-off-by-one
+note: 'Builds the causal mask''s row positions from bk instead of bq: right whenever the blocks are square (the defaults),
+  wrong as soon as bq != bk.'

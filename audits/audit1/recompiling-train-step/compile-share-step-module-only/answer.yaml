@@ -1,0 +1,12 @@
+cause: recompilation
+step_compiles: 12
+compile_share: 0.785
+explanation: >-
+  Every one of the 12 train annotations contains a full XLA compile of jit_step (one
+  "HLO passes through layout assignment (jit_step)" event per batch) and a ~270-330 ms
+  backend_compile_and_load, while the executed computation itself takes a few ms. The batches are
+  padded to their own longest sequence, so almost every batch has a new width, a new input shape,
+  and jit traces and compiles step again; compiling jit_step takes about 78% of the time inside
+  train. I pad each batch to the next power of two (at least 16) with the padding masked out of
+  the loss, so step compiles once per bucket (3-4 times in 30 batches) instead of once per batch,
+  and the losses are unchanged.

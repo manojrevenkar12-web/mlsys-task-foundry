@@ -1,0 +1,1 @@
+wrong: "The causal block-skip condition is `j <= i` (block indices), which is only correct when bq == bk; with bq > bk (e.g. bq=128, bk=64) key blocks that query rows can still see are skipped, so causal outputs are wrong (error ~0.75), while the defaults bq=bk=128 and all non-causal calls are exact."

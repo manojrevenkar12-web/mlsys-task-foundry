@@ -1,0 +1,14 @@
+expected_tokens_a08_k4: 3.3616
+speedup_a08_k4_c005: 2.689
+best_k_a08_c005: 8
+best_k_a06_c02: 2
+speedup_a06_c02_best: 1.225
+explanation: >-
+  Expected tokens per target pass: the first i draft tokens are all accepted with probability
+  alpha^i and the target always adds one token, so E = sum_{i=0..k} alpha^i =
+  (1 - alpha^(k+1)) / (1 - alpha) = 3.3616 for alpha=0.8, k=4. A round runs the draft k + 1 times
+  (k proposals plus the step that conditions on the last one) and the target once, costing
+  (k + 1) c + 1 target steps, so speedup = E / ((k + 1) c + 1) = 2.689 at c=0.05. Over k=1..10
+  the speedup peaks at k=8 for alpha=0.8, c=0.05, and at k=2 (1.225x) for alpha=0.6, c=0.2.
+  Speculation stops paying off when alpha is low or c high: the marginal draft token adds
+  alpha^k expected tokens but costs c.

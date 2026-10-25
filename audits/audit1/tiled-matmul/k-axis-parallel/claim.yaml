@@ -1,0 +1,1 @@
+wrong: "The K (reduction) grid axis is declared \"parallel\" along with M and N, so the compiler/interpreter may split or reorder the accumulation steps across cores; the prompt requires only the parallel axes to be marked parallel, and the f32 accumulator then gives wrong sums (in TPU interpret mode the result is wrong by O(100))."

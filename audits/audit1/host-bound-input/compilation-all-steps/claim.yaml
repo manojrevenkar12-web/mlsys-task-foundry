@@ -1,0 +1,1 @@
+wrong: "It averages over all 10 steps including step 0's compile instead of the steady state (steps 1-9) the prompt asks for, so device_busy_share (0.050 vs ~0.113) and overlapped_step_ms (40.8 vs ~16.6 ms) are wrong and the bottleneck is mislabelled compilation instead of host_input."

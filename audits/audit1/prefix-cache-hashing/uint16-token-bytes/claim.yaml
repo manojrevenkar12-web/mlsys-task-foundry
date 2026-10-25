@@ -1,0 +1,1 @@
+wrong: "block_hashes serialises each block's token ids as uint16 before hashing, which silently wraps ids >= 65536 (common with 128k vocabularies), so different prompts such as [5, 6, 7, 8] and [65541, 6, 7, 8] get the same digest and would share cached KV, violating 'share a digest exactly when the tokens are equal'."

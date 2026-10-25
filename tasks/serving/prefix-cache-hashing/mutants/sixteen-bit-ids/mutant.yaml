@@ -1,0 +1,4 @@
+modes:
+- prefix-hash
+note: 'Encodes each token id in 16 bits: ids above 65535 wrap, so different prompts from a large vocabulary share digests
+  and cached KV.'

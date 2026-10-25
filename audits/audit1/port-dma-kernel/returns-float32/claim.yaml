@@ -1,0 +1,1 @@
+wrong: "The output is allocated as float32 regardless of the input, so for bfloat16 inputs project returns a float32 array instead of the input dtype the prompt requires (values match x @ w; only a dtype check catches it)."

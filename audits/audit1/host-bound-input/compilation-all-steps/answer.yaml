@@ -1,0 +1,13 @@
+bottleneck: compilation
+device_busy_share: 0.050
+largest_host_phase: decode_images
+overlapped_step_ms: 40.76
+explanation: >-
+  Over the ten train annotations the mean step is about 45.6 ms, but step 0 alone is 273 ms and
+  almost all of it is backend_compile_and_load for update (~185 ms plus smaller compiles); the
+  device (ThunkExecutor on the tf_XLAExecute thread) is busy only about 5% of the traced step
+  time. Within load_batch, decode_images is the largest phase (~15 ms per step), augment ~1.6 ms.
+  If loading overlapped perfectly with the rest of each step, the mean step would be ~40.8 ms,
+  still dominated by the compile. Changes: compile ahead of time (jax.jit(...).lower().compile()
+  or a persistent compilation cache) so the first step does not pay for compilation, then
+  prefetch batches in a background thread and vectorise decode_images and augment.

@@ -1,0 +1,1 @@
+wrong: "hidden_share divides hidden collective time by the union of the two collective lanes (76.5 ms, with overlapping all-gathers and reduce-scatters merged) instead of the total time of all collectives (95.7 ms), giving 0.878 instead of ~0.902; the other answers are right."

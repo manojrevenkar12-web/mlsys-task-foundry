@@ -1,0 +1,1 @@
+wrong: "Each microbatch's mean-loss gradient is reweighted by its share of target tokens, which is exact for non-empty microbatches, but a microbatch with no real target tokens still evaluates token_loss = 0/0, whose NaN gradient times weight 0 is NaN, so the whole accumulated gradient is NaN; the prompt requires such a microbatch to contribute nothing and produce no NaN."

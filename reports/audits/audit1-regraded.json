@@ -1,0 +1,435 @@
+{
+ "label": "audit1-regraded",
+ "recorded_at": "2026-10-25T11:27:08+00:00",
+ "forced": false,
+ "variants": [
+  {
+   "task": "continuous-batching",
+   "variant": "preempt-decoders-only",
+   "claim": "When decodes do not fit, it always preempts the most recently arrived decoding request, never a later-arrived request that is part-way through prefill and holds blocks; the prompt says to preempt the most recently arrived block holder whether decoding or prefilling, so under memory pressure the wrong request is evicted (plans differ in ~half of random workloads, and some workloads livelock with an older decoder repeatedly evicted while a newer prefill keeps its blocks).",
+   "escaped": false,
+   "caught_by": [
+    "tight_pool_traces_with_preemption"
+   ]
+  },
+  {
+   "task": "continuous-batching",
+   "variant": "preempted-to-back-of-queue",
+   "claim": "A preempted request is re-queued as if it had just arrived (given a new, latest arrival order), so it waits behind requests that arrived after it and is treated as the newest for later preemptions, violating 'goes back to waiting, ahead of every request that arrived after it'; plans are identical until a preemption happens with later arrivals waiting.",
+   "escaped": false,
+   "caught_by": [
+    "tight_pool_traces_with_preemption"
+   ]
+  },
+  {
+   "task": "decode-roofline-tpu",
+   "variant": "adds-memory-and-compute",
+   "claim": "It models the step as memory time plus compute time instead of the longer of the two, as the prompt specifies, so step_ms (10.150 vs 10.132), tokens_per_s_b1 (98.5 vs 98.7) and especially tokens_per_s_b256_l4096 (2,607 vs 2,732) are wrong, while the crossover and max-context values (defined by equality) are right.",
+   "escaped": false,
+   "caught_by": [
+    "throughput_at_batch_256"
+   ]
+  },
+  {
+   "task": "decode-roofline-tpu",
+   "variant": "kv-cache-k-only",
+   "claim": "The KV bytes per token omit the factor 2 for K and V (65,536 instead of 131,072 bytes), so every KV-dependent answer is off: step_ms 9.97 vs 10.13, crossover batch 792 vs 1,352, max context 437 vs 219, and B=256 throughput 4,946 vs 2,732 tokens/s.",
+   "escaped": false,
+   "caught_by": [
+    "crossover_batch_at_short_context",
+    "longest_context_with_a_crossover",
+    "throughput_at_batch_256"
+   ]
+  },
+  {
+   "task": "dp-replicas-drift",
+   "variant": "check-vma-still-off",
+   "claim": "The math is fixed (gradient and loss are pmean'd over shards), but make_step still passes check_vma=False to shard_map, violating the requirement that make_step run with shard_map's default varying-across-devices checks on.",
+   "escaped": false,
+   "caught_by": [
+    "shard_map_checks_are_on"
+   ]
+  },
+  {
+   "task": "dp-replicas-drift",
+   "variant": "hardcoded-eight-devices",
+   "claim": "With check_vma on, the gradient of the local mean loss w.r.t. the replicated w is summed over shards, and the fix divides it by a hard-coded 8 instead of the device count; it matches the full-batch step only on exactly 8 devices (on 4 devices the weights are off by ~0.5), violating 'for any device count dividing N'.",
+   "escaped": false,
+   "caught_by": [
+    "independent_of_the_device_count"
+   ]
+  },
+  {
+   "task": "flash-attention-causal",
+   "variant": "kv-axis-parallel",
+   "claim": "The key/value grid axis, which carries the online-softmax running max/sum/accumulator in scratch and is a sequential reduction, is declared \"parallel\" together with the batch-head and query axes; the prompt requires dimension semantics that reflect this (kv axis arbitrary), and with it parallel the accumulation is not guaranteed to run in order on one core, giving wrong outputs (as TPU interpret mode shows).",
+   "escaped": false,
+   "caught_by": [
+    "full_attention_matches",
+    "causal_attention_matches",
+    "exact_on_every_distribution_and_large_scores",
+    "correct_on_two_cores_in_random_order",
+    "causal_with_unequal_query_and_key_blocks"
+   ]
+  },
+  {
+   "task": "flash-attention-causal",
+   "variant": "skip-assumes-square-blocks",
+   "claim": "The causal block-skip condition is `j <= i` (block indices), which is only correct when bq == bk; with bq > bk (e.g. bq=128, bk=64) key blocks that query rows can still see are skipped, so causal outputs are wrong (error ~0.75), while the defaults bq=bk=128 and all non-causal calls are exact.",
+   "escaped": false,
+   "caught_by": [
+    "causal_with_unequal_query_and_key_blocks"
+   ]
+  },
+  {
+   "task": "gpu-launch-bound",
+   "variant": "called-memory-bound",
+   "claim": "The numbers are right but the bottleneck is mislabelled memory_bound: the 600 optimizer kernels each run ~3 us while each cudaLaunchKernel takes ~8 us, so the GPU idles between kernels waiting for launches (busy only ~45% in that phase), which is launch_bound, and halving bytes moved would not shorten the iteration.",
+   "escaped": false,
+   "caught_by": [
+    "names_the_bottleneck"
+   ]
+  },
+  {
+   "task": "gpu-launch-bound",
+   "variant": "optimizer-window-from-launch",
+   "claim": "The optimizer window is started at the CPU timestamp of the first short kernel's cudaLaunchKernel (~1.2 ms before that kernel actually runs, while the GEMMs are still executing) instead of at the first short kernel on the GPU, so optimizer_busy_share comes out 0.568 instead of ~0.445.",
+   "escaped": false,
+   "caught_by": [
+    "measures_the_optimizer_phase"
+   ]
+  },
+  {
+   "task": "grad-accumulation-weights",
+   "variant": "reweighted-means-nan-on-empty",
+   "claim": "Each microbatch's mean-loss gradient is reweighted by its share of target tokens, which is exact for non-empty microbatches, but a microbatch with no real target tokens still evaluates token_loss = 0/0, whose NaN gradient times weight 0 is NaN, so the whole accumulated gradient is NaN; the prompt requires such a microbatch to contribute nothing and produce no NaN.",
+   "escaped": false,
+   "caught_by": [
+    "an_empty_microbatch_is_harmless"
+   ]
+  },
+  {
+   "task": "grad-accumulation-weights",
+   "variant": "weights-count-input-tokens",
+   "claim": "Microbatches are weighted by their count of real tokens (sum of the full mask) instead of real target tokens (mask[:, 1:]), an off-by-one per sequence; equal-length microbatches still match exactly, but when microbatches hold different numbers of sequences/tokens the result differs from jax.grad of the whole-batch mean (errors ~3e-2 here).",
+   "escaped": false,
+   "caught_by": [
+    "unequal_microbatches_match",
+    "an_empty_microbatch_is_harmless"
+   ]
+  },
+  {
+   "task": "host-bound-input",
+   "variant": "compilation-all-steps",
+   "claim": "It averages over all 10 steps including step 0's compile instead of the steady state (steps 1-9) the prompt asks for, so device_busy_share (0.050 vs ~0.113) and overlapped_step_ms (40.8 vs ~16.6 ms) are wrong and the bottleneck is mislabelled compilation instead of host_input.",
+   "escaped": false,
+   "caught_by": [
+    "names_the_bottleneck",
+    "measures_device_busy_share",
+    "bounds_the_step_with_perfect_overlap"
+   ]
+  },
+  {
+   "task": "host-bound-input",
+   "variant": "overlap-hides-loading",
+   "claim": "overlapped_step_ms is given as 3.71 ms, the step time with loading removed entirely; with perfect overlap each step takes the longer of loading (~16.6 ms) and the rest (~3.7 ms), so the mean overlapped step is ~16.6 ms, as the prompt defines.",
+   "escaped": false,
+   "caught_by": [
+    "bounds_the_step_with_perfect_overlap"
+   ]
+  },
+  {
+   "task": "int8-matmul-scales",
+   "variant": "dequant-every-k-block",
+   "claim": "Each K block's int32 partial product is dequantised (multiplied by x_scale and w_scale) and added to a float32 accumulator, so the scales are applied once per K block rather than once after the last block and the K-sum is accumulated in float32, not exactly in an integer type; results drift from the exact value by up to ~1e-6 relative, more for large K and large-magnitude inputs.",
+   "escaped": false,
+   "caught_by": [
+    "matches_with_distinct_row_and_channel_scales",
+    "exact_integer_sums_with_long_k",
+    "correct_on_two_cores_in_random_order",
+    "one_sided_and_sparse_values"
+   ]
+  },
+  {
+   "task": "int8-matmul-scales",
+   "variant": "f32-accumulator",
+   "claim": "The integer products are accumulated across K blocks in a float32 scratch (dot with preferred_element_type=float32) instead of an int32 accumulator; float32 has a 24-bit mantissa, so once a partial sum passes 2^24 (easily reached for K=8192 with large-magnitude int8 values) the sum is no longer exact, violating the exact-integer-accumulation requirement (random inputs still match bit-for-bit).",
+   "escaped": false,
+   "caught_by": [
+    "exact_integer_sums_with_long_k"
+   ]
+  },
+  {
+   "task": "kv-capacity-planning",
+   "variant": "kv-uses-query-heads",
+   "claim": "It sizes the KV cache with the 32 query heads instead of the 8 KV heads of grouped-query attention, so KV bytes per token are 4x too large (524,288 instead of 131,072) and every derived count is 4x too small (6,191 blocks / 12 / 24 sequences instead of 24,766 / 48 / 96).",
+   "escaped": false,
+   "caught_by": [
+    "bytes_per_token",
+    "blocks_that_fit",
+    "sequences_that_fit",
+    "sequences_that_fit_with_fp8_kv"
+   ]
+  },
+  {
+   "task": "kv-capacity-planning",
+   "variant": "reserve-before-90-percent",
+   "claim": "It subtracts the 4e9-byte reserve before applying the 90% limit (0.9 x (80e9 - 4e9)) instead of taking the reserve out of the 90% (0.9 x 80e9 - weights - 4e9), giving 0.4e9 bytes too much KV: kv_blocks 24,957 instead of 24,766 and FP8 sequences 97 instead of 96, while kv_bytes_per_token and seqs_at_8k happen to stay right.",
+   "escaped": false,
+   "caught_by": [
+    "blocks_that_fit",
+    "sequences_that_fit_with_fp8_kv"
+   ]
+  },
+  {
+   "task": "nan-from-padding",
+   "variant": "no-max-shift",
+   "claim": "It removes the max subtraction and exponentiates the raw masked scores, guarding only the zero denominator; empty sequences and small scores are handled, but when the query is scaled up exp(scores) overflows to inf and the pool, loss and gradients become NaN, violating 'stays exact for large scores'.",
+   "escaped": false,
+   "caught_by": [
+    "exact_for_large_scores"
+   ]
+  },
+  {
+   "task": "nan-from-padding",
+   "variant": "where-on-output-only",
+   "claim": "It keeps the -inf masking and only replaces the NaN pooled vector of an empty sequence with zeros via an outer jnp.where; the forward pass and loss become finite, but the NaN weights are still computed, so jax.grad(loss) w.r.t. values is NaN for any batch with an empty sequence (the where-gradient trap), violating finite gradients for any mask.",
+   "escaped": false,
+   "caught_by": [
+    "gradients_are_finite_with_an_empty_sequence"
+   ]
+  },
+  {
+   "task": "paged-kv-allocator",
+   "variant": "allocate-no-rollback",
+   "claim": "allocate takes free blocks one at a time and raises OutOfBlocks only when the pool runs dry part-way, without returning the blocks it already took; the failed call leaks them (num_free drops and they never come back), violating 'leave the pool exactly as it was before the call'.",
+   "escaped": false,
+   "caught_by": [
+    "random_workloads_keep_the_books",
+    "out_of_blocks_changes_nothing"
+   ]
+  },
+  {
+   "task": "paged-kv-allocator",
+   "variant": "cow-keeps-source-ref",
+   "claim": "On copy-on-write the writer gets a private copy but the shared source block's reference count is not decremented, so the remaining owner still looks shared (its next append does a needless copy and takes another block) and the source block never returns to the free pool after both sequences are freed.",
+   "escaped": false,
+   "caught_by": [
+    "random_workloads_keep_the_books",
+    "writing_into_a_shared_block_copies_it_first"
+   ]
+  },
+  {
+   "task": "port-dma-kernel",
+   "variant": "blocked-input-then-dma",
+   "claim": "x is passed as a blocked (rows, d) VMEM input via BlockSpec, and the kernel's \"manual DMA\" only copies that already-pipelined VMEM block into the scratch buffer; x no longer stays in HBM and the HBM-to-VMEM transfer is done by the BlockSpec pipeline, which the prompt explicitly says is not a port.",
+   "escaped": false,
+   "caught_by": [
+    "x_stays_in_hbm"
+   ]
+  },
+  {
+   "task": "port-dma-kernel",
+   "variant": "returns-float32",
+   "claim": "The output is allocated as float32 regardless of the input, so for bfloat16 inputs project returns a float32 array instead of the input dtype the prompt requires (values match x @ w; only a dtype check catches it).",
+   "escaped": false,
+   "caught_by": [
+    "bf16_in_bf16_out"
+   ]
+  },
+  {
+   "task": "prefix-cache-hashing",
+   "variant": "lru-evicts-non-leaf",
+   "claim": "Eviction picks the least recently used block that no request is using without checking that no other cached block extends it, and recency is refreshed parent-first, so the first block of a cached prefix is usually evicted first; this punches a hole at the start of the prefix, making its still-cached descendants unreachable by match, which the prompt forbids (evict only leaves).",
+   "escaped": false,
+   "caught_by": [
+    "evicts_least_recently_used_leaves_never_in_use"
+   ]
+  },
+  {
+   "task": "prefix-cache-hashing",
+   "variant": "uint16-token-bytes",
+   "claim": "block_hashes serialises each block's token ids as uint16 before hashing, which silently wraps ids >= 65536 (common with 128k vocabularies), so different prompts such as [5, 6, 7, 8] and [65541, 6, 7, 8] get the same digest and would share cached KV, violating 'share a digest exactly when the tokens are equal'.",
+   "escaped": false,
+   "caught_by": [
+    "large_token_ids_keep_their_identity"
+   ]
+  },
+  {
+   "task": "recompiling-train-step",
+   "variant": "bucket-cap-truncates",
+   "claim": "Buckets are capped at 256, and sequences longer than the cap are silently truncated (their tail tokens dropped from tokens and mask), so for batches containing a sequence over 256 tokens (2 of 30 batches for seed 0) the training data and the returned losses differ from the starter's; the loss difference is small (~1e-5) because the model is near-uniform, but padding is no longer loss-neutral as required.",
+   "escaped": false,
+   "caught_by": [
+    "every_real_token_survives_bucketing"
+   ]
+  },
+  {
+   "task": "recompiling-train-step",
+   "variant": "compile-share-step-module-only",
+   "claim": "compile_share counts only the large jit_step backend_compile_and_load in each step (0.785) and leaves out the other backend_compile_and_load events inside the train annotations (the small per-step compiles), whereas the prompt asks for the share of all backend_compile_and_load time, about 0.822; the fix itself is correct.",
+   "escaped": false,
+   "caught_by": [
+    "measures_the_compile_share"
+   ]
+  },
+  {
+   "task": "rmsnorm-residual-ragged",
+   "variant": "eps-outside-sqrt",
+   "claim": "It normalises by sqrt(mean(h**2)) + eps instead of sqrt(mean(h**2) + eps); for activations of ordinary magnitude the difference is ~1e-6 relative, but for small-magnitude rows (mean square comparable to eps, e.g. inputs ~1e-3) y is off by tens of percent, so it does not compute the specified formula.",
+   "escaped": false,
+   "caught_by": [
+    "full_blocks_on_every_distribution",
+    "eps_is_inside_the_square_root"
+   ]
+  },
+  {
+   "task": "rmsnorm-residual-ragged",
+   "variant": "tail-rows-outside-kernel",
+   "claim": "Only the full br-row blocks go through the Pallas kernel; the rows of the last partial block (and all rows when R < br) are computed with plain jnp outside the kernel and concatenated, so the ragged case is not handled by the one kernel the prompt asks for (the numbers are right, the implementation dodges the requirement).",
+   "escaped": false,
+   "caught_by": [
+    "every_row_is_computed_in_the_kernel"
+   ]
+  },
+  {
+   "task": "roofline-classify",
+   "variant": "fraction-of-peak-flops",
+   "claim": "roof_fraction is computed as achieved FLOP/s over the 989.4 TFLOP/s compute peak for every op, not over the roofline's limit at each op's arithmetic intensity (bandwidth x intensity for memory-bound ops), so all memory-bound ops get fractions 10-300x too small (e.g. rmsnorm 0.0023 instead of 0.67) and the 'furthest below the roof' ops are misidentified; the bound labels and ridge are right.",
+   "escaped": false,
+   "caught_by": [
+    "roof_fraction_of_every_op"
+   ]
+  },
+  {
+   "task": "roofline-classify",
+   "variant": "gemm-256-called-compute",
+   "claim": "prefill_gemm_256x4096x4096 has arithmetic intensity 227.6 FLOP/byte, below the 295 ridge, so it is memory-bound with roof_fraction 0.75 (vs bandwidth x intensity); the answer labels it compute-bound and gives 0.578 of peak FLOP/s, and so also picks the wrong op as one of the two furthest below their roofs (rmsnorm at 0.67 is second, not this GEMM).",
+   "escaped": false,
+   "caught_by": [
+    "classifies_every_op",
+    "roof_fraction_of_every_op"
+   ]
+  },
+  {
+   "task": "row-softmax",
+   "variant": "clip-instead-of-max",
+   "claim": "Instead of subtracting the row max it clamps logits to [-80, 80] before exp, which is exact for small or normal inputs but wrong for large logits: values above 80 all become equal (rows of logits in the hundreds come out near-uniform among the large entries) and rows entirely below -80 become uniform, violating the requirement to be accurate for large and very negative logits.",
+   "escaped": false,
+   "caught_by": [
+    "matches_on_every_input_distribution",
+    "finite_and_exact_for_logits_in_the_hundreds"
+   ]
+  },
+  {
+   "task": "row-softmax",
+   "variant": "compute-in-input-dtype",
+   "claim": "The kernel never upcasts the block, so for bfloat16 inputs the max, exp, sum and division all run in bfloat16 rather than float32 as the prompt requires; float32 inputs are exact, but bf16 rows are less accurate (row sums off by up to ~0.005 and errors ~2x a float32-computed softmax).",
+   "escaped": false,
+   "caught_by": [
+    "bf16_in_bf16_out_computed_in_f32"
+   ]
+  },
+  {
+   "task": "same-dropout-everywhere",
+   "variant": "bernoulli-drop-probability",
+   "claim": "The keep mask is drawn with probability `rate` instead of `1 - rate`, so units are kept with probability rate while still scaled by 1/(1 - rate); at the default rate=0.5 this is indistinguishable, but at rate=0.2 only ~20% of values are kept, violating the keep-probability requirement.",
+   "escaped": false,
+   "caught_by": [
+    "keep_rate_and_scaling"
+   ]
+  },
+  {
+   "task": "same-dropout-everywhere",
+   "variant": "no-step-fold",
+   "claim": "The key is folded with the shard index only, never with `step`, so each shard gets its own mask but the same mask is reused at every training step, violating 'every step gets a new one'.",
+   "escaped": false,
+   "caught_by": [
+    "steps_get_different_masks"
+   ]
+  },
+  {
+   "task": "speculative-decoding-math",
+   "variant": "drafts-k-plus-one-tokens",
+   "claim": "It charges (k + 1) draft steps per round instead of the k the prompt describes, so the cost is (k + 1)c + 1; expected tokens and both best-k labels come out right, but the speedups are wrong (2.689 instead of 2.801 for alpha=0.8, k=4, c=0.05, and 1.225 instead of 1.400 for alpha=0.6, c=0.2).",
+   "escaped": false,
+   "caught_by": [
+    "speedup_at_k4",
+    "best_draft_length_costly_draft"
+   ]
+  },
+  {
+   "task": "speculative-decoding-math",
+   "variant": "missing-bonus-token",
+   "claim": "It uses (1 - alpha^k)/(1 - alpha) for expected tokens per pass, dropping the target's always-added token (the correct count is (1 - alpha^(k+1))/(1 - alpha) = 3.3616 for alpha=0.8, k=4), so the expected tokens (2.952), speedups (2.46, 1.225) and best k values (9 and 3 instead of 8 and 2) are all wrong.",
+   "escaped": false,
+   "caught_by": [
+    "expected_tokens",
+    "speedup_at_k4",
+    "best_draft_length_cheap_draft",
+    "best_draft_length_costly_draft"
+   ]
+  },
+  {
+   "task": "tiled-matmul",
+   "variant": "input-dtype-accumulator",
+   "claim": "The VMEM accumulator is allocated in the input dtype and the per-block dot returns that dtype, so bfloat16 inputs are accumulated in bfloat16 across K blocks instead of float32 as required; float32 inputs are unaffected, but bf16 results lose precision (relative error ~0.3 vs ~0.004 for K=1024).",
+   "escaped": false,
+   "caught_by": [
+    "bf16_in_bf16_out_with_f32_accumulation",
+    "lowers_for_a_real_tpu"
+   ]
+  },
+  {
+   "task": "tiled-matmul",
+   "variant": "k-axis-parallel",
+   "claim": "The K (reduction) grid axis is declared \"parallel\" along with M and N, so the compiler/interpreter may split or reorder the accumulation steps across cores; the prompt requires only the parallel axes to be marked parallel, and the f32 accumulator then gives wrong sums (in TPU interpret mode the result is wrong by O(100)).",
+   "escaped": false,
+   "caught_by": [
+    "matches_on_every_input_distribution",
+    "handles_other_shapes_and_blocks",
+    "bf16_in_bf16_out_with_f32_accumulation",
+    "correct_when_parallel_axes_run_on_two_cores_in_random_order"
+   ]
+  },
+  {
+   "task": "tpu-exposed-collectives",
+   "variant": "blames-all-gather",
+   "claim": "The shares and per-step time are right, but the collective with the most exposed time is the reduce-scatter (the layer-0 reduce-scatter after the last backward fusion, ~0.72 ms per step, ~5.8 ms in total), not the all-gather (~0.40 ms per step, ~3.2 ms in total).",
+   "escaped": false,
+   "caught_by": [
+    "measures_hidden_share",
+    "finds_the_most_exposed_collective"
+   ]
+  },
+  {
+   "task": "tpu-exposed-collectives",
+   "variant": "hidden-share-over-merged-lanes",
+   "claim": "hidden_share divides hidden collective time by the union of the two collective lanes (76.5 ms, with overlapping all-gathers and reduce-scatters merged) instead of the total time of all collectives (95.7 ms), giving 0.878 instead of ~0.902; the other answers are right.",
+   "escaped": true,
+   "caught_by": []
+  },
+  {
+   "task": "vocab-parallel-loss",
+   "variant": "custom-vjp-missing-mean",
+   "claim": "The forward loss is the correct mean NLL, but the hand-written custom_vjp backward returns (softmax - one_hot) * g without the 1/T factor of the mean, so jax.grad of mean_nll is T times too large (right direction, wrong magnitude), violating the requirement that the gradient be right.",
+   "escaped": false,
+   "caught_by": [
+    "gradient_is_softmax_minus_onehot"
+   ]
+  },
+  {
+   "task": "vocab-parallel-loss",
+   "variant": "naive-shard-lse-combine",
+   "claim": "Shards are combined as log(psum(exp(local_logsumexp))) with no global max shift, so the loss is right for ordinary logits but overflows to inf (and the gradient to NaN) once logits reach ~90 or more, violating 'stays exact for logits in the hundreds'.",
+   "escaped": false,
+   "caught_by": [
+    "exact_for_large_logits"
+   ]
+  }
+ ],
+ "summary": {
+  "variants": 44,
+  "escaped": 1
+ }
+}

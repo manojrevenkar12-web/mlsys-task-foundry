@@ -1,0 +1,1 @@
+wrong: "compile_share counts only the large jit_step backend_compile_and_load in each step (0.785) and leaves out the other backend_compile_and_load events inside the train annotations (the small per-step compiles), whereas the prompt asks for the share of all backend_compile_and_load time, about 0.822; the fix itself is correct."

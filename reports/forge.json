@@ -1,5 +1,5 @@
 {
- "seconds": 262.5,
+ "seconds": 35.1,
  "tasks": [
   {
    "id": "dp-replicas-drift",
@@ -509,7 +509,7 @@
    "title": "Flash attention forward with a causal mask and online softmax",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 8.38,
+   "reference_seconds": 6.48,
    "checks": [
     "uses_current_api",
     "runs_a_pallas_kernel",
@@ -517,7 +517,8 @@
     "causal_attention_matches",
     "exact_on_every_distribution_and_large_scores",
     "correct_on_two_cores_in_random_order",
-    "lowers_for_a_real_tpu"
+    "lowers_for_a_real_tpu",
+    "causal_with_unequal_query_and_key_blocks"
    ],
    "check_targets": {
     "uses_current_api": [
@@ -546,6 +547,9 @@
     ],
     "lowers_for_a_real_tpu": [
      "interpret-only"
+    ],
+    "causal_with_unequal_query_and_key_blocks": [
+     "mask-off-by-one"
     ]
    },
    "mutants": {
@@ -558,10 +562,11 @@
       "full_attention_matches",
       "causal_attention_matches",
       "exact_on_every_distribution_and_large_scores",
-      "correct_on_two_cores_in_random_order"
+      "correct_on_two_cores_in_random_order",
+      "causal_with_unequal_query_and_key_blocks"
      ],
      "crashed": null,
-     "seconds": 6.54
+     "seconds": 5.05
     },
     "max-not-tracked": {
      "modes": [
@@ -573,10 +578,11 @@
       "full_attention_matches",
       "causal_attention_matches",
       "exact_on_every_distribution_and_large_scores",
-      "correct_on_two_cores_in_random_order"
+      "correct_on_two_cores_in_random_order",
+      "causal_with_unequal_query_and_key_blocks"
      ],
      "crashed": null,
-     "seconds": 5.59
+     "seconds": 4.68
     },
     "no-acc-rescale": {
      "modes": [
@@ -587,10 +593,11 @@
       "full_attention_matches",
       "causal_attention_matches",
       "exact_on_every_distribution_and_large_scores",
-      "correct_on_two_cores_in_random_order"
+      "correct_on_two_cores_in_random_order",
+      "causal_with_unequal_query_and_key_blocks"
      ],
      "crashed": null,
-     "seconds": 5.73
+     "seconds": 4.75
     },
     "no-scale": {
      "modes": [
@@ -601,10 +608,11 @@
       "full_attention_matches",
       "causal_attention_matches",
       "exact_on_every_distribution_and_large_scores",
-      "correct_on_two_cores_in_random_order"
+      "correct_on_two_cores_in_random_order",
+      "causal_with_unequal_query_and_key_blocks"
      ],
      "crashed": null,
-     "seconds": 4.31
+     "seconds": 4.81
     },
     "no-sum-rescale": {
      "modes": [
@@ -615,10 +623,11 @@
       "full_attention_matches",
       "causal_attention_matches",
       "exact_on_every_distribution_and_large_scores",
-      "correct_on_two_cores_in_random_order"
+      "correct_on_two_cores_in_random_order",
+      "causal_with_unequal_query_and_key_blocks"
      ],
      "crashed": null,
-     "seconds": 4.32
+     "seconds": 4.77
     },
     "normalise-every-step": {
      "modes": [
@@ -629,10 +638,22 @@
       "full_attention_matches",
       "causal_attention_matches",
       "exact_on_every_distribution_and_large_scores",
-      "correct_on_two_cores_in_random_order"
+      "correct_on_two_cores_in_random_order",
+      "causal_with_unequal_query_and_key_blocks"
      ],
      "crashed": null,
-     "seconds": 4.38
+     "seconds": 4.61
+    },
+    "square-block-mask": {
+     "modes": [
+      "mask-off-by-one"
+     ],
+     "note": "Builds the causal mask's row positions from bk instead of bq: right whenever the blocks are square (the defaults), wrong as soon as bq != bk.",
+     "killed_by": [
+      "causal_with_unequal_query_and_key_blocks"
+     ],
+     "crashed": null,
+     "seconds": 6.07
     },
     "strict-causal": {
      "modes": [
@@ -642,10 +663,11 @@
      "killed_by": [
       "causal_attention_matches",
       "exact_on_every_distribution_and_large_scores",
-      "correct_on_two_cores_in_random_order"
+      "correct_on_two_cores_in_random_order",
+      "causal_with_unequal_query_and_key_blocks"
      ],
      "crashed": null,
-     "seconds": 4.52
+     "seconds": 4.79
     }
    },
    "idle_checks": [
@@ -658,7 +680,7 @@
    "rubric_issues": [],
    "problems": [],
    "ok": true,
-   "killed": 7
+   "killed": 8
   },
   {
    "id": "int8-matmul-scales",
@@ -803,10 +825,11 @@
    "title": "Port a manual-DMA kernel from old Pallas to JAX 0.12",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 4.38,
+   "reference_seconds": 2.78,
    "checks": [
     "uses_current_api",
     "keeps_the_manual_dma",
+    "x_stays_in_hbm",
     "matches_on_every_distribution",
     "data_is_used_only_after_the_wait",
     "bf16_in_bf16_out",
@@ -820,6 +843,9 @@
     "keeps_the_manual_dma": [
      "kernel-bypass",
      "api-removed"
+    ],
+    "x_stays_in_hbm": [
+     "kernel-bypass"
     ],
     "matches_on_every_distribution": [
      "narrow-distribution",
@@ -836,16 +862,28 @@
     ]
    },
    "mutants": {
+    "blocked-x-then-copy": {
+     "modes": [
+      "kernel-bypass"
+     ],
+     "note": "Lets a BlockSpec pipeline x into VMEM and then DMAs that VMEM block into the scratch buffer: the numbers are right, but the HBM-to-VMEM copy is no longer manual.",
+     "killed_by": [
+      "x_stays_in_hbm"
+     ],
+     "crashed": null,
+     "seconds": 3.03
+    },
     "blockspec-instead": {
      "modes": [
       "kernel-bypass"
      ],
      "note": "Replaces the manual copy with a blocked input: correct numbers, but not the kernel asked for.",
      "killed_by": [
-      "keeps_the_manual_dma"
+      "keeps_the_manual_dma",
+      "x_stays_in_hbm"
      ],
      "crashed": null,
-     "seconds": 4.21
+     "seconds": 2.91
     },
     "hallucinated-params": {
      "modes": [
@@ -854,13 +892,14 @@
      "note": "Invents pl.CompilerParams, which Pallas never had.",
      "killed_by": [
       "keeps_the_manual_dma",
+      "x_stays_in_hbm",
       "matches_on_every_distribution",
       "data_is_used_only_after_the_wait",
       "bf16_in_bf16_out",
       "lowers_for_a_real_tpu"
      ],
      "crashed": null,
-     "seconds": 1.28
+     "seconds": 0.99
     },
     "kept-pl-dot": {
      "modes": [
@@ -870,13 +909,14 @@
      "killed_by": [
       "uses_current_api",
       "keeps_the_manual_dma",
+      "x_stays_in_hbm",
       "matches_on_every_distribution",
       "data_is_used_only_after_the_wait",
       "bf16_in_bf16_out",
       "lowers_for_a_real_tpu"
      ],
      "crashed": null,
-     "seconds": 1.5
+     "seconds": 1.07
     },
     "kept-pltpu-any": {
      "modes": [
@@ -886,13 +926,14 @@
      "killed_by": [
       "uses_current_api",
       "keeps_the_manual_dma",
+      "x_stays_in_hbm",
       "matches_on_every_distribution",
       "data_is_used_only_after_the_wait",
       "bf16_in_bf16_out",
       "lowers_for_a_real_tpu"
      ],
      "crashed": null,
-     "seconds": 1.28
+     "seconds": 0.94
     },
     "rows-of-4": {
      "modes": [
@@ -903,7 +944,7 @@
       "lowers_for_a_real_tpu"
      ],
      "crashed": null,
-     "seconds": 5.43
+     "seconds": 3.36
     },
     "wait-after-use": {
      "modes": [
@@ -916,7 +957,7 @@
       "bf16_in_bf16_out"
      ],
      "crashed": null,
-     "seconds": 3.15
+     "seconds": 2.42
     },
     "wrong-row-offset": {
      "modes": [
@@ -929,7 +970,7 @@
       "bf16_in_bf16_out"
      ],
      "crashed": null,
-     "seconds": 3.17
+     "seconds": 2.26
     }
    },
    "idle_checks": [],
@@ -942,7 +983,7 @@
    "rubric_issues": [],
    "problems": [],
    "ok": true,
-   "killed": 7
+   "killed": 8
   },
   {
    "id": "rmsnorm-residual-ragged",
@@ -952,7 +993,7 @@
    "title": "Fused residual add and RMSNorm when rows do not fill the last block",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 6.1,
+   "reference_seconds": 4.46,
    "checks": [
     "uses_current_api",
     "runs_a_pallas_kernel",
@@ -960,7 +1001,8 @@
     "every_row_right_when_the_last_block_is_partial",
     "bf16_in_bf16_out_computed_in_f32",
     "eps_is_inside_the_square_root",
-    "lowers_for_a_real_tpu"
+    "lowers_for_a_real_tpu",
+    "every_row_is_computed_in_the_kernel"
    ],
    "check_targets": {
     "uses_current_api": [
@@ -985,6 +1027,10 @@
     ],
     "lowers_for_a_real_tpu": [
      "interpret-only"
+    ],
+    "every_row_is_computed_in_the_kernel": [
+     "ragged-tail",
+     "kernel-bypass"
     ]
    },
    "mutants": {
@@ -998,7 +1044,7 @@
       "eps_is_inside_the_square_root"
      ],
      "crashed": null,
-     "seconds": 5.49
+     "seconds": 4.22
     },
     "floor-grid": {
      "modes": [
@@ -1009,7 +1055,7 @@
       "every_row_right_when_the_last_block_is_partial"
      ],
      "crashed": null,
-     "seconds": 3.57
+     "seconds": 3.23
     },
     "norm-before-add": {
      "modes": [
@@ -1022,7 +1068,7 @@
       "bf16_in_bf16_out_computed_in_f32"
      ],
      "crashed": null,
-     "seconds": 4.05
+     "seconds": 3.06
     },
     "outputs-swapped": {
      "modes": [
@@ -1036,7 +1082,7 @@
       "eps_is_inside_the_square_root"
      ],
      "crashed": null,
-     "seconds": 4.04
+     "seconds": 3.18
     },
     "pad-to-block": {
      "modes": [
@@ -1048,7 +1094,19 @@
       "every_row_right_when_the_last_block_is_partial"
      ],
      "crashed": null,
-     "seconds": 3.75
+     "seconds": 3.27
+    },
+    "tail-outside-kernel": {
+     "modes": [
+      "ragged-tail",
+      "kernel-bypass"
+     ],
+     "note": "Runs the kernel over the full blocks only and computes the leftover rows with jnp outside it, then concatenates: the numbers are right, the ragged block is never handled by the kernel.",
+     "killed_by": [
+      "every_row_is_computed_in_the_kernel"
+     ],
+     "crashed": null,
+     "seconds": 4.64
     },
     "twelve-row-blocks": {
      "modes": [
@@ -1059,7 +1117,7 @@
       "lowers_for_a_real_tpu"
      ],
      "crashed": null,
-     "seconds": 4.6
+     "seconds": 4.62
     }
    },
    "idle_checks": [
@@ -1071,7 +1129,7 @@
    "rubric_issues": [],
    "problems": [],
    "ok": true,
-   "killed": 6
+   "killed": 7
   },
   {
    "id": "row-softmax",
@@ -1573,14 +1631,15 @@
    "title": "A training step that recompiles every batch",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 11.09,
+   "reference_seconds": 8.15,
    "checks": [
     "names_the_cause",
     "counts_the_compilations_in_the_trace",
     "measures_the_compile_share",
     "fixed_train_compiles_step_at_most_six_times",
     "losses_are_unchanged_by_padding",
-    "padding_stays_below_twice_the_longest_sequence"
+    "padding_stays_below_twice_the_longest_sequence",
+    "every_real_token_survives_bucketing"
    ],
    "check_targets": {
     "names_the_cause": [
@@ -1600,6 +1659,9 @@
     ],
     "padding_stays_below_twice_the_longest_sequence": [
      "shape-special-case"
+    ],
+    "every_real_token_survives_bucketing": [
+     "shape-special-case"
     ]
    },
    "mutants": {
@@ -1612,7 +1674,18 @@
       "names_the_cause"
      ],
      "crashed": null,
-     "seconds": 8.77
+     "seconds": 7.99
+    },
+    "cap-at-256": {
+     "modes": [
+      "shape-special-case"
+     ],
+     "note": "Caps buckets at 256 tokens and truncates longer sequences: fewer compiles, and the losses barely move on a near-uniform model, but training data is silently dropped.",
+     "killed_by": [
+      "every_real_token_survives_bucketing"
+     ],
+     "crashed": null,
+     "seconds": 7.52
     },
     "counted-every-compile": {
      "modes": [
@@ -1623,7 +1696,7 @@
       "counts_the_compilations_in_the_trace"
      ],
      "crashed": null,
-     "seconds": 8.91
+     "seconds": 7.88
     },
     "mask-dropped": {
      "modes": [
@@ -1634,7 +1707,7 @@
       "losses_are_unchanged_by_padding"
      ],
      "crashed": null,
-     "seconds": 7.81
+     "seconds": 7.53
     },
     "multiple-of-eight": {
      "modes": [
@@ -1645,7 +1718,7 @@
       "fixed_train_compiles_step_at_most_six_times"
      ],
      "crashed": null,
-     "seconds": 16.63
+     "seconds": 14.0
     },
     "nested-events-summed": {
      "modes": [
@@ -1657,7 +1730,7 @@
       "measures_the_compile_share"
      ],
      "crashed": null,
-     "seconds": 10.52
+     "seconds": 7.53
     },
     "pad-to-max": {
      "modes": [
@@ -1668,7 +1741,7 @@
       "padding_stays_below_twice_the_longest_sequence"
      ],
      "crashed": null,
-     "seconds": 11.03
+     "seconds": 7.38
     }
    },
    "idle_checks": [],
@@ -1677,7 +1750,7 @@
    "rubric_issues": [],
    "problems": [],
    "ok": true,
-   "killed": 6
+   "killed": 7
   },
   {
    "id": "roofline-classify",
@@ -2269,7 +2342,7 @@
    "title": "Prefix caching by chained block hashes",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 0.32,
+   "reference_seconds": 0.21,
    "checks": [
     "same_block_different_prefix_differs",
     "equal_prefixes_share_digests_and_partial_blocks_are_ignored",
@@ -2277,7 +2350,8 @@
     "digests_are_the_same_in_another_process",
     "match_returns_the_longest_cached_prefix_and_stops_at_a_miss",
     "evicts_least_recently_used_leaves_never_in_use",
-    "never_holds_more_than_its_capacity"
+    "never_holds_more_than_its_capacity",
+    "large_token_ids_keep_their_identity"
    ],
    "check_targets": {
     "same_block_different_prefix_differs": [
@@ -2301,6 +2375,9 @@
     ],
     "never_holds_more_than_its_capacity": [
      "block-leak"
+    ],
+    "large_token_ids_keep_their_identity": [
+     "prefix-hash"
     ]
    },
    "mutants": {
@@ -2313,7 +2390,7 @@
       "same_block_different_prefix_differs"
      ],
      "crashed": null,
-     "seconds": 0.37
+     "seconds": 0.2
     },
     "evict-plain-lru": {
      "modes": [
@@ -2324,7 +2401,7 @@
       "evicts_least_recently_used_leaves_never_in_use"
      ],
      "crashed": null,
-     "seconds": 0.28
+     "seconds": 0.2
     },
     "partial-block-hashed": {
      "modes": [
@@ -2335,7 +2412,7 @@
       "equal_prefixes_share_digests_and_partial_blocks_are_ignored"
      ],
      "crashed": null,
-     "seconds": 0.27
+     "seconds": 0.22
     },
     "python-hash": {
      "modes": [
@@ -2346,7 +2423,18 @@
       "digests_are_the_same_in_another_process"
      ],
      "crashed": null,
-     "seconds": 0.3
+     "seconds": 0.19
+    },
+    "sixteen-bit-ids": {
+     "modes": [
+      "prefix-hash"
+     ],
+     "note": "Encodes each token id in 16 bits: ids above 65535 wrap, so different prompts from a large vocabulary share digests and cached KV.",
+     "killed_by": [
+      "large_token_ids_keep_their_identity"
+     ],
+     "crashed": null,
+     "seconds": 0.21
     },
     "string-join": {
      "modes": [
@@ -2357,7 +2445,7 @@
       "boundaries_matter"
      ],
      "crashed": null,
-     "seconds": 0.25
+     "seconds": 0.23
     }
    },
    "idle_checks": [
@@ -2369,7 +2457,7 @@
    "rubric_issues": [],
    "problems": [],
    "ok": true,
-   "killed": 5
+   "killed": 6
   },
   {
    "id": "speculative-decoding-math",
@@ -2462,9 +2550,9 @@
  "summary": {
   "tasks": 22,
   "ok": 22,
-  "mutants": 119,
-  "killed": 119,
-  "checks": 111,
+  "mutants": 124,
+  "killed": 124,
+  "checks": 116,
   "idle_checks": 10
  }
 }

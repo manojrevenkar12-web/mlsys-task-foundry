@@ -1,0 +1,16 @@
+step_ms_b1_l4096: 10.150
+tokens_per_s_b1_l4096: 98.52
+crossover_batch_l128: 1351.98
+max_context_for_crossover: 218.63
+tokens_per_s_b256_l4096: 2607.2
+explanation: >-
+  Weights are 8.03e9 x 2 = 16.06e9 bytes; the KV cache is 2 x 32 x 8 x 128 x 2 = 131,072 bytes
+  per token, 0.537e9 bytes for a 4,096-token sequence. A step is the weight read plus the KV read
+  plus the matmul work, (16.06e9 + B L 131072) / 1.638e12 s + B x 2 x 8.03e9 / 918e12 s: at B=1,
+  L=4096 that is 10.13 ms of memory plus 0.017 ms of compute, 10.15 ms, ~98.5 tokens/s. Compute
+  per sequence is worth 2 x 8.03e9 / 918e12 x 1.638e12 = 2.87e7 bytes of HBM time, so at L=128
+  compute catches up with memory at B = 16.06e9 / (2.87e7 - 128 x 131072) ~ 1352, and only for
+  L below 2.87e7 / 131072 ~ 219 tokens can any batch be compute-bound. At B=256, L=4096 the
+  step is 93.7 ms memory + 4.5 ms compute, 2,607 tokens/s in total. Small batches are limited by
+  reading the weights; large batches by reading every sequence's KV cache, which grows with
+  batch and context, so longer contexts push the crossover out until it disappears.

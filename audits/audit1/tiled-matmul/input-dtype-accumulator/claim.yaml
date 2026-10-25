@@ -1,0 +1,1 @@
+wrong: "The VMEM accumulator is allocated in the input dtype and the per-block dot returns that dtype, so bfloat16 inputs are accumulated in bfloat16 across K blocks instead of float32 as required; float32 inputs are unaffected, but bf16 results lose precision (relative error ~0.3 vs ~0.004 for K=1024)."

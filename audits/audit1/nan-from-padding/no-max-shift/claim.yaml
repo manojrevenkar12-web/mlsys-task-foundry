@@ -1,0 +1,1 @@
+wrong: "It removes the max subtraction and exponentiates the raw masked scores, guarding only the zero denominator; empty sequences and small scores are handled, but when the query is scaled up exp(scores) overflows to inf and the pool, loss and gradients become NaN, violating 'stays exact for large scores'."

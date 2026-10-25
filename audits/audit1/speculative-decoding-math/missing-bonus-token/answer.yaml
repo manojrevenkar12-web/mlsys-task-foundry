@@ -1,0 +1,14 @@
+expected_tokens_a08_k4: 2.952
+speedup_a08_k4_c005: 2.46
+best_k_a08_c005: 9
+best_k_a06_c02: 3
+speedup_a06_c02_best: 1.225
+explanation: >-
+  With per-token acceptance alpha, the i-th draft token survives with probability alpha^(i-1)
+  times its own acceptance, so the expected tokens per target pass is the geometric sum
+  1 + alpha + ... + alpha^(k-1) = (1 - alpha^k) / (1 - alpha). One round costs k draft steps plus
+  one target pass, k c + 1 target-step units, against one token per target step for plain
+  decoding, so speedup = (1 - alpha^k) / ((1 - alpha)(k c + 1)). For alpha=0.8, k=4 that is 2.952
+  tokens and a 2.46x speedup at c=0.05; the best k is 9. For alpha=0.6, c=0.2 the best k is 3
+  with 1.225x. It stops paying off when alpha is low or the draft is expensive: extra draft
+  tokens are accepted with geometrically falling probability while each costs c.

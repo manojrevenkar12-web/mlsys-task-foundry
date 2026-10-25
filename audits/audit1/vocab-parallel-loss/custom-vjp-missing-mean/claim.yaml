@@ -1,0 +1,1 @@
+wrong: "The forward loss is the correct mean NLL, but the hand-written custom_vjp backward returns (softmax - one_hot) * g without the 1/T factor of the mean, so jax.grad of mean_nll is T times too large (right direction, wrong magnitude), violating the requirement that the gradient be right."

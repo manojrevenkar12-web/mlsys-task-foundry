@@ -1,0 +1,1 @@
+wrong: "overlapped_step_ms is given as 3.71 ms, the step time with loading removed entirely; with perfect overlap each step takes the longer of loading (~16.6 ms) and the rest (~3.7 ms), so the mean overlapped step is ~16.6 ms, as the prompt defines."

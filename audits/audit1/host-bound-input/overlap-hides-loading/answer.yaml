@@ -1,0 +1,14 @@
+bottleneck: host_input
+device_busy_share: 0.113
+largest_host_phase: decode_images
+overlapped_step_ms: 3.71
+explanation: >-
+  In steps 1-9 a step takes about 20.3 ms, of which load_batch takes about 16.6 ms on the Python
+  thread (decode_images ~15.0 ms, augment ~1.6 ms) and the update's ThunkExecutor execution on the
+  tf_XLAExecute thread only ~2.3 ms, so the device is busy about 11% of the step and idles while
+  the host decodes images. Changes, in order of gain: (1) prefetch / load the next batch in a
+  background thread or process pool while the current update runs, which hides the loading so the
+  step drops to the remaining ~3.7 ms; (2) vectorise decode_images (decode the whole batch with
+  one NumPy operation instead of a per-image Python loop) and use parallel decoding workers;
+  (3) vectorise augment the same way; (4) keep the update dispatched asynchronously instead of
+  blocking on the loss every step.

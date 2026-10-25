@@ -1,0 +1,1 @@
+wrong: "allocate takes free blocks one at a time and raises OutOfBlocks only when the pool runs dry part-way, without returning the blocks it already took; the failed call leaks them (num_free drops and they never come back), violating 'leave the pool exactly as it was before the call'."

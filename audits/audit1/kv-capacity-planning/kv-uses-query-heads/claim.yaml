@@ -1,0 +1,1 @@
+wrong: "It sizes the KV cache with the 32 query heads instead of the 8 KV heads of grouped-query attention, so KV bytes per token are 4x too large (524,288 instead of 131,072) and every derived count is 4x too small (6,191 blocks / 12 / 24 sequences instead of 24,766 / 48 / 96)."

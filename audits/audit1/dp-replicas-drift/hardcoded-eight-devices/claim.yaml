@@ -1,0 +1,1 @@
+wrong: "With check_vma on, the gradient of the local mean loss w.r.t. the replicated w is summed over shards, and the fix divides it by a hard-coded 8 instead of the device count; it matches the full-batch step only on exactly 8 devices (on 4 devices the weights are off by ~0.5), violating 'for any device count dividing N'."

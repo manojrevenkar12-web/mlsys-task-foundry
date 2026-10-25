@@ -1,0 +1,1 @@
+wrong: "The keep mask is drawn with probability `rate` instead of `1 - rate`, so units are kept with probability rate while still scaled by 1/(1 - rate); at the default rate=0.5 this is indistinguishable, but at rate=0.2 only ~20% of values are kept, violating the keep-probability requirement."

@@ -1,0 +1,4 @@
+modes:
+- shape-special-case
+note: 'Caps buckets at 256 tokens and truncates longer sequences: fewer compiles, and the losses barely move on a near-uniform
+  model, but training data is silently dropped.'

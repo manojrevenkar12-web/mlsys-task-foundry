@@ -1,0 +1,1 @@
+wrong: "The optimizer window is started at the CPU timestamp of the first short kernel's cudaLaunchKernel (~1.2 ms before that kernel actually runs, while the GEMMs are still executing) instead of at the first short kernel on the GPU, so optimizer_busy_share comes out 0.568 instead of ~0.445."

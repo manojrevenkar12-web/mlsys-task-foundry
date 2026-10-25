@@ -63,3 +63,19 @@ def padding_stays_below_twice_the_longest_sequence(sol, ctx: Ctx):
         ratios.append(np.asarray(tokens).shape[1] / longest)
     if np.mean(ratios) > 2.0:
         fail(f"batches are padded to {np.mean(ratios):.1f}x their longest sequence on average")
+
+
+@check(targets=["shape-special-case"])
+def every_real_token_survives_bucketing(sol, ctx: Ctx):
+    """Bucketing may add padding, never remove data: long sequences keep every token."""
+    longest = 0
+    pairs = zip(_starter(ctx).batches(seed=11, n_batches=40, batch=64), sol.batches(seed=11, n_batches=40, batch=64), strict=True)
+    for i, ((t0, m0), (t1, m1)) in enumerate(pairs):
+        t0, m0, t1, m1 = (np.asarray(a) for a in (t0, m0, t1, m1))
+        longest = max(longest, int(m0.sum(axis=1).max()))
+        if not np.array_equal(m0.sum(axis=1), m1.sum(axis=1)):
+            fail(f"batch {i}: the real-token counts per sequence changed")
+        if not all(np.array_equal(t0[r][m0[r] > 0], t1[r][m1[r] > 0]) for r in range(len(t0))):
+            fail(f"batch {i}: the real tokens changed")
+    if longest <= 256:
+        fail("grader error: the seed produced no sequence longer than 256 tokens")

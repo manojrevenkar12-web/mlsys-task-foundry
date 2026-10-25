@@ -1,0 +1,1 @@
+wrong: "It keeps the -inf masking and only replaces the NaN pooled vector of an empty sequence with zeros via an outer jnp.where; the forward pass and loss become finite, but the NaN weights are still computed, so jax.grad(loss) w.r.t. values is NaN for any batch with an empty sequence (the where-gradient trap), violating finite gradients for any mask."

@@ -1,0 +1,1 @@
+wrong: "The math is fixed (gradient and loss are pmean'd over shards), but make_step still passes check_vma=False to shard_map, violating the requirement that make_step run with shard_map's default varying-across-devices checks on."

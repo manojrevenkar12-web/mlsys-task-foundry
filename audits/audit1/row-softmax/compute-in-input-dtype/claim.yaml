@@ -1,0 +1,1 @@
+wrong: "The kernel never upcasts the block, so for bfloat16 inputs the max, exp, sum and division all run in bfloat16 rather than float32 as the prompt requires; float32 inputs are exact, but bf16 rows are less accurate (row sums off by up to ~0.005 and errors ~2x a float32-computed softmax)."

@@ -1,0 +1,15 @@
+bottleneck: launch_bound
+gpu_busy_share: 0.568
+kernels_per_iteration: 602
+optimizer_busy_share: 0.568
+explanation: >-
+  Each ~5.4 ms iteration launches 602 kernels from the Python thread: two bf16 GEMMs (~0.4 and
+  ~0.8 ms) and then 600 tiny vectorized_elementwise kernels (mul/add/lerp/sqrt_div, 2-4 us each),
+  the per-parameter optimizer update. Each cudaLaunchKernel costs ~8 us of CPU time, more than the
+  kernel it launches, so after the GEMMs the stream drains and the GPU waits for the next launch;
+  overall a kernel is running only ~57% of the iteration, and measured from the launch of the
+  first short kernel to the end of the iteration the GPU is busy ~57% as well. Fixes: use a
+  fused / multi-tensor (foreach) optimizer so the 600 elementwise launches become a handful,
+  which should cut the iteration from ~5.4 ms towards ~1.5 ms; or capture the step in a CUDA
+  graph so the launches are replayed with one CPU call; and torch.compile the optimizer step to
+  fuse the elementwise ops.

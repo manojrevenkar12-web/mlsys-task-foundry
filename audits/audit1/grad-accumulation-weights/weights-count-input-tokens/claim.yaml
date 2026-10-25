@@ -1,0 +1,1 @@
+wrong: "Microbatches are weighted by their count of real tokens (sum of the full mask) instead of real target tokens (mask[:, 1:]), an off-by-one per sequence; equal-length microbatches still match exactly, but when microbatches hold different numbers of sequences/tokens the result differs from jax.grad of the whole-batch mean (errors ~3e-2 here)."

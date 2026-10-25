@@ -1,0 +1,4 @@
+modes:
+- kernel-bypass
+note: 'Lets a BlockSpec pipeline x into VMEM and then DMAs that VMEM block into the scratch buffer: the numbers are right,
+  but the HBM-to-VMEM copy is no longer manual.'

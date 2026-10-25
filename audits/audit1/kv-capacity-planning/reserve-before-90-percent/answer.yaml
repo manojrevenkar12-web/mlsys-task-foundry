@@ -1,0 +1,13 @@
+kv_bytes_per_token: 131072
+kv_blocks: 24957
+seqs_at_8k: 48
+seqs_at_8k_fp8: 97
+explanation: >-
+  KV per token = 2 (K and V) x 32 layers x 8 KV heads x 128 dims x 2 bytes = 131,072 bytes
+  (GQA: only the 8 KV heads are cached). Take the 4e9 bytes of activations and CUDA context off
+  the 80e9 first, apply the 90% limit to the remaining 76e9 (68.4e9), and subtract the weights
+  (8.03e9 x 2 = 16.06e9): 52.34e9 bytes of KV. A block is 16 x 131,072 = 2,097,152 bytes, so
+  24,957 blocks. An 8k sequence needs 8,192 / 16 = 512 blocks: 48 sequences. FP8 halves the
+  block to 1,048,576 bytes: 49,915 blocks, 97 sequences. So at 8k context the decode batch is
+  capped at about 48 concurrent conversations (about 97 with FP8 KV), regardless of how much
+  compute is free.

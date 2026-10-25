@@ -1,0 +1,1 @@
+wrong: "x is passed as a blocked (rows, d) VMEM input via BlockSpec, and the kernel's \"manual DMA\" only copies that already-pipelined VMEM block into the scratch buffer; x no longer stays in HBM and the HBM-to-VMEM transfer is done by the BlockSpec pipeline, which the prompt explicitly says is not a port."

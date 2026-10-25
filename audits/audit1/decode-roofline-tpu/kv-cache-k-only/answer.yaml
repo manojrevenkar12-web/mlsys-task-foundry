@@ -1,0 +1,14 @@
+step_ms_b1_l4096: 9.969
+tokens_per_s_b1_l4096: 100.32
+crossover_batch_l128: 792.4
+max_context_for_crossover: 437.26
+tokens_per_s_b256_l4096: 4946.1
+explanation: >-
+  Weights are 8.03e9 x 2 bytes = 16.06e9 bytes; the KV cache is 32 layers x 8 KV heads x 128
+  dims x 2 bytes = 65,536 bytes per token. At B=1, L=4096 a step reads 16.06e9 + 0.268e9 bytes,
+  9.97 ms at 1,638 GB/s, against 0.017 ms of compute (2 x 8.03e9 FLOPs at 918 TFLOP/s), so
+  ~100 tokens/s. Compute per sequence is worth 2.87e7 bytes of HBM time; at L=128 the crossover
+  is B = 16.06e9 / (2.87e7 - 128 x 65536) ~ 792, and no batch is compute-bound once
+  L x 65536 exceeds 2.87e7, i.e. beyond ~437 tokens. At B=256, L=4096 memory is 51.8 ms versus
+  4.5 ms compute: ~4,946 tokens/s. Small batches are bound by weight reads, large batches by
+  per-sequence KV reads, which grow with context and push the crossover out.

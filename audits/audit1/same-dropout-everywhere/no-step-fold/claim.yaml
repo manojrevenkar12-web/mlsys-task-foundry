@@ -1,0 +1,1 @@
+wrong: "The key is folded with the shard index only, never with `step`, so each shard gets its own mask but the same mask is reused at every training step, violating 'every step gets a new one'."
