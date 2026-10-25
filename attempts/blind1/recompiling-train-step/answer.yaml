@@ -1,0 +1,21 @@
+cause: recompilation
+step_compiles: 12
+compile_share: 0.822
+explanation: >-
+  The 12 `train` annotations total 4,481 ms, and 3,685 ms of that (82.2%) is inside
+  `backend_compile_and_load`; the compiled code itself (`ThunkExecutor::Execute`) is only ~73 ms
+  (1.6%). Every one of the 12 batches contains a full XLA pipeline for module `jit_step` (one
+  "HLO passes through layout assignment (jit_step)" per batch, 12 in total) and a 260-330 ms
+  backend compile, plus two ~5-10 ms compiles of the small `jit(stage)` programs that
+  `jnp.asarray` uses to put the int32/float32 arrays on device, and a `lower_sharding_computation`
+  re-trace. So each step is ~370 ms of which ~300 ms is compiling a program that then runs for a
+  few ms. Cause: `batches()` pads every batch to exactly its longest sequence, so the input shape
+  (8, width) changes almost every batch (28 distinct widths in 30 batches, 53 to 274), and jit
+  specialises and caches on shape, so every new width is a cache miss and a full recompile.
+  Fix (solution.py): pad each batch up to a power-of-two bucket (16, 32, ..., 512) instead of
+  to its exact maximum. Same RNG stream, same tokens and lengths; the extra positions have mask
+  0, so the masked-mean loss is unchanged (max loss difference vs the starter 1.9e-6, float32
+  rounding). A 30-batch train now sees only widths {64, 128, 256, 512}, so `step` compiles 4
+  times (at most 6 possible buckets), the average padding is 1.40x the longest sequence (max
+  1.97x), and the 30-batch run went from ~24.6 s to ~4.3 s on this CPU. `step` stays a
+  module-level jax.jit.

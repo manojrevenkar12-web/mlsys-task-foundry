@@ -1,0 +1,31 @@
+exposed_share: 0.0804
+hidden_share: 0.902
+most_exposed_collective: reduce-scatter
+exposed_us_per_step: 1170.9
+explanation: >-
+  Over the 8 steps (116,439 us total, 14,555 us per step) collectives run for 95,728 us; 86,360
+  us of that (90.2%) overlaps a compute fusion and 9,367 us is exposed, i.e. 8.0% of step time
+  or 1,170.9 us per step. Almost all of it sits at the two edges of the step, in exactly three
+  places. (1) End of backward: the reduce-scatter of layer 0's gradients (~742 us, 722 us
+  exposed per step) can only start when `fusion.bwd.0` finishes, and there is no later backward
+  compute to hide behind - every other layer's reduce-scatter hides under the next layer's
+  ~1,074 us backward fusion. Then the `all-reduce` of loss and gradient norm (52 us, fully
+  exposed) must wait for all reduce-scatters, and `fusion.optimizer` (312 us) waits for it.
+  Total reduce-scatter exposed 5,779 us (62% of all exposed time), so reduce-scatter is the
+  most exposed collective. (2) Start of step: the all-gather of layer 0's weights (~397 us per
+  step, 3,174 us total) is the first thing in the step and `fusion.fwd.0` depends on it, so
+  nothing can overlap it; all later gathers are prefetched one layer ahead and hide under the
+  ~560 us forward / ~1,074 us backward fusions (layer 7 is not re-gathered for backward). (3)
+  The all-reduce, 415 us total.
+  Changes: (a) overlap the tail reduce-scatter: split layer 0's backward (and its gradient
+  reduce-scatter) into buckets, e.g. reduce-scatter the MLP weight gradients while the attention
+  backward of layer 0 still runs, and run the optimizer update of layers 7..1 (whose shards are
+  already reduced, ~7/8 of 312 us) while layer 0's reduce-scatter is in flight; reduce gradients
+  in bf16 rather than fp32 to roughly halve the 742 us reduce-scatter; compute the gradient-norm
+  partials per layer as shards arrive so the final all-reduce is only a scalar. Expected:
+  ~400-700 us of the 774 us tail hidden. (b) hide the first all-gather: update layer 0's shard
+  first in the optimizer and issue the next step's layer-0 all-gather immediately, overlapping
+  the rest of the optimizer (~270 us of the 397 us), or keep layer 0 (the first block) unsharded
+  /replicated so it needs no gather at all (memory cost of one layer). Together these would cut
+  exposed time from ~1,171 us to roughly 300-400 us per step, about a 5-6% shorter step (the
+  ceiling is the full 8.0% if all communication were hidden; compute is busy 92% of the step).

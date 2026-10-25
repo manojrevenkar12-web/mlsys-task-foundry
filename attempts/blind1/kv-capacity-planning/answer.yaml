@@ -1,0 +1,22 @@
+kv_bytes_per_token: 131072
+kv_blocks: 24766
+seqs_at_8k: 48
+seqs_at_8k_fp8: 96
+explanation: >-
+  KV bytes per token = 2 (K and V) x 32 layers x 8 KV heads x 128 head dim x 2 bytes (bf16)
+  = 131,072 bytes (128 KiB); GQA matters here: with 32 KV heads it would be 4x larger.
+  Budget: 90% of 80e9 = 72.0e9 bytes. Weights = 8.03e9 x 2 = 16.06e9 bytes. Reserve 4e9 for
+  activations and the CUDA context. KV cache = 72.0e9 - 16.06e9 - 4.0e9 = 51.94e9 bytes.
+  One 16-token block = 16 x 131,072 = 2,097,152 bytes, so 51.94e9 / 2,097,152 = 24,766.9 ->
+  24,766 whole blocks (= 396,256 token slots). An 8,192-token sequence needs 8,192 / 16 = 512
+  blocks (1 GiB = 1.07e9 bytes of KV each), so 24,766 / 512 = 48.37 -> 48 sequences.
+  With FP8 KV (1 byte per value) a block is 1,048,576 bytes, 51.94e9 / 1,048,576 = 49,533
+  blocks, / 512 = 96.7 -> 96 sequences (exactly double, since the weights are unchanged and
+  only the KV pool shrinks per token).
+  Meaning: if every conversation is 8k tokens long, the server can hold at most 48 (bf16) or
+  96 (FP8) of them in flight at once, so the decode batch is capped at 48 / 96 by memory, not
+  by compute; a 49th long conversation must wait or force a preemption/swap. Each 8k sequence
+  costs ~1.07 GB of HBM, roughly 1/15 of the weights, so at batch 48 the step reads ~51.5 GB
+  of KV vs 16 GB of weights and decode is dominated by KV traffic. Shorter real conversations
+  (paged allocation only takes the blocks actually used) let more fit; prefix sharing, FP8 KV,
+  or a second GPU raise the cap.

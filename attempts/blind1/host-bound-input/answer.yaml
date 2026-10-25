@@ -1,0 +1,28 @@
+bottleneck: host_input
+device_busy_share: 0.113
+largest_host_phase: decode_images
+overlapped_step_ms: 16.63
+explanation: >-
+  Steady state (steps 1-9): the mean `train` step is 20.34 ms, but the device (the
+  `ThunkExecutor::Execute (wait for completion)` events on the tf_XLAExecute thread) is busy only
+  2.30 ms per step, an 11.3% share (0.6-3.1 ms per step). `load_batch` on the Python thread takes
+  16.63 ms per step (81.8% of the step), and inside it `decode_images` takes 15.00 ms (73.8% of
+  the step) and `augment` 1.61 ms (7.9%); the remaining ~1.4 ms is jnp.asarray staging, the
+  `PjitFunction(update)` dispatch (~80 us) and the blocking wait. Nothing overlaps: load, then
+  dispatch, then `block_until_ready`, so the device sits idle while Python decodes the next batch.
+  Compilation is only in step 0 (185 ms backend_compile_and_load), so this is host input-bound,
+  not compute- or compile-bound. If loading the next batch overlapped perfectly with the update,
+  each step would take max(load, rest) = 16.63 ms on average (an 18% gain only), since load is
+  still longer than everything else; to get further the loader itself must get faster.
+  Changes in order of expected gain: (1) make decoding cheap: vectorise `decode_images` over the
+  whole batch (one rng.integers call for (64, 64, 64, 3) and one reshape-mean instead of a 64-
+  iteration Python loop), or better use a real decoder library / pre-decoded uint8 dataset
+  (e.g. tf.data / grain / DALI), and parallelise decoding across worker processes, which attacks
+  the 15 ms (74%) phase directly; (2) run the loader asynchronously - a background thread or
+  multiprocess prefetch queue of 2-3 batches, and drop the per-step `block_until_ready` so JAX's
+  async dispatch overlaps the update with loading - bringing the step to max(load, device) =
+  16.6 ms now, and to ~2.3-3 ms (device-bound) once loading is parallel/fast enough; (3)
+  vectorise `augment` (batched flips via a mask and per-image rolls via index arithmetic, or do
+  the augmentation on device inside the jitted update with jax.random), saving ~1.6 ms; (4)
+  transfer uint8 instead of float32 and normalise on device, and use jax.device_put of the
+  prefetched batch ahead of time, cutting the host-to-device copy size 4x.

@@ -115,7 +115,8 @@ class Ctx:
         except (TypeError, ValueError) as e:
             raise CheckFailed(f"{key}: {self.answer[key]!r} is not a number") from e
         if not (abs(got - want) <= max(abs_, rel * abs(want))):
-            raise CheckFailed(f"{key}: {got:g} is not within {rel:.0%} of the correct value")
+            tol = f"{rel:.0%}" if rel * abs(want) >= abs_ else f"{abs_:g}"
+            raise CheckFailed(f"{key}: {got:g} is not within {tol} of the correct value")
 
     def label(self, key: str, allowed: set[str] | str) -> None:
         """An answer field that must be one of the accepted labels (case-insensitive)."""

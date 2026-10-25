@@ -10,7 +10,9 @@ weights, `reduce-scatter` of each layer's gradients, one `all-reduce`). Collecti
 In `answer.yaml` give:
 
 - `exposed_share`: exposed collective time as a share (0 to 1) of the total step time;
-- `hidden_share`: the share (0 to 1) of all collective time that overlaps with compute;
+- `hidden_share`: the share (0 to 1) of collective time that overlaps with compute, where collective
+  time is the wall-clock time during which at least one collective runs (the two async lanes can
+  overlap each other; count such a moment once);
 - `most_exposed_collective`: `all-gather`, `reduce-scatter` or `all-reduce`: the one with the most
   exposed time in total;
 - `exposed_us_per_step`: mean exposed collective time per step, in microseconds;

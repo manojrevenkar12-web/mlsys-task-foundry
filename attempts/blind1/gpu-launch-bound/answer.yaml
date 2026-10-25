@@ -1,0 +1,29 @@
+bottleneck: launch_bound
+gpu_busy_share: 0.568
+kernels_per_iteration: 602
+optimizer_busy_share: 0.445
+explanation: >-
+  Each of the 5 iterations (mean 5,427 us) launches 602 kernels with 602 `cudaLaunchKernel`
+  calls: 2 bf16 GEMMs (~390 us and ~810 us, together ~1,200 us) and then 600 tiny elementwise
+  kernels - 150 each of mul, add, lerp and sqrt_div, i.e. an unfused, per-parameter (for-loop)
+  Adam update over 150 tensors - averaging only 3.1 us each (~1,875 us of work in total). Each
+  launch call takes ~8.0 us on the Python thread and launches are issued every ~9 us, so the CPU
+  produces kernels roughly 3x slower than the GPU consumes them. During the GEMMs the CPU gets
+  ahead (the first ~130 small kernels queue up and run back-to-back), but after that the GPU
+  waits on every launch: median idle gap between kernels 4.8 us (90th percentile 7 us), and the
+  launch-to-start lag drops to ~9-12 us, i.e. kernels start as soon as they are launched. Result:
+  the GPU is busy only 56.8% of the iteration, and only 44.5% of the optimizer phase (the 4.2 ms
+  from the first <10 us kernel to the end of the iteration, 78% of the iteration). The GEMMs run
+  at full speed; it is not compute-, memory- or data-bound - the iteration length is set by
+  600 x ~7-9 us of CPU launch overhead.
+  Changes, in order: (1) use a fused / multi-tensor optimizer (torch.optim.AdamW(fused=True) or
+  foreach=True, or apex FusedAdam), which replaces the 600 launches with a few multi_tensor_apply
+  kernels; the optimizer phase drops from ~4.2 ms to roughly the bandwidth time of the update
+  (well under 0.5 ms), so the iteration goes from ~5.4 ms to ~1.5-1.7 ms (~3x). (2) Capture the
+  step with CUDA graphs (torch.cuda.graphs / torch.compile mode="reduce-overhead"), which removes
+  per-kernel CPU launch cost altogether: even without fusion the GPU would then run the 602
+  kernels back to back, ~1.2 ms + ~1.9 ms = ~3.1 ms (1.75x); with the fused optimizer ~1.3-1.5 ms.
+  (3) torch.compile the optimizer step / elementwise chain to fuse mul+add+lerp+sqrt_div into one
+  kernel per parameter group (4x fewer launches). (4) Flatten parameters into a few large buffers
+  so each kernel does enough work to cover launch latency. After these the iteration is bound by
+  the GEMMs (~1.2 ms), which is where further work (bigger batches, better GEMM shapes) belongs.

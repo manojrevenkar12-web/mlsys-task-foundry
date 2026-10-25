@@ -1,0 +1,22 @@
+expected_tokens_a08_k4: 3.3616
+speedup_a08_k4_c005: 2.8013
+best_k_a08_c005: 8
+best_k_a06_c02: 2
+speedup_a06_c02_best: 1.4
+explanation: >-
+  With i.i.d. acceptance probability alpha, the number of accepted draft tokens is the length of
+  the accepted prefix (capped at k) and the target always adds one token, so expected tokens per
+  target pass E(k) = 1 + alpha + alpha^2 + ... + alpha^k = (1 - alpha^(k+1)) / (1 - alpha).
+  One round costs k draft steps plus one verify pass = (1 + k c) target steps, while plain
+  decoding produces 1 token per target step, so speedup S(k) = (1 - alpha^(k+1)) /
+  ((1 - alpha)(1 + k c)). alpha=0.8, k=4: E = (1 - 0.8^5)/0.2 = 3.3616 tokens; cost 1.2;
+  S = 2.801. For alpha=0.8, c=0.05, S(k) for k=1..10 = 1.714, 2.218, 2.567, 2.801, 2.951,
+  3.040, 3.082, 3.092, 3.078, 3.047, best k = 8 (S = 3.092). For alpha=0.6, c=0.2: S = 1.333,
+  1.400, 1.360, 1.281, 1.192, 1.105, 1.024, 0.952, ... best k = 2 (S = 1.40); from k = 8 on it
+  is slower than plain decoding. It stops paying off when the marginal token is worth less than
+  its cost: going from k to k+1 adds alpha^(k+1) expected tokens but c of cost, so longer drafts
+  help only while alpha^(k+1) / E(k) > c / (1 + k c) roughly; with low alpha or an expensive
+  draft (large c) the best k is small and the gain shrinks, and if alpha is low enough that
+  (1 + alpha) / (1 + c) < 1 (alpha < c for k=1) it never pays. The model also ignores that the
+  verify pass with k+1 tokens is not free at large batch: once decode becomes compute-bound
+  (big batches) verification costs more than one step and the speedup falls further.

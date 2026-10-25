@@ -1,0 +1,26 @@
+step_ms_b1_l4096: 10.1324
+tokens_per_s_b1_l4096: 98.69
+crossover_batch_l128: 1351.98
+max_context_for_crossover: 218.63
+tokens_per_s_b256_l4096: 2731.8
+explanation: >-
+  Model: memory time = (16.06e9 weight bytes + B x L x 131,072 KV bytes/token) / 1,638e9 B/s;
+  compute time = B x 2 x 8.03e9 / 918e12. KV per token = 2 x 32 x 8 x 128 x 2 B = 131,072 B.
+  B=1, L=4096: memory = (16.06e9 + 0.537e9) / 1.638e12 = 10.13 ms vs compute 0.0175 ms, so the
+  step is 10.13 ms and the sequence gets ~98.7 tokens/s; the chip is ~580x away from
+  compute-bound. At small batch decode is purely weight-bandwidth bound: every step streams all
+  16 GB of weights to do only 2 FLOPs per parameter per sequence (arithmetic intensity ~B FLOP/B
+  vs the v6e ridge of 918e12/1.638e12 = 560 FLOP/byte), so adding sequences is nearly free.
+  At L=128 compute equals memory at B = (W/BW) / (2P/F - L*kv/BW) = 9.80 ms / (17.49 us - 10.24
+  us) = 1,352 sequences (step ~23.7 ms). But KV traffic grows with B too: each sequence adds
+  L x 131,072 bytes of reads (L x 80 ns) against a fixed 17.5 us of compute, so as B grows the
+  step tends to a per-sequence ratio and compute can only win if L x 131,072 / 1.638e12 <
+  2 x 8.03e9 / 918e12, i.e. L < 218.6 tokens. Above ~219 tokens of context no batch size makes
+  decode compute-bound; the KV reads (which, unlike the weights, are not amortised across the
+  batch) keep it memory-bound. At B=256, L=4096: memory = (16.06e9 + 137.4e9) / 1.638e12 =
+  93.7 ms vs compute 4.48 ms, so 256 / 0.0937 = 2,732 tokens/s total (10.7 per sequence): large
+  batches raise throughput 28x but at long context the step is dominated by KV reads (90% of
+  bytes). Longer contexts move the crossover to larger batches (and past L~219 make it
+  disappear) because they add memory time per sequence without adding (modelled) FLOPs; fixes
+  are KV-side: FP8/int8 KV, fewer KV heads / MLA, prefix sharing, or splitting the batch across
+  chips.
