@@ -1,0 +1,3 @@
+modes:
+- all-gather-kv
+note: 'All-gathers K and V on every device and masks locally: right answers, but every device holds the whole sequence.'

@@ -1,0 +1,19 @@
+bottleneck: straggler
+straggler_host: 2
+stall_event: read_shard_from_storage
+stalled_steps: 6
+mean_step_ms: 16.47
+step_ms_without_stall: 13.34
+explanation: 'The all-reduce events are long on hosts 0, 1 and 3 (about 100-105 ms in total over 20 steps)
+  and short on host 2 (46 ms). An all-reduce cannot finish before the last participant joins, so its duration
+  on an early host is mostly waiting; the host with the shortest all-reduce is the one everybody waits
+  for. Host 2 is last to reach the all-reduce by more than 1 ms in 6 of 20 steps, and in exactly those
+  steps its Host input lane starts with read_shard_from_storage (6-12 ms), an event no other host has.
+  On the other steps all hosts arrive within about 0.5 ms and the all-reduce takes about 2 ms, so the
+  network is not the problem. Mean step is 16.5 ms; without the storage reads it would be about 13.7 ms,
+  a 17% gain, and the stalled steps would drop from about 24 ms to about 13.5 ms. Fix: prefetch host 2''s
+  shards ahead (a background reader with a queue of a few batches), or cache the shards locally; check
+  why only host 2 reads from storage (a cold cache or a slow disk on that machine). More bandwidth or
+  a faster all-reduce would not help.
+
+  '

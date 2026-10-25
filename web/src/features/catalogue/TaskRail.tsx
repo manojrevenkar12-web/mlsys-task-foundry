@@ -41,6 +41,7 @@ export function TaskRail({ tasks }: { tasks: TaskRow[] }) {
                 <li key={t.id}>
                   <NavLink to={`/tasks/${t.id}`} className={styles.item}>
                     <span className={styles.title}>{t.title}</span>
+                    {t.tier === "hard" && <span className={styles.tier}>Hard tier: prompts state requirements, not traps</span>}
                     <span className={styles.meta}>
                       <Difficulty level={t.difficulty} />
                       <ProofMark t={t} />

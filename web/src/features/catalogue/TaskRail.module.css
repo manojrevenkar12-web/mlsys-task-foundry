@@ -89,3 +89,10 @@
 .proof[data-state="proven"] { color: var(--proven); }
 .proof[data-state="broken"] { color: var(--broken); }
 .proof[data-state="unproven"] { color: var(--ink-faint); }
+
+.tier {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--ink-faint);
+  font-size: var(--text-xs);
+}

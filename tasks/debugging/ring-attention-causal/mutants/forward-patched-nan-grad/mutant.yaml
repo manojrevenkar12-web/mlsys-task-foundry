@@ -1,0 +1,4 @@
+modes:
+- nan-gradient
+note: 'Masks with an additive -inf bias and visits a fully masked block first, then hides exp(-inf - -inf) behind a where(): the forward pass is right, but the NaN reaches q and k through the bias addition
+  in the backward pass.'

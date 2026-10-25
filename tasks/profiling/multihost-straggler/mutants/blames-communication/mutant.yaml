@@ -1,0 +1,3 @@
+modes:
+- straggler-blame
+note: Takes the long all-reduce events at face value and calls the job communication-bound.

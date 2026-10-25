@@ -52,7 +52,7 @@ export function TaskPage() {
           <article className={styles.page} data-area={task.area}>
             <header className={styles.header}>
               <p className={styles.area}>
-                {AREA_LABEL[task.area]}, difficulty {task.difficulty} of 5
+                {AREA_LABEL[task.area]}, difficulty {task.difficulty} of 5{task.tier === "hard" ? ", hard tier" : ""}
               </p>
               <h1 className={styles.title}>{task.title}</h1>
             </header>

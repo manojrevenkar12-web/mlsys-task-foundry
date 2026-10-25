@@ -1,0 +1,3 @@
+modes:
+- gqa-grouping
+note: Groups query heads by modulo (head j uses KV head j % Hkv) instead of by block (j // G).

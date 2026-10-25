@@ -14,9 +14,20 @@ modes:
   quant-scale-axis: {area: kernels, text: "Applies per-channel quantisation scales along the wrong axis or at the wrong time", source: expert}
   int-accum-overflow: {area: kernels, text: "Accumulates int8 products in a narrow integer type", source: expert}
   interpret-only: {area: kernels, text: "Passes in the TPU interpreter but cannot lower for a real chip (blocks off the (8, 128) tiling, ops Mosaic does not support)", source: "Pallas TPU lowering rules; interpret mode does not enforce them"}
+  hbm-traffic: {area: kernels, text: "Picks tiles by rule of thumb (512 x 512) instead of from the traffic they cause; re-reads an operand once per block of the other", source: expert}
+  pipeline-revisits: {area: kernels, text: "Misjudges when the TPU pipeline skips a copy (block index unchanged between consecutive steps), e.g. keeps a reduction axis when one block of K would let an operand be read once", source: "Pallas TPU pipelining docs"}
+  vmem-budget: {area: kernels, text: "Sizes blocks for VMEM without double buffering or the accumulator scratch", source: expert}
+  paged-traffic: {area: kernels, text: "Fetches every page-table slot (or the page after the last) instead of only the live pages; misses that a repeated block index skips the copy", source: "JetStream / vLLM TPU ragged paged attention"}
+  nan-past-length: {area: kernels, text: "Masks the scores but still multiplies garbage V rows past the length (0 x NaN = NaN)", source: expert}
+  gqa-grouping: {area: any, text: "Maps query heads to KV heads by modulo instead of by group (or the reverse)", source: expert}
+  paged-gather: {area: kernels, text: "Gathers the pages into a contiguous array outside the kernel, reading and writing the whole cache", source: expert}
   kernel-bypass: {area: kernels, text: "Computes the answer with plain jnp/XLA instead of the kernel the task asks for", source: "KernelBench: fallback to library calls"}
   shape-special-case: {area: any, text: "Hard-codes the shapes or values the visible tests use", source: "KernelBench-Verified: shape-matched bypasses"}
   narrow-distribution: {area: any, text: "Correct only on the input distribution the visible tests use", source: "KernelBench-Verified: four-distribution hidden suite"}
+  ring-offset: {area: debugging, text: "Gets which device's K/V block is held at each ring step (or its positions) wrong, breaking the causal mask across shards", source: expert}
+  nan-gradient: {area: any, text: "Uses -inf masking so a fully masked block gives exp(-inf - -inf) = NaN in the backward pass, even if the forward pass is patched", source: expert}
+  all-gather-kv: {area: debugging, text: "Gathers the full K and V on every device instead of passing blocks around the ring", source: expert}
+  vma-carry: {area: debugging, text: "Starts a loop carry or accumulator as a device-invariant value under shard_map's varying-axes check (or uses the removed jax.lax.pvary to fix it)", source: "JAX 0.12 shard_map check_vma"}
   missing-collective: {area: debugging, text: "Leaves out a psum/pmean, so shards drift apart", source: expert}
   wrong-partition-spec: {area: debugging, text: "Shards the wrong axis, or reduces over a sharded axis without a collective", source: expert}
   rng-key-reuse: {area: debugging, text: "Reuses one PRNG key where independent randomness is needed (across shards or steps)", source: expert}
@@ -28,7 +39,11 @@ modes:
   exposed-communication: {area: profiling, text: "Misreads how much collective time overlaps with compute", source: expert}
   launch-bound: {area: profiling, text: "Misses that many small kernels leave the GPU idle between launches", source: expert}
   roofline-misclassified: {area: profiling, text: "Calls a memory-bound op compute-bound or the reverse", source: expert}
+  straggler-blame: {area: profiling, text: "Reads a long collective as slow communication (or blames the host that waits longest) instead of finding the late participant everyone waits for", source: expert}
+  straggler-what-if: {area: profiling, text: "Estimates the gain from removing a stall by deleting waiting time rather than replaying the arrival order", source: expert}
   units: {area: any, text: "Mixes GB and GiB, bits and bytes, or per-direction and bidirectional bandwidth", source: expert}
+  sliding-window-blocks: {area: serving, text: "Counts a sliding window's KV as window / block_size blocks, ignoring that an unaligned window straddles one more block, or keeps the full context for windowed layers", source: expert}
+  prefix-sharing: {area: serving, text: "Shares (or fails to share) a cached prefix in layers where it is not (or is) still held", source: expert}
   kv-capacity: {area: serving, text: "Gets KV-cache size per token wrong (layers, K and V, GQA heads, dtype)", source: expert}
   block-leak: {area: serving, text: "Loses KV blocks: freed sequences or preemptions do not return them", source: expert}
   copy-on-write: {area: serving, text: "Writes into a KV block another sequence still shares", source: expert}

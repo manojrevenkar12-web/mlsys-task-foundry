@@ -1,0 +1,3 @@
+modes:
+- straggler-what-if
+note: Subtracts the whole stall from the stalled steps, ignoring that host 2 then waits for the next-latest host.

@@ -11,10 +11,14 @@ function AreaRow({ area, tasks }: { area: TaskRow["area"]; tasks: TaskRow[] }) {
   const mutants = tasks.reduce((n, t) => n + (t.forge?.mutants ?? 0), 0);
   const killed = tasks.reduce((n, t) => n + (t.forge?.killed ?? 0), 0);
   const first = tasks[0];
+  const hard = tasks.filter((t) => t.tier === "hard").length;
   return (
     <tr data-area={area}>
       <th scope="row">{first ? <Link to={`/tasks/${first.id}`}>{AREA_LABEL[area]}</Link> : AREA_LABEL[area]}</th>
-      <td>{tasks.length}</td>
+      <td>
+        {tasks.length}
+        {hard > 0 && <span className={styles.hard}> ({hard} hard)</span>}
+      </td>
       <td>{proven}</td>
       <td>
         {killed} of {mutants}

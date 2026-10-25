@@ -1,0 +1,10 @@
+id: multihost-straggler
+title: "Four hosts, one slow all-reduce: who is actually holding up the step?"
+area: profiling
+kind: answer
+difficulty: 4
+tier: hard
+target: "A synthetic multi-host trace in xprof's Chrome trace format"
+skills: [trace-reading, data-parallel, collectives, stragglers, what-if-analysis]
+modes: [straggler-blame, straggler-what-if, units]
+time_limit_s: 60

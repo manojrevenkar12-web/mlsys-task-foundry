@@ -1,0 +1,4 @@
+modes:
+- reduction-axis-parallel
+note: 'Marks the reduction axis parallel: on two cores the k steps of one output block run on different cores and partial
+  sums are lost.'

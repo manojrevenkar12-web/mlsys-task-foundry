@@ -1,0 +1,3 @@
+modes:
+- straggler-blame
+note: Counts every step in which host 2 happens to be last, not only those where it is more than 1 ms late.

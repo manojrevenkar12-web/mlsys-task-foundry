@@ -1,0 +1,3 @@
+modes:
+- straggler-what-if
+note: Estimates the gain by deleting the waiting hosts' all-reduce time instead of moving host 2's arrival earlier.

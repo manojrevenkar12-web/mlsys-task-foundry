@@ -1,0 +1,21 @@
+kv_bytes_per_token_per_layer: 4096
+layer_blocks_per_conversation: 26664
+shared_layer_blocks: 0
+pool_layer_blocks: 732421
+max_conversations: 27
+explanation: 'One token in one layer stores K and V for 8 heads of 128 bf16 values: 2 x 8 x 128 x 2 =
+  4,096 bytes, so a 16-position block is 65,536 bytes. The pool is 80e9 - 24e9 (weights) - 8e9 = 48e9
+  bytes = 732,421 blocks. Global layers (8 of 48) keep every position: 32,768 / 16 = 2,048 blocks each,
+  of which the first 128 hold only the system prompt and are shared, so 1,920 per conversation per global
+  layer. Local layers (40) keep the blocks that overlap the last 4,096 positions. 4,096 is 256 blocks,
+  but the window only starts on a block boundary at one position in 16; everywhere else it straddles 257
+  blocks, and since a conversation must always be able to take its next token, I count 257. Per conversation:
+  8 x 1,920 + 40 x 257 = 15,360 + 10,280 = 25,640 blocks. The system prompt saves 8 x 128 = 1,024 blocks
+  in the global layers, held once. It saves nothing in the local layers: at 32k tokens its positions left
+  the window long ago and those blocks were freed. (732,421 - 1,024) / 25,640 = 28.5, so 28 conversations.
+  Keeping every layer''s full context would allow only 7, so the window is worth 4x here. To fit more,
+  store KV in FP8 (halves every block: about 57), use 8-position blocks for local layers to shrink the
+  straddle block, or share more prefix only if conversations really have it in common. Quantising weights
+  to FP8 frees 12 GB, about 7 more conversations.
+
+  '

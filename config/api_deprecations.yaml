@@ -18,6 +18,7 @@ removed:
   pl.debug_checks_enabled: "removed in 0.11.2; use pl.enable_debug_checks.value"
   plgpu.TritonCompilerParams: "removed in 0.8.1; use plgpu.CompilerParams"
   jax.experimental.maps: "removed (xmap); use jax.shard_map or jit with shardings"
+  jax.lax.pvary: "removed by 0.12; use jax.lax.pcast(x, axis_name, to='varying')"
 deprecated:
   jax.experimental.shard_map: "use jax.shard_map"
   jax.experimental.pjit: "use jax.jit with in_shardings/out_shardings"

@@ -13,6 +13,7 @@ export interface TaskRow {
   area: Area;
   kind: "code" | "answer" | "code+answer";
   difficulty: number;
+  tier: "core" | "hard";
   modes: string[];
   forge: ForgeBrief | null;
 }

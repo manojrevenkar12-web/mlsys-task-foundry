@@ -1,0 +1,4 @@
+modes:
+- ring-offset
+note: 'Sends K and V to the previous device but still assumes the block held at step t came from device i - t: the causal
+  mask is applied to the wrong positions.'

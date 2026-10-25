@@ -1,0 +1,10 @@
+id: kv-capacity-sliding-window
+title: "How many 32k-token conversations fit when most layers only look back 4,096 tokens?"
+area: serving
+kind: answer
+difficulty: 4
+tier: hard
+target: "Paged KV capacity for a hybrid local/global attention model on an H100 80GB, with a shared prefix"
+skills: [kv-cache, sliding-window-attention, gqa, prefix-caching, capacity-planning]
+modes: [kv-capacity, sliding-window-blocks, prefix-sharing, units]
+time_limit_s: 60

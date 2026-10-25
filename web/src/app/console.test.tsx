@@ -23,6 +23,8 @@ describe("overview and rail", () => {
     expect(screen.getAllByRole("status")[0]).toHaveTextContent(/Loading tasks/);
     const rail = await screen.findByRole("navigation", { name: "Tasks by area" });
     expect(within(rail).getByRole("link", { name: /Tiled matmul in Pallas/ })).toHaveAttribute("href", "/tasks/tiled-matmul");
+    expect(within(rail).getByRole("link", { name: /host-bound input pipeline/ })).toHaveTextContent(/Hard tier/);
+    expect(within(rail).getByRole("link", { name: /Tiled matmul/ })).not.toHaveTextContent(/Hard tier/);
     const table = await screen.findByRole("table");
     const kernels = within(table).getByRole("row", { name: /Kernels/ });
     expect(kernels).toHaveTextContent("3 of 3");

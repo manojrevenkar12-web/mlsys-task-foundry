@@ -1,0 +1,4 @@
+modes:
+- paged-traffic
+note: 'Indexes the page table with the grid step directly: right answers (compute past the length is skipped), but every page-table
+  slot is copied, live or not.'

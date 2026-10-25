@@ -1,0 +1,3 @@
+modes:
+- straggler-blame
+note: Names the input event every host runs, not the one only host 2 has.

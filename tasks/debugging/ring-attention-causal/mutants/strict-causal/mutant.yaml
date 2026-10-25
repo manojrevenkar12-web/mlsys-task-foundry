@@ -1,0 +1,3 @@
+modes:
+- ring-offset
+note: 'Masks with < instead of <=: each position no longer attends to itself (and position 0 attends to nothing).'

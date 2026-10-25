@@ -1,0 +1,3 @@
+modes:
+- prefix-sharing
+note: Copies the system prompt into every conversation instead of sharing its blocks.

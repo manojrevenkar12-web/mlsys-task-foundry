@@ -1,0 +1,3 @@
+modes:
+- output-dtype
+note: Returns the float32 accumulator instead of bfloat16 (and moves twice the output bytes).

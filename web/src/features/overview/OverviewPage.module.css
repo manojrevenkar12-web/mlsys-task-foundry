@@ -68,3 +68,7 @@
     font-size: var(--text-xl);
   }
 }
+
+.hard {
+  color: var(--ink-faint);
+}

@@ -1,0 +1,4 @@
+modes:
+- api-removed
+- vma-carry
+note: Loops with fori_loop and marks the invariant carries with jax.lax.pvary, which JAX 0.12 removed (it is now jax.lax.pcast(..., to="varying")).

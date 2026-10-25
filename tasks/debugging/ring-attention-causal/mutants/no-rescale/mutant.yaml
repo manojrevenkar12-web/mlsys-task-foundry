@@ -1,0 +1,3 @@
+modes:
+- online-softmax-rescale
+note: Never rescales the running sum and accumulator when a later block raises the running max.

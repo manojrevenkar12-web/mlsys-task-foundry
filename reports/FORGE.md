@@ -1,29 +1,34 @@
 # Forge report
 
-22 of 22 tasks proven. 124 of 124 plausible wrong solutions rejected by
-116 checks (10 checks no mutant fails).
+27 of 27 tasks proven. 157 of 157 plausible wrong solutions rejected by
+149 checks (15 checks no mutant fails).
 
 | Task | Area | Difficulty | Reference | Mutants killed | Checks | Problems |
 |---|---|---:|---|---:|---:|---|
 | dp-replicas-drift | debugging | 2 | passes (1 s) | 4/4 | 4 | - |
 | grad-accumulation-weights | debugging | 3 | passes (3 s) | 5/5 | 4 | - |
 | nan-from-padding | debugging | 3 | passes (3 s) | 5/5 | 5 | - |
+| ring-attention-causal | debugging | 5 | passes (8 s) | 7/7 | 7 | - |
 | same-dropout-everywhere | debugging | 3 | passes (3 s) | 5/5 | 4 | - |
 | vocab-parallel-loss | debugging | 4 | passes (8 s) | 6/6 | 4 | - |
 | flash-attention-causal | kernels | 4 | passes (6 s) | 8/8 | 8 | - |
 | int8-matmul-scales | kernels | 3 | passes (7 s) | 6/6 | 7 | - |
+| matmul-hbm-traffic | kernels | 5 | passes (4 s) | 7/7 | 8 | - |
+| paged-attention-decode | kernels | 5 | passes (9 s) | 7/7 | 7 | - |
 | port-dma-kernel | kernels | 3 | passes (3 s) | 8/8 | 7 | - |
 | rmsnorm-residual-ragged | kernels | 3 | passes (4 s) | 7/7 | 8 | - |
 | row-softmax | kernels | 2 | passes (3 s) | 7/7 | 7 | - |
 | tiled-matmul | kernels | 2 | passes (8 s) | 9/9 | 7 | - |
 | gpu-launch-bound | profiling | 2 | passes (0 s) | 4/4 | 4 | - |
 | host-bound-input | profiling | 2 | passes (0 s) | 5/5 | 4 | - |
+| multihost-straggler | profiling | 4 | passes (0 s) | 6/6 | 6 | - |
 | recompiling-train-step | profiling | 2 | passes (8 s) | 7/7 | 7 | - |
 | roofline-classify | profiling | 3 | passes (0 s) | 4/4 | 3 | - |
 | tpu-exposed-collectives | profiling | 3 | passes (0 s) | 4/4 | 4 | - |
 | continuous-batching | serving | 4 | passes (0 s) | 6/6 | 3 | - |
 | decode-roofline-tpu | serving | 3 | passes (0 s) | 4/4 | 5 | - |
 | kv-capacity-planning | serving | 2 | passes (0 s) | 4/4 | 4 | - |
+| kv-capacity-sliding-window | serving | 4 | passes (0 s) | 6/6 | 5 | - |
 | paged-kv-allocator | serving | 3 | passes (0 s) | 6/6 | 5 | - |
 | prefix-cache-hashing | serving | 3 | passes (0 s) | 6/6 | 8 | - |
 | speculative-decoding-math | serving | 2 | passes (0 s) | 4/4 | 4 | - |
@@ -58,6 +63,18 @@
 | no-max-shift | softmax-unstable | exact_for_large_scores |
 | uniform-for-empty | nan-all-masked | pool_is_right_including_empty_sequences, masked_positions_get_no_gradient, exact_for_large_scores |
 | where-after-inf | nan-all-masked | gradients_are_finite_with_an_empty_sequence |
+
+### ring-attention-causal
+
+| Mutant | Failure modes | Rejected by |
+|---|---|---|
+| forward-patched-nan-grad | nan-gradient | gradients_match_and_are_finite |
+| gather-everything | all-gather-kv | passes_kv_around_the_ring |
+| local-positions | ring-offset | matches_causal_attention, first_positions_see_only_themselves, gradients_match_and_are_finite, other_shapes_and_bf16 |
+| no-rescale | online-softmax-rescale | matches_causal_attention, gradients_match_and_are_finite, other_shapes_and_bf16 |
+| pvary-loop | api-removed, vma-carry | uses_current_api, runs_under_shard_map_with_default_checks, matches_causal_attention, first_positions_see_only_themselves, gradients_match_and_are_finite, passes_kv_around_the_ring, other_shapes_and_bf16 |
+| strict-causal | ring-offset | matches_causal_attention, first_positions_see_only_themselves, gradients_match_and_are_finite, other_shapes_and_bf16 |
+| wrong-direction | ring-offset | matches_causal_attention, gradients_match_and_are_finite, other_shapes_and_bf16 |
 
 ### same-dropout-everywhere
 
@@ -103,6 +120,30 @@
 | k-parallel | reduction-axis-parallel | matches_with_distinct_row_and_channel_scales, exact_integer_sums_with_long_k, correct_on_two_cores_in_random_order, one_sided_and_sparse_values |
 | k-tiles-of-64 | interpret-only | lowers_for_a_real_tpu |
 | scales-transposed | quant-scale-axis | correct_on_two_cores_in_random_order, one_sided_and_sparse_values |
+
+### matmul-hbm-traffic
+
+| Mutant | Failure modes | Rejected by |
+|---|---|---|
+| budget-without-accumulator | vmem-budget | fits_the_vmem_budget |
+| dot-outside | kernel-bypass | runs_one_pallas_kernel, correct_on_two_cores_in_random_order, long_reduction_matches |
+| f32-output | output-dtype | matches_on_every_distribution, fits_the_vmem_budget, moves_close_to_the_least_hbm_traffic |
+| k-axis-parallel | reduction-axis-parallel | long_reduction_matches |
+| rule-of-thumb-512 | hbm-traffic | moves_close_to_the_least_hbm_traffic |
+| single-buffered-budget | vmem-budget | fits_the_vmem_budget |
+| zero-every-step | accumulator-init | correct_on_two_cores_in_random_order, long_reduction_matches |
+
+### paged-attention-decode
+
+| Mutant | Failure modes | Rejected by |
+|---|---|---|
+| every-slot-fetched | paged-traffic | fetches_each_live_page_once_and_nothing_past_the_length |
+| gathered-outside | paged-gather, paged-traffic | one_kernel_and_no_gather_outside_it, fetches_each_live_page_once_and_nothing_past_the_length |
+| heads-by-modulo | gqa-grouping | matches_with_grouped_heads, correct_on_two_cores_in_random_order |
+| last-page-off-by-one | paged-traffic, mask-off-by-one | fetches_each_live_page_once_and_nothing_past_the_length |
+| length-inclusive | mask-off-by-one, nan-past-length | matches_with_grouped_heads, every_length_against_one_page_boundary, correct_on_two_cores_in_random_order |
+| no-rescale | online-softmax-rescale | matches_with_grouped_heads, every_length_against_one_page_boundary, correct_on_two_cores_in_random_order |
+| scores-masked-only | nan-past-length | matches_with_grouped_heads, every_length_against_one_page_boundary, correct_on_two_cores_in_random_order |
 
 ### port-dma-kernel
 
@@ -174,6 +215,17 @@
 | overlap-ignored | host-bound, units | bounds_the_step_with_perfect_overlap |
 | python-thread-events | host-bound | measures_device_busy_share |
 
+### multihost-straggler
+
+| Mutant | Failure modes | Rejected by |
+|---|---|---|
+| blames-communication | straggler-blame | names_the_bottleneck, finds_the_host |
+| counts-all-late-steps | straggler-blame | counts_the_stalled_steps |
+| longest-allreduce-host | straggler-blame | finds_the_host |
+| names-next-batch | straggler-blame | finds_the_cause |
+| removes-the-allreduce | straggler-what-if | predicts_the_step_without_the_stall |
+| stall-saved-in-full | straggler-what-if | predicts_the_step_without_the_stall |
+
 ### recompiling-train-step
 
 | Mutant | Failure modes | Rejected by |
@@ -232,6 +284,17 @@
 | fp8-weights-too | kv-capacity | sequences_that_fit_with_fp8_kv |
 | gib-hbm | units | blocks_that_fit, sequences_that_fit |
 | query-heads | kv-capacity | bytes_per_token, blocks_that_fit, sequences_that_fit, sequences_that_fit_with_fp8_kv |
+
+### kv-capacity-sliding-window
+
+| Mutant | Failure modes | Rejected by |
+|---|---|---|
+| aligned-window | sliding-window-blocks | blocks_one_conversation_needs |
+| full-context-local | sliding-window-blocks | blocks_one_conversation_needs, conversations_that_fit |
+| gib-hbm | units | blocks_in_the_pool, conversations_that_fit |
+| no-prefix-sharing | prefix-sharing | blocks_one_conversation_needs, blocks_the_system_prompt_shares, conversations_that_fit |
+| prefix-shared-everywhere | prefix-sharing | blocks_the_system_prompt_shares |
+| query-heads | kv-capacity | bytes_per_token_per_layer |
 
 ### paged-kv-allocator
 

@@ -1,0 +1,3 @@
+modes:
+- straggler-blame
+note: Blames the host with the longest total all-reduce time, which is the host that waited most.

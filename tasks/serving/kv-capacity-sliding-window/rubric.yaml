@@ -1,0 +1,21 @@
+criteria:
+  - id: window-straddles-blocks
+    weight: 30
+    text: Counts a local layer's worst case as the blocks a 4,096-position window can overlap when it does not start on a block boundary (257), and says why the worst case is the one that matters
+    pass: '"the window starts on a boundary only at one position in 16; otherwise it touches 257 blocks"'
+    fail: uses 4096 / 16 = 256 blocks without considering alignment, or keeps the full context in local layers
+  - id: prefix-where-it-saves
+    weight: 25
+    text: Says the shared system prompt saves blocks in the global layers only, and why it saves nothing in the local layers at full length
+    pass: '"8 x 128 = 1,024 shared blocks; in local layers the prompt left the window and was freed"'
+    fail: subtracts the system prompt from every layer, or ignores sharing
+  - id: arithmetic-shown
+    weight: 20
+    text: Shows the per-token bytes, the pool in blocks and the final division with decimal GB
+    pass: '"2 x 8 x 128 x 2 = 4,096 B; 48e9 / 65,536 = 732,421 blocks; (732,421 - 1,024) / 25,640 = 28.5"'
+    fail: gives only the final number, or mixes GB and GiB
+  - id: next-step-with-effect
+    weight: 25
+    text: Proposes changes that would fit more conversations and estimates the effect of at least one
+    pass: '"FP8 KV halves every block: about 57 conversations"'
+    fail: '"use a bigger GPU" with no estimate'

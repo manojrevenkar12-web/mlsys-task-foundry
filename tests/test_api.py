@@ -52,6 +52,8 @@ def test_task_list_joins_forge_results(client):
     unforged = [t for t in rows.values() if t["id"] != RUBRIC_TASK]
     assert all(t["forge"] is None for t in unforged)
     assert {t["area"] for t in rows.values()} == {"kernels", "profiling", "debugging", "serving"}
+    assert rows["paged-attention-decode"]["tier"] == "hard"
+    assert rows["tiled-matmul"]["tier"] == "core"
 
 
 def test_task_detail_has_prompt_rubric_and_mode_text(client):

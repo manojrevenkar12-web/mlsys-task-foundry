@@ -1,0 +1,4 @@
+modes:
+- vmem-budget
+note: Counts the double-buffered blocks but forgets the f32 accumulator scratch, so the tiling it picks for large shapes overflows
+  VMEM.

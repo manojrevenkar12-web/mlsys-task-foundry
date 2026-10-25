@@ -1,0 +1,3 @@
+modes:
+- kv-capacity
+note: Uses query heads instead of the 8 KV heads.

@@ -1,0 +1,4 @@
+modes:
+- mask-off-by-one
+- nan-past-length
+note: 'Treats position == length as valid: one position past the end, which holds garbage, joins the softmax.'

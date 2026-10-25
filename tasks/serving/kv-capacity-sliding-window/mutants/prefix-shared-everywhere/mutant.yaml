@@ -1,0 +1,3 @@
+modes:
+- prefix-sharing
+note: Counts the system prompt as shared in all 48 layers, though at full length the local layers freed it long ago.

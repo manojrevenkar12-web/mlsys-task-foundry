@@ -1,0 +1,3 @@
+modes:
+- sliding-window-blocks
+note: Counts 4,096 / 16 = 256 blocks per local layer, as if the window always started on a block boundary.

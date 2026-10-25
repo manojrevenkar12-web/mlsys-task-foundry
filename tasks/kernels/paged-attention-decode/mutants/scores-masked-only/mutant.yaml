@@ -1,0 +1,3 @@
+modes:
+- nan-past-length
+note: 'Masks the scores past the length but multiplies the probabilities with V rows that were never written: 0 x NaN is NaN.'

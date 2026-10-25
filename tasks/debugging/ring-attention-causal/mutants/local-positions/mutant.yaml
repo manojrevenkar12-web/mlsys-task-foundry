@@ -1,0 +1,3 @@
+modes:
+- ring-offset
+note: Builds query and key positions from local indices only, forgetting each shard's offset in the sequence.

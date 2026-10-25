@@ -219,6 +219,59 @@ def gpu_launch_bound(seed: int = 3) -> None:
     )
 
 
+def multihost_straggler(seed: int = 13) -> None:
+    """A synthetic trace of 20 data-parallel steps on 4 hosts. Each host loads its batch, runs the
+    forward and backward pass, then joins a gradient all-reduce that cannot finish before the last
+    host arrives. On 6 steps host 2 first reads a shard from storage; every other host then waits
+    inside the all-reduce, so their all-reduce events are long and host 2's is short."""
+    import random
+
+    rnd = random.Random(seed)
+    t = TASKS / "profiling" / "multihost-straggler"
+    hosts, steps = 4, 20
+    straggler = 2
+    stalled = set(rnd.sample(range(1, steps), 6))
+    ev: list[dict] = []
+    for h in range(hosts):
+        pid = h + 1
+        ev.append({"ph": "M", "pid": pid, "name": "process_name", "args": {"name": f"/host:{h} (synthetic)"}})
+        for tid, name in ((1, "Steps"), (2, "Host input"), (3, "XLA Ops"), (4, "Collectives")):
+            ev.append({"ph": "M", "pid": pid, "tid": tid, "name": "thread_name", "args": {"name": name}})
+
+    def x(pid: int, tid: int, name: str, ts: float, dur: float, **args: str) -> None:
+        ev.append({"ph": "X", "pid": pid, "tid": tid, "name": name, "ts": round(ts, 3), "dur": round(dur, 3), "args": args})
+
+    t0 = 0.0
+    for s in range(steps):
+        arrive, starts = {}, {}
+        for h in range(hosts):
+            pid, ts = h + 1, t0
+            starts[h] = ts
+            if h == straggler and s in stalled:
+                d = rnd.uniform(6000, 12000)
+                x(pid, 2, "read_shard_from_storage", ts, d, shard=str(rnd.randrange(1000)))
+                ts += d
+            nb = rnd.uniform(1200, 1800) + (rnd.uniform(0, 500) if h == 0 else 0.0)
+            x(pid, 2, "next_batch", ts, nb)
+            ts += nb
+            fb = rnd.uniform(8800, 9600)
+            x(pid, 3, "fusion.forward_backward", ts, fb)
+            arrive[h] = ts + fb
+        transfer = rnd.uniform(1900, 2100)
+        done = max(arrive.values()) + transfer
+        for h in range(hosts):
+            pid = h + 1
+            x(pid, 4, "all-reduce", arrive[h], done - arrive[h], what="gradients")
+            x(pid, 3, "fusion.optimizer", done, 600.0)
+            x(pid, 1, "train_step", starts[h], done + 600.0 - starts[h], step_num=str(s))
+        t0 = done + 600.0 + rnd.uniform(40, 80)
+    _write(
+        t / "assets" / "trace.json.gz",
+        ev,
+        {"source": "synthetic, scripts/make_assets.py multihost_straggler(seed=13); 4 hosts, xprof-style lanes"},
+    )
+
+
 def roofline_table() -> None:
     """Measured-looking op timings on an H100 (constructed: FLOPs and bytes are exact for each op's
     shape; times are chosen to land at a stated share of the roofline)."""
@@ -260,6 +313,7 @@ def roofline_table() -> None:
 
 
 BUILDERS = {
+    "multihost_straggler": multihost_straggler,
     "roofline_table": roofline_table,
     "recompiling": recompiling,
     "host_bound": host_bound,

@@ -81,6 +81,7 @@ def create_app(reports: Path | None = None, tasks_dir: Path | None = None, db: P
                     "area": t.area,
                     "kind": t.kind,
                     "difficulty": t.difficulty,
+                    "tier": str(t.meta.get("tier", "core")),
                     "modes": t.modes,
                     "forge": {
                         "ok": r.get("ok"),
@@ -105,6 +106,7 @@ def create_app(reports: Path | None = None, tasks_dir: Path | None = None, db: P
             "area": t.area,
             "kind": t.kind,
             "difficulty": t.difficulty,
+            "tier": str(t.meta.get("tier", "core")),
             "target": t.target,
             "skills": t.skills,
             "modes": t.modes,

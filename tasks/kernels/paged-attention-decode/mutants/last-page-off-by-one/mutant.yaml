@@ -1,0 +1,5 @@
+modes:
+- paged-traffic
+- mask-off-by-one
+note: 'Takes the last live page as length // page: when a length is a multiple of 16 that names the next, unused page, which
+  is copied for nothing.'

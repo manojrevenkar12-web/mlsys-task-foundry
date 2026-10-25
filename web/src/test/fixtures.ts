@@ -1,8 +1,8 @@
 import type { AttemptDoc, AuditDoc, Reviews, Summary, TaskDetail, TaskRow } from "../shared/api/types";
 
 export const rows: TaskRow[] = [
-  { id: "tiled-matmul", title: "Tiled matmul in Pallas", area: "kernels", kind: "code", difficulty: 2, modes: ["wrong-tiling"], forge: { ok: true, killed: 3, mutants: 3, checks: 4 } },
-  { id: "host-bound-input", title: "A host-bound input pipeline", area: "profiling", kind: "answer", difficulty: 3, modes: ["host-bound"], forge: { ok: false, killed: 1, mutants: 2, checks: 3 } },
+  { id: "tiled-matmul", title: "Tiled matmul in Pallas", area: "kernels", kind: "code", difficulty: 2, tier: "core", modes: ["wrong-tiling"], forge: { ok: true, killed: 3, mutants: 3, checks: 4 } },
+  { id: "host-bound-input", title: "A host-bound input pipeline", area: "profiling", kind: "answer", difficulty: 3, tier: "hard", modes: ["host-bound"], forge: { ok: false, killed: 1, mutants: 2, checks: 3 } },
 ];
 
 export const detail: TaskDetail = {
@@ -11,6 +11,7 @@ export const detail: TaskDetail = {
   area: "profiling",
   kind: "answer",
   difficulty: 3,
+  tier: "hard",
   modes: ["host-bound"],
   target: "JAX profiler trace",
   skills: ["trace reading"],

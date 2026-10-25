@@ -1,0 +1,10 @@
+id: paged-attention-decode
+title: Decode attention over a paged KV cache that never touches a page past the length
+area: kernels
+kind: code
+difficulty: 5
+tier: hard
+target: "Pallas TPU with scalar prefetch, JAX 0.12.0.1; page copies read from the pallas_call's own index maps"
+skills: [pallas, scalar-prefetch, paged-attention, gqa, online-softmax, pipelining]
+modes: [paged-traffic, nan-past-length, gqa-grouping, paged-gather, online-softmax-rescale, mask-off-by-one, reduction-axis-parallel, accumulator-init, kernel-bypass, interpret-only]
+time_limit_s: 300

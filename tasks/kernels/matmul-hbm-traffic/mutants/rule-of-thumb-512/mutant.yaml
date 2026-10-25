@@ -1,0 +1,4 @@
+modes:
+- hbm-traffic
+note: 'Uses 512 x 512 x 512 tiles (or the whole dimension when smaller) for every shape: fits easily, but re-reads both operands
+  far more often than needed.'

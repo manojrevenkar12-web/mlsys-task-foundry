@@ -1,0 +1,3 @@
+modes:
+- sliding-window-blocks
+note: Keeps the whole context in the local layers too, as a server without window-aware freeing would.

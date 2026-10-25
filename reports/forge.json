@@ -1,5 +1,5 @@
 {
- "seconds": 35.1,
+ "seconds": 2.9,
  "tasks": [
   {
    "id": "dp-replicas-drift",
@@ -289,6 +289,156 @@
    "problems": [],
    "ok": true,
    "killed": 5
+  },
+  {
+   "id": "ring-attention-causal",
+   "area": "debugging",
+   "kind": "code",
+   "difficulty": 5,
+   "title": "Causal ring attention across eight devices, gradients included",
+   "reference_passed": true,
+   "deterministic": true,
+   "reference_seconds": 8.35,
+   "checks": [
+    "uses_current_api",
+    "runs_under_shard_map_with_default_checks",
+    "matches_causal_attention",
+    "first_positions_see_only_themselves",
+    "gradients_match_and_are_finite",
+    "passes_kv_around_the_ring",
+    "other_shapes_and_bf16"
+   ],
+   "check_targets": {
+    "uses_current_api": [
+     "api-removed",
+     "api-hallucinated"
+    ],
+    "runs_under_shard_map_with_default_checks": [
+     "vma-carry",
+     "api-removed"
+    ],
+    "matches_causal_attention": [
+     "ring-offset",
+     "online-softmax-rescale",
+     "narrow-distribution"
+    ],
+    "first_positions_see_only_themselves": [
+     "ring-offset"
+    ],
+    "gradients_match_and_are_finite": [
+     "nan-gradient",
+     "ring-offset"
+    ],
+    "passes_kv_around_the_ring": [
+     "all-gather-kv"
+    ],
+    "other_shapes_and_bf16": [
+     "ring-offset"
+    ]
+   },
+   "mutants": {
+    "forward-patched-nan-grad": {
+     "modes": [
+      "nan-gradient"
+     ],
+     "note": "Masks with an additive -inf bias and visits a fully masked block first, then hides exp(-inf - -inf) behind a where(): the forward pass is right, but the NaN reaches q and k through the bias addition in the backward pass.",
+     "killed_by": [
+      "gradients_match_and_are_finite"
+     ],
+     "crashed": null,
+     "seconds": 9.2
+    },
+    "gather-everything": {
+     "modes": [
+      "all-gather-kv"
+     ],
+     "note": "All-gathers K and V on every device and masks locally: right answers, but every device holds the whole sequence.",
+     "killed_by": [
+      "passes_kv_around_the_ring"
+     ],
+     "crashed": null,
+     "seconds": 4.0
+    },
+    "local-positions": {
+     "modes": [
+      "ring-offset"
+     ],
+     "note": "Builds query and key positions from local indices only, forgetting each shard's offset in the sequence.",
+     "killed_by": [
+      "matches_causal_attention",
+      "first_positions_see_only_themselves",
+      "gradients_match_and_are_finite",
+      "other_shapes_and_bf16"
+     ],
+     "crashed": null,
+     "seconds": 7.54
+    },
+    "no-rescale": {
+     "modes": [
+      "online-softmax-rescale"
+     ],
+     "note": "Never rescales the running sum and accumulator when a later block raises the running max.",
+     "killed_by": [
+      "matches_causal_attention",
+      "gradients_match_and_are_finite",
+      "other_shapes_and_bf16"
+     ],
+     "crashed": null,
+     "seconds": 8.06
+    },
+    "pvary-loop": {
+     "modes": [
+      "api-removed",
+      "vma-carry"
+     ],
+     "note": "Loops with fori_loop and marks the invariant carries with jax.lax.pvary, which JAX 0.12 removed (it is now jax.lax.pcast(..., to=\"varying\")).",
+     "killed_by": [
+      "uses_current_api",
+      "runs_under_shard_map_with_default_checks",
+      "matches_causal_attention",
+      "first_positions_see_only_themselves",
+      "gradients_match_and_are_finite",
+      "passes_kv_around_the_ring",
+      "other_shapes_and_bf16"
+     ],
+     "crashed": null,
+     "seconds": 0.81
+    },
+    "strict-causal": {
+     "modes": [
+      "ring-offset"
+     ],
+     "note": "Masks with < instead of <=: each position no longer attends to itself (and position 0 attends to nothing).",
+     "killed_by": [
+      "matches_causal_attention",
+      "first_positions_see_only_themselves",
+      "gradients_match_and_are_finite",
+      "other_shapes_and_bf16"
+     ],
+     "crashed": null,
+     "seconds": 8.95
+    },
+    "wrong-direction": {
+     "modes": [
+      "ring-offset"
+     ],
+     "note": "Sends K and V to the previous device but still assumes the block held at step t came from device i - t: the causal mask is applied to the wrong positions.",
+     "killed_by": [
+      "matches_causal_attention",
+      "gradients_match_and_are_finite",
+      "other_shapes_and_bf16"
+     ],
+     "crashed": null,
+     "seconds": 9.45
+    }
+   },
+   "idle_checks": [],
+   "api_findings": [],
+   "leaks": [],
+   "rubric_issues": [],
+   "problems": [],
+   "ok": true,
+   "killed": 7
   },
   {
    "id": "same-dropout-everywhere",
@@ -816,6 +966,300 @@
    "problems": [],
    "ok": true,
    "killed": 6
+  },
+  {
+   "id": "matmul-hbm-traffic",
+   "area": "kernels",
+   "kind": "code",
+   "difficulty": 5,
+   "title": "A bf16 matmul tiled for the least HBM traffic that fits in VMEM",
+   "reference_passed": true,
+   "deterministic": true,
+   "reference_seconds": 4.4,
+   "checks": [
+    "uses_current_api",
+    "runs_one_pallas_kernel",
+    "matches_on_every_distribution",
+    "correct_on_two_cores_in_random_order",
+    "long_reduction_matches",
+    "fits_the_vmem_budget",
+    "moves_close_to_the_least_hbm_traffic",
+    "lowers_for_a_real_tpu"
+   ],
+   "check_targets": {
+    "uses_current_api": [
+     "api-removed",
+     "api-hallucinated"
+    ],
+    "runs_one_pallas_kernel": [
+     "kernel-bypass"
+    ],
+    "matches_on_every_distribution": [
+     "narrow-distribution",
+     "accumulator-init",
+     "output-dtype"
+    ],
+    "correct_on_two_cores_in_random_order": [
+     "reduction-axis-parallel",
+     "accumulator-init"
+    ],
+    "long_reduction_matches": [
+     "accumulator-init",
+     "output-dtype"
+    ],
+    "fits_the_vmem_budget": [
+     "vmem-budget"
+    ],
+    "moves_close_to_the_least_hbm_traffic": [
+     "hbm-traffic",
+     "pipeline-revisits"
+    ],
+    "lowers_for_a_real_tpu": [
+     "interpret-only"
+    ]
+   },
+   "mutants": {
+    "budget-without-accumulator": {
+     "modes": [
+      "vmem-budget"
+     ],
+     "note": "Counts the double-buffered blocks but forgets the f32 accumulator scratch, so the tiling it picks for large shapes overflows VMEM.",
+     "killed_by": [
+      "fits_the_vmem_budget"
+     ],
+     "crashed": null,
+     "seconds": 4.19
+    },
+    "dot-outside": {
+     "modes": [
+      "kernel-bypass"
+     ],
+     "note": "Computes the product with jnp.dot and only copies it through a kernel.",
+     "killed_by": [
+      "runs_one_pallas_kernel",
+      "correct_on_two_cores_in_random_order",
+      "long_reduction_matches"
+     ],
+     "crashed": null,
+     "seconds": 4.14
+    },
+    "f32-output": {
+     "modes": [
+      "output-dtype"
+     ],
+     "note": "Returns the float32 accumulator instead of bfloat16 (and moves twice the output bytes).",
+     "killed_by": [
+      "matches_on_every_distribution",
+      "fits_the_vmem_budget",
+      "moves_close_to_the_least_hbm_traffic"
+     ],
+     "crashed": null,
+     "seconds": 3.89
+    },
+    "k-axis-parallel": {
+     "modes": [
+      "reduction-axis-parallel"
+     ],
+     "note": "Marks the reduction axis parallel: on two cores the k steps of one output block run on different cores and partial sums are lost.",
+     "killed_by": [
+      "long_reduction_matches"
+     ],
+     "crashed": null,
+     "seconds": 4.65
+    },
+    "rule-of-thumb-512": {
+     "modes": [
+      "hbm-traffic"
+     ],
+     "note": "Uses 512 x 512 x 512 tiles (or the whole dimension when smaller) for every shape: fits easily, but re-reads both operands far more often than needed.",
+     "killed_by": [
+      "moves_close_to_the_least_hbm_traffic"
+     ],
+     "crashed": null,
+     "seconds": 5.07
+    },
+    "single-buffered-budget": {
+     "modes": [
+      "vmem-budget"
+     ],
+     "note": "Sizes blocks as if each needed one VMEM buffer: the pipeline double-buffers, so the chosen blocks overflow 16 MiB.",
+     "killed_by": [
+      "fits_the_vmem_budget"
+     ],
+     "crashed": null,
+     "seconds": 4.01
+    },
+    "zero-every-step": {
+     "modes": [
+      "accumulator-init"
+     ],
+     "note": "Clears the accumulator on every k step instead of the first: only the last K block survives.",
+     "killed_by": [
+      "correct_on_two_cores_in_random_order",
+      "long_reduction_matches"
+     ],
+     "crashed": null,
+     "seconds": 4.11
+    }
+   },
+   "idle_checks": [
+    "uses_current_api",
+    "lowers_for_a_real_tpu"
+   ],
+   "api_findings": [],
+   "leaks": [],
+   "rubric_issues": [],
+   "problems": [],
+   "ok": true,
+   "killed": 7
+  },
+  {
+   "id": "paged-attention-decode",
+   "area": "kernels",
+   "kind": "code",
+   "difficulty": 5,
+   "title": "Decode attention over a paged KV cache that never touches a page past the length",
+   "reference_passed": true,
+   "deterministic": true,
+   "reference_seconds": 9.1,
+   "checks": [
+    "uses_current_api",
+    "one_kernel_and_no_gather_outside_it",
+    "matches_with_grouped_heads",
+    "every_length_against_one_page_boundary",
+    "correct_on_two_cores_in_random_order",
+    "fetches_each_live_page_once_and_nothing_past_the_length",
+    "lowers_for_a_real_tpu"
+   ],
+   "check_targets": {
+    "uses_current_api": [
+     "api-removed",
+     "api-hallucinated"
+    ],
+    "one_kernel_and_no_gather_outside_it": [
+     "kernel-bypass",
+     "paged-gather"
+    ],
+    "matches_with_grouped_heads": [
+     "online-softmax-rescale",
+     "gqa-grouping",
+     "mask-off-by-one"
+    ],
+    "every_length_against_one_page_boundary": [
+     "mask-off-by-one",
+     "nan-past-length"
+    ],
+    "correct_on_two_cores_in_random_order": [
+     "reduction-axis-parallel",
+     "accumulator-init"
+    ],
+    "fetches_each_live_page_once_and_nothing_past_the_length": [
+     "paged-traffic"
+    ],
+    "lowers_for_a_real_tpu": [
+     "interpret-only"
+    ]
+   },
+   "mutants": {
+    "every-slot-fetched": {
+     "modes": [
+      "paged-traffic"
+     ],
+     "note": "Indexes the page table with the grid step directly: right answers (compute past the length is skipped), but every page-table slot is copied, live or not.",
+     "killed_by": [
+      "fetches_each_live_page_once_and_nothing_past_the_length"
+     ],
+     "crashed": null,
+     "seconds": 9.65
+    },
+    "gathered-outside": {
+     "modes": [
+      "paged-gather",
+      "paged-traffic"
+     ],
+     "note": "Gathers each sequence's pages into a contiguous cache with jnp.take before the kernel: correct, but the cache is read and rewritten outside the kernel.",
+     "killed_by": [
+      "one_kernel_and_no_gather_outside_it",
+      "fetches_each_live_page_once_and_nothing_past_the_length"
+     ],
+     "crashed": null,
+     "seconds": 9.53
+    },
+    "heads-by-modulo": {
+     "modes": [
+      "gqa-grouping"
+     ],
+     "note": "Groups query heads by modulo (head j uses KV head j % Hkv) instead of by block (j // G).",
+     "killed_by": [
+      "matches_with_grouped_heads",
+      "correct_on_two_cores_in_random_order"
+     ],
+     "crashed": null,
+     "seconds": 5.08
+    },
+    "last-page-off-by-one": {
+     "modes": [
+      "paged-traffic",
+      "mask-off-by-one"
+     ],
+     "note": "Takes the last live page as length // page: when a length is a multiple of 16 that names the next, unused page, which is copied for nothing.",
+     "killed_by": [
+      "fetches_each_live_page_once_and_nothing_past_the_length"
+     ],
+     "crashed": null,
+     "seconds": 9.01
+    },
+    "length-inclusive": {
+     "modes": [
+      "mask-off-by-one",
+      "nan-past-length"
+     ],
+     "note": "Treats position == length as valid: one position past the end, which holds garbage, joins the softmax.",
+     "killed_by": [
+      "matches_with_grouped_heads",
+      "every_length_against_one_page_boundary",
+      "correct_on_two_cores_in_random_order"
+     ],
+     "crashed": null,
+     "seconds": 5.43
+    },
+    "no-rescale": {
+     "modes": [
+      "online-softmax-rescale"
+     ],
+     "note": "Forgets to rescale the running sum and accumulator when a later page raises the running max.",
+     "killed_by": [
+      "matches_with_grouped_heads",
+      "every_length_against_one_page_boundary",
+      "correct_on_two_cores_in_random_order"
+     ],
+     "crashed": null,
+     "seconds": 5.1
+    },
+    "scores-masked-only": {
+     "modes": [
+      "nan-past-length"
+     ],
+     "note": "Masks the scores past the length but multiplies the probabilities with V rows that were never written: 0 x NaN is NaN.",
+     "killed_by": [
+      "matches_with_grouped_heads",
+      "every_length_against_one_page_boundary",
+      "correct_on_two_cores_in_random_order"
+     ],
+     "crashed": null,
+     "seconds": 4.93
+    }
+   },
+   "idle_checks": [
+    "uses_current_api",
+    "lowers_for_a_real_tpu"
+   ],
+   "api_findings": [],
+   "leaks": [],
+   "rubric_issues": [],
+   "problems": [],
+   "ok": true,
+   "killed": 7
   },
   {
    "id": "port-dma-kernel",
@@ -1624,6 +2068,122 @@
    "killed": 5
   },
   {
+   "id": "multihost-straggler",
+   "area": "profiling",
+   "kind": "answer",
+   "difficulty": 4,
+   "title": "Four hosts, one slow all-reduce: who is actually holding up the step?",
+   "reference_passed": true,
+   "deterministic": true,
+   "reference_seconds": 0.19,
+   "checks": [
+    "names_the_bottleneck",
+    "finds_the_host",
+    "finds_the_cause",
+    "counts_the_stalled_steps",
+    "measures_the_step",
+    "predicts_the_step_without_the_stall"
+   ],
+   "check_targets": {
+    "names_the_bottleneck": [
+     "straggler-blame"
+    ],
+    "finds_the_host": [
+     "straggler-blame"
+    ],
+    "finds_the_cause": [
+     "straggler-blame"
+    ],
+    "counts_the_stalled_steps": [
+     "straggler-blame"
+    ],
+    "measures_the_step": [
+     "units"
+    ],
+    "predicts_the_step_without_the_stall": [
+     "straggler-what-if"
+    ]
+   },
+   "mutants": {
+    "blames-communication": {
+     "modes": [
+      "straggler-blame"
+     ],
+     "note": "Takes the long all-reduce events at face value and calls the job communication-bound.",
+     "killed_by": [
+      "names_the_bottleneck",
+      "finds_the_host"
+     ],
+     "crashed": null,
+     "seconds": 0.18
+    },
+    "counts-all-late-steps": {
+     "modes": [
+      "straggler-blame"
+     ],
+     "note": "Counts every step in which host 2 happens to be last, not only those where it is more than 1 ms late.",
+     "killed_by": [
+      "counts_the_stalled_steps"
+     ],
+     "crashed": null,
+     "seconds": 0.19
+    },
+    "longest-allreduce-host": {
+     "modes": [
+      "straggler-blame"
+     ],
+     "note": "Blames the host with the longest total all-reduce time, which is the host that waited most.",
+     "killed_by": [
+      "finds_the_host"
+     ],
+     "crashed": null,
+     "seconds": 0.19
+    },
+    "names-next-batch": {
+     "modes": [
+      "straggler-blame"
+     ],
+     "note": "Names the input event every host runs, not the one only host 2 has.",
+     "killed_by": [
+      "finds_the_cause"
+     ],
+     "crashed": null,
+     "seconds": 0.19
+    },
+    "removes-the-allreduce": {
+     "modes": [
+      "straggler-what-if"
+     ],
+     "note": "Estimates the gain by deleting the waiting hosts' all-reduce time instead of moving host 2's arrival earlier.",
+     "killed_by": [
+      "predicts_the_step_without_the_stall"
+     ],
+     "crashed": null,
+     "seconds": 0.2
+    },
+    "stall-saved-in-full": {
+     "modes": [
+      "straggler-what-if"
+     ],
+     "note": "Subtracts the whole stall from the stalled steps, ignoring that host 2 then waits for the next-latest host.",
+     "killed_by": [
+      "predicts_the_step_without_the_stall"
+     ],
+     "crashed": null,
+     "seconds": 0.19
+    }
+   },
+   "idle_checks": [
+    "measures_the_step"
+   ],
+   "api_findings": [],
+   "leaks": [],
+   "rubric_issues": [],
+   "problems": [],
+   "ok": true,
+   "killed": 6
+  },
+  {
    "id": "recompiling-train-step",
    "area": "profiling",
    "kind": "code+answer",
@@ -2218,6 +2778,122 @@
    "killed": 4
   },
   {
+   "id": "kv-capacity-sliding-window",
+   "area": "serving",
+   "kind": "answer",
+   "difficulty": 4,
+   "title": "How many 32k-token conversations fit when most layers only look back 4,096 tokens?",
+   "reference_passed": true,
+   "deterministic": true,
+   "reference_seconds": 0.18,
+   "checks": [
+    "bytes_per_token_per_layer",
+    "blocks_one_conversation_needs",
+    "blocks_the_system_prompt_shares",
+    "blocks_in_the_pool",
+    "conversations_that_fit"
+   ],
+   "check_targets": {
+    "bytes_per_token_per_layer": [
+     "kv-capacity"
+    ],
+    "blocks_one_conversation_needs": [
+     "sliding-window-blocks",
+     "prefix-sharing",
+     "kv-capacity"
+    ],
+    "blocks_the_system_prompt_shares": [
+     "prefix-sharing"
+    ],
+    "blocks_in_the_pool": [
+     "kv-capacity"
+    ],
+    "conversations_that_fit": [
+     "kv-capacity",
+     "sliding-window-blocks"
+    ]
+   },
+   "mutants": {
+    "aligned-window": {
+     "modes": [
+      "sliding-window-blocks"
+     ],
+     "note": "Counts 4,096 / 16 = 256 blocks per local layer, as if the window always started on a block boundary.",
+     "killed_by": [
+      "blocks_one_conversation_needs"
+     ],
+     "crashed": null,
+     "seconds": 0.18
+    },
+    "full-context-local": {
+     "modes": [
+      "sliding-window-blocks"
+     ],
+     "note": "Keeps the whole context in the local layers too, as a server without window-aware freeing would.",
+     "killed_by": [
+      "blocks_one_conversation_needs",
+      "conversations_that_fit"
+     ],
+     "crashed": null,
+     "seconds": 0.17
+    },
+    "gib-hbm": {
+     "modes": [
+      "units"
+     ],
+     "note": "Reads 80 GB as 80 GiB.",
+     "killed_by": [
+      "blocks_in_the_pool",
+      "conversations_that_fit"
+     ],
+     "crashed": null,
+     "seconds": 0.16
+    },
+    "no-prefix-sharing": {
+     "modes": [
+      "prefix-sharing"
+     ],
+     "note": "Copies the system prompt into every conversation instead of sharing its blocks.",
+     "killed_by": [
+      "blocks_one_conversation_needs",
+      "blocks_the_system_prompt_shares",
+      "conversations_that_fit"
+     ],
+     "crashed": null,
+     "seconds": 0.17
+    },
+    "prefix-shared-everywhere": {
+     "modes": [
+      "prefix-sharing"
+     ],
+     "note": "Counts the system prompt as shared in all 48 layers, though at full length the local layers freed it long ago.",
+     "killed_by": [
+      "blocks_the_system_prompt_shares"
+     ],
+     "crashed": null,
+     "seconds": 0.19
+    },
+    "query-heads": {
+     "modes": [
+      "kv-capacity"
+     ],
+     "note": "Uses query heads instead of the 8 KV heads.",
+     "killed_by": [
+      "bytes_per_token_per_layer"
+     ],
+     "crashed": null,
+     "seconds": 0.18
+    }
+   },
+   "idle_checks": [],
+   "api_findings": [],
+   "leaks": [],
+   "rubric_issues": [],
+   "problems": [],
+   "ok": true,
+   "killed": 6
+  },
+  {
    "id": "paged-kv-allocator",
    "area": "serving",
    "kind": "code",
@@ -2548,11 +3224,11 @@
   }
  ],
  "summary": {
-  "tasks": 22,
-  "ok": 22,
-  "mutants": 124,
-  "killed": 124,
-  "checks": 116,
-  "idle_checks": 10
+  "tasks": 27,
+  "ok": 27,
+  "mutants": 157,
+  "killed": 157,
+  "checks": 149,
+  "idle_checks": 15
  }
 }

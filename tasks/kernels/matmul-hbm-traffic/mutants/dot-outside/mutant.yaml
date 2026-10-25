@@ -1,0 +1,3 @@
+modes:
+- kernel-bypass
+note: Computes the product with jnp.dot and only copies it through a kernel.

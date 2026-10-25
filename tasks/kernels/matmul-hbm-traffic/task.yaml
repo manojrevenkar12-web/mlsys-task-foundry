@@ -1,0 +1,10 @@
+id: matmul-hbm-traffic
+title: A bf16 matmul tiled for the least HBM traffic that fits in VMEM
+area: kernels
+kind: code
+difficulty: 5
+tier: hard
+target: "Pallas TPU, JAX 0.12.0.1; traffic and VMEM read from the pallas_call's own BlockSpecs"
+skills: [pallas, blockspec, pipelining, vmem, hbm-traffic, tiling]
+modes: [hbm-traffic, pipeline-revisits, vmem-budget, kernel-bypass, accumulator-init, reduction-axis-parallel, interpret-only, output-dtype, narrow-distribution]
+time_limit_s: 300

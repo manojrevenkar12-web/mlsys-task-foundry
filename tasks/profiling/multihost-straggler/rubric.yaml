@@ -1,0 +1,21 @@
+criteria:
+  - id: waiting-not-transfer
+    weight: 30
+    text: Explains that a long all-reduce on most hosts is waiting for a late participant, so the host with the shortest all-reduce is the one being waited for
+    pass: '"hosts 0, 1, 3 spend ~100 ms in all-reduce, host 2 only 46 ms: the others wait for host 2"'
+    fail: calls the job communication-bound, or blames the host with the longest all-reduce
+  - id: cause-on-the-straggler
+    weight: 25
+    text: Ties the late arrivals to the storage reads on host 2's input lane, step by step
+    pass: '"the 6 late steps are exactly the steps with read_shard_from_storage on host 2"'
+    fail: names the straggler without the event that makes it late
+  - id: what-if-with-numbers
+    weight: 20
+    text: Quantifies the gain from removing the stall from the trace
+    pass: '"16.5 ms to about 13.7 ms per step, about 17%"'
+    fail: no estimate, or an estimate that assumes the all-reduce disappears
+  - id: fix-at-the-source
+    weight: 25
+    text: Proposes fixing the input pipeline on that host (prefetching, local caching, finding why only it reads storage) and says why network changes would not help
+    pass: '"prefetch shards on a background reader; a faster interconnect changes nothing here"'
+    fail: '"increase bandwidth" or "use a different collective"'

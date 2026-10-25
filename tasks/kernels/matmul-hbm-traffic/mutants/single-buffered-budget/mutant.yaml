@@ -1,0 +1,3 @@
+modes:
+- vmem-budget
+note: 'Sizes blocks as if each needed one VMEM buffer: the pipeline double-buffers, so the chosen blocks overflow 16 MiB.'

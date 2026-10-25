@@ -1,0 +1,3 @@
+modes:
+- accumulator-init
+note: 'Clears the accumulator on every k step instead of the first: only the last K block survives.'

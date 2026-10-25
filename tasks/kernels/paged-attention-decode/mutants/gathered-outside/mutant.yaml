@@ -1,0 +1,5 @@
+modes:
+- paged-gather
+- paged-traffic
+note: 'Gathers each sequence''s pages into a contiguous cache with jnp.take before the kernel: correct, but the cache is read
+  and rewritten outside the kernel.'

@@ -1,0 +1,12 @@
+id: ring-attention-causal
+title: Causal ring attention across eight devices, gradients included
+area: debugging
+kind: code
+difficulty: 5
+tier: hard
+target: "jax.shard_map over 8 simulated CPU devices, JAX 0.12.0.1 with check_vma on"
+skills: [shard-map, ppermute, ring-attention, online-softmax, causal-mask, autodiff]
+modes: [ring-offset, online-softmax-rescale, nan-gradient, all-gather-kv, vma-carry, api-removed, narrow-distribution]
+devices: 8
+api_scan: true
+time_limit_s: 300
