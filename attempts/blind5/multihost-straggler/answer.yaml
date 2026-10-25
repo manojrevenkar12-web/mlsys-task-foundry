@@ -1,0 +1,30 @@
+bottleneck: straggler
+straggler_host: 2
+stall_event: read_shard_from_storage
+stalled_steps: 6
+mean_step_ms: 16.47
+step_ms_without_stall: 13.67
+explanation: |
+  What the trace shows: on every step, hosts 0, 1 and 3 reach the gradient all-reduce early and then
+  wait inside it, so their all-reduce events are 2.0 to 2.9 ms long. The collective itself takes about
+  2.0 ms after the last host arrives (the all-reduce ends at the same time on all four hosts, so the
+  duration after the last arrival is end minus last arrival). The long all-reduce bars are therefore mostly
+  waiting for host 2, not communication. The team's reading that the job is communication-bound is wrong:
+  real communication is about 2 ms per step, roughly 14% of the 16.5 ms mean step.
+
+  Host 2 is the straggler. In steps 3, 6, 8, 9, 10 and 11 it runs read_shard_from_storage (6.8 to 11.8 ms,
+  "Host input" lane) at the start of the step, before next_batch and forward/backward. It therefore reaches
+  the all-reduce 6.4 to 11.7 ms after the other hosts, and in those six steps the step is 19.6 to 25.1 ms
+  instead of about 13.5 ms. In the other 14 steps all four hosts arrive within 0.7 ms of each other.
+
+  Why the all-reduce misleads: its duration on most hosts is pure waiting, and it shrinks or grows with the
+  straggler's lateness, not with the traffic. Only the last host's all-reduce shows the real cost.
+
+  Changes: (1) prefetch the next data shard on host 2 (and on all hosts) in a background thread, or keep
+  two or more shards buffered, so storage reads overlap the previous step's compute; (2) find out why host 2's
+  reads are slow (locality, cache state, shard size or placement) and rebalance shard assignment so
+  no host reads cold data inside the step; (3) only after that, look at the roughly 2 ms all-reduce itself
+  (bucketing, overlap with the backward pass).
+
+  Expected effect: removing the stall takes the mean step from 16.47 ms to about 13.67 ms (about 17%
+  faster); the stalled steps drop to 13.2 to 14.1 ms.

@@ -1,0 +1,23 @@
+kv_bytes_per_token: 131072
+kv_blocks: 24766
+seqs_at_8k: 48
+seqs_at_8k_fp8: 96
+explanation: |
+  KV bytes per token: 2 (K and V) x 32 layers x 8 KV heads x 128 dims x 2 bytes = 131,072 bytes. Grouped-query
+  attention keeps this at a quarter of what 32 KV heads would cost (524,288 bytes).
+
+  Memory budget: 90% of 80e9 bytes is 72e9. Weights are 8.03e9 parameters x 2 bytes = 16.06e9. Activations and
+  context take 4e9. The KV pool is 72e9 - 16.06e9 - 4e9 = 51.94e9 bytes.
+
+  Blocks: one block holds 16 tokens, which is 16 x 131,072 = 2,097,152 bytes. 51.94e9 / 2,097,152 = 24,766.9,
+  so kv_blocks = 24,766 whole blocks.
+
+  Sequences: an 8,192-token conversation needs 8192 / 16 = 512 blocks, so 24,766 / 512 = 48.37 and seqs_at_8k = 48.
+
+  FP8: one token is 65,536 bytes, a block is 1,048,576 bytes, the pool holds 49,533 blocks, and 49,533 / 512 = 96.7,
+  so seqs_at_8k_fp8 = 96.
+
+  What it means: the server can keep 48 full 8k conversations resident at once in bf16 (96 with an FP8 KV
+  cache). Because the KV cache fills the whole pool at full length, a decode batch of 48 is the most a server
+  can run at 8k each without preempting; shorter or prefix-shared conversations allow more, and the
+  activation reserve is a guess that moves the count by a few sequences.

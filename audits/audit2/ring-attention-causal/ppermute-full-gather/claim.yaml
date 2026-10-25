@@ -1,0 +1,5 @@
+wrong: >
+  Uses only ppermute, but sends every device's K and V to every other device with n-1 ppermutes of
+  different shifts and concatenates them, so each device holds the whole sequence's K and V (an
+  all-gather written as ppermutes). That violates "no device may gather the whole sequence";
+  outputs and gradients are right.

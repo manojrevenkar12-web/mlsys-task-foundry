@@ -1,0 +1,18 @@
+kv_bytes_per_token: 131072
+kv_blocks: 24766
+seqs_at_8k: 48
+seqs_at_8k_fp8: 96
+explanation: |
+  KV bytes per token = 2 (K and V) x 32 layers x 8 KV heads x 128 dims x 2 B (bf16) = 131,072 B = 128 KiB (GQA with 8 of 32 heads
+  cuts it 4x versus full multi-head attention).
+  Budget: 0.9 x 80e9 = 72.0e9 B usable; weights 8.03e9 x 2 B = 16.06e9; activations/CUDA context 4e9; KV pool = 72.0 - 16.06 - 4.0
+  = 51.94e9 B. One block = 16 x 131,072 = 2,097,152 B (2 MiB), so 51.94e9 / 2,097,152 = 24,766.9 -> 24,766 whole blocks.
+  An 8,192-token sequence needs 8192/16 = 512 blocks, so 24,766 // 512 = 48 sequences (48 x 512 = 24,576 blocks, 190 left over, not
+  enough for a 49th). With an FP8 KV cache the block is 1,048,576 B, giving 49,533 blocks and 49,533 // 512 = 96 sequences
+  (exactly 2x, the 0.9 extra block rounding does not change the floor).
+  Meaning: the server can run at most 48 concurrent 8k-token conversations (96 with FP8), however many requests are queued, so the
+  decode batch is capped at 48; each decode step then reads the 16 GB of weights plus up to 48 x 1.07 GB = 51.5 GB of KV, so KV
+  traffic, not weights, dominates the step time and per-user speed falls as the batch fills. Capacity is lower in practice if
+  prompts are not full length (more sequences fit when average length is below 8k) and paged allocation means no
+  fragmentation beyond the last partial block (<16 tokens per sequence). FP8 KV, sliding-window layers, prefix sharing, or a second GPU
+  with tensor parallelism are the levers for more concurrency.

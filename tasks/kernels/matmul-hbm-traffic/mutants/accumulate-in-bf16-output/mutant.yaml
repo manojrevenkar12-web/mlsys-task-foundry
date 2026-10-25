@@ -1,0 +1,5 @@
+modes:
+- output-dtype
+- accumulator-init
+note: 'Accumulates the k partial products directly in the bf16 output block instead of a float32 scratch: right to about 0.3%,
+  but rounded at every step.'

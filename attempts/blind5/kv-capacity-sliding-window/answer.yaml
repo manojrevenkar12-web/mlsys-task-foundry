@@ -1,0 +1,33 @@
+kv_bytes_per_token_per_layer: 4096
+layer_blocks_per_conversation: 25640
+shared_layer_blocks: 1024
+pool_layer_blocks: 732421
+max_conversations: 28
+explanation: |
+  Per token per layer: 2 (K and V) x 8 KV heads x 128 dims x 2 bytes = 4,096 bytes. A layer block is 16 x 4,096 =
+  65,536 bytes.
+
+  Pool: 80e9 minus 12e9 x 2 bytes of weights (24e9) minus 8e9 for activations leaves 48e9 bytes of KV, or
+  48e9 / 65,536 = 732,421 layer blocks.
+
+  Global layers (8 of the 48: layers 5, 11, ..., 47): a full-length conversation of 32,768 tokens needs 2,048
+  blocks per layer. The 2,048-token system prompt fills blocks 0 to 127 exactly, which are shared, so each
+  conversation holds 1,920 private blocks per global layer: 8 x 1,920 = 15,360.
+
+  Local layers (40): the newest token attends to 4,096 positions, so the live window is 4,096 positions. With
+  16-token blocks a window that starts on a block boundary spans 256 blocks, but a window that starts mid-block
+  spans 257. The worst case over positions is 257 (the window starts one position into a block, e.g. when the
+  newest token is a multiple of 16). So 40 x 257 = 10,280. The sum of private blocks is 15,360 + 10,280 =
+  25,640.
+
+  Shared system prompt: in the global layers the 128 system-prompt blocks per layer are held once for everyone,
+  so 8 x 128 = 1,024. In the local layers those blocks are freed after position 6,143 (2,048 + 4,096), so at full
+  length nothing is saved there; the 40 x 128 = 5,120 local system-prompt blocks are shared only while a
+  conversation is still inside its first 6,144 tokens.
+
+  Count: (732,421 - 1,024) / 25,640 = 28.5, so max_conversations = 28. The 257-block worst case costs 40 blocks
+  per conversation over the aligned case, and it does not change the answer.
+
+  To fit more: (a) store KV in FP8 (roughly doubles to about 57 conversations); (b) the eight global layers are
+  60% of the per-conversation cost, so making half of them local, or sharing KV across layers, gives about 38; a
+  naive 48-global-layer model would fit only 7; (c) a smaller window or a shorter maximum context.

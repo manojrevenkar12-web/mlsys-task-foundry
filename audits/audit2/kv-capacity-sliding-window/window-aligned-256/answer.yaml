@@ -1,0 +1,17 @@
+kv_bytes_per_token_per_layer: 4096
+layer_blocks_per_conversation: 25600
+shared_layer_blocks: 1024
+pool_layer_blocks: 732421
+max_conversations: 28
+explanation: >
+  K and V for one token in one layer are 2 x 8 heads x 128 dims x 2 bytes = 4096 bytes, so a
+  16-token block is 64 KiB. Weights take 12e9 x 2 = 24 GB; 80 - 24 - 8 = 48 GB of pool, i.e.
+  732,421 blocks. Each of the 8 global layers keeps all 32,768 positions = 2,048 blocks, of which
+  the first 128 hold only the 2,048-token system prompt and are shared, leaving 1,920 private
+  blocks per global layer. Each of the 40 local layers keeps only its 4,096-token window, which is
+  4,096 / 16 = 256 blocks. Per conversation: 8 x 1,920 + 40 x 256 = 25,600 blocks. The system prompt
+  saves 128 blocks in each global layer (1,024 shared blocks), but nothing in local layers, because
+  by full length the window has moved far past position 2,047 and those blocks were freed.
+  (732,421 - 1,024) / 25,600 = 28.57, so 28 conversations. To fit more: quantise the KV cache to
+  fp8 (halves the block size), use more local layers or a smaller window, or offload global-layer
+  KV.

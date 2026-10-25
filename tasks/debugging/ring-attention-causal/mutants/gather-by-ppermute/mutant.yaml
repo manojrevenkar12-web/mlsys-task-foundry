@@ -1,0 +1,4 @@
+modes:
+- all-gather-kv
+note: 'Never calls all_gather, but sends every shard to every device with n-1 ppermutes of different shifts and concatenates
+  them: an all-gather written by hand.'

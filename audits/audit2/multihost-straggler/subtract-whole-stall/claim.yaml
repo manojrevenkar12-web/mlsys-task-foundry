@@ -1,0 +1,4 @@
+wrong: >
+  step_ms_without_stall subtracts each stall's full duration from the step, but a step only
+  shortens by how much later host 2 arrived than the next-latest host (capped at the stall), so the
+  right value is 13.669 ms; 13.533 is about 1% off, outside the 0.4% tolerance.

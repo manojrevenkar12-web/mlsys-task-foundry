@@ -1,0 +1,22 @@
+expected_tokens_a08_k4: 3.3616
+speedup_a08_k4_c005: 2.8013
+best_k_a08_c005: 8
+best_k_a06_c02: 2
+speedup_a06_c02_best: 1.4
+explanation: |
+  Formula: with per-token acceptance alpha, the accepted draft prefix length is geometric, so the expected tokens per
+  target pass (accepted drafts plus the target's own token) are E(alpha, k) = sum from i=0 to k of alpha^i =
+  (1 - alpha^(k+1)) / (1 - alpha). Time per round is k x c (drafts) plus 1 (verify pass), so speedup over
+  plain decoding is S = E / (k c + 1).
+
+  Numbers: alpha = 0.8, k = 4: E = (1 - 0.8^5) / 0.2 = 3.3616. With c = 0.05, S = 3.3616 / 1.20 = 2.80. Over k = 1..10 at
+  alpha = 0.8, c = 0.05 the speedups are 1.71, 2.22, 2.57, 2.80, 2.95, 3.04, 3.08, 3.092 (k=8, best), 3.078, 3.047.
+  At alpha = 0.6, c = 0.2 the speedups are 1.33 (k=1), 1.40 (k=2, best), 1.36, 1.28, 1.19, 1.10, 1.02, 0.95, 0.89, 0.83.
+
+  When it stops paying off: E is bounded by 1/(1 - alpha) (5 at alpha = 0.8, 2.5 at alpha = 0.6), while the cost grows
+  linearly with k c. So a longer draft only helps while the next token's expected gain exceeds its draft cost. At low
+  acceptance (alpha = 0.6) and a draft that costs 20% of a target step, speculation gains only 40% at best and is
+  slower than plain decoding for k of 7 or more. Speculation pays when alpha is high and c is small. The best k is
+  where the expected gain from one more draft token (alpha^(k+1), in tokens per round) stops exceeding its cost
+  (c, in target-step units, scaled by the round's time): at alpha = 0.8, c = 0.05 that is k = 8; at alpha = 0.6,
+  c = 0.2 it is k = 2.

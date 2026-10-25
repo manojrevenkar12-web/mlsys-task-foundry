@@ -1,0 +1,3 @@
+wrong: >
+  Reports the straggler as host 3 by reading the trace's process id (pid 3), but pid 3 is the
+  process named /host:2; the slow host is host 2.

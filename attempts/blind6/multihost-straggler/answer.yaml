@@ -1,0 +1,24 @@
+bottleneck: straggler
+straggler_host: 2
+stall_event: read_shard_from_storage
+stalled_steps: 6
+mean_step_ms: 16.473
+step_ms_without_stall: 13.669
+explanation: |
+  The job is not communication-bound; it is held up by one input-stalled host. /host:2 (pid 3) has 6 extra
+  `read_shard_from_storage` events on its Host input lane (9.2, 11.8, 6.8, 11.8, 8.5 and 10.6 ms, in steps 3, 6, 8, 9, 10 and
+  11; shards 300, 617, 318, 529, 241, 194) that run before its normal `next_batch` (~1.3-1.7 ms), so in exactly those 6 of 20
+  steps it reaches the all-reduce 5.5-11.7 ms after the other three hosts (e.g. step 3: arrivals 53.2, 52.7, 61.6, 52.4 ms).
+  In the other 14 steps all four hosts arrive within 0.2-0.6 ms of each other. The other hosts run the same forward/backward
+  (~9.0-9.6 ms) and then sit inside the all-reduce waiting for host 2: the all-reduce events on hosts 0, 1, 3 average ~5.0 ms
+  (up to ~14 ms in stalled steps) whereas host 2's own all-reduce is only ~2.3 ms, which is the true wire/reduce time
+  (in unstalled steps all hosts show ~2.0-2.6 ms). The long all-reduce events therefore mislead: they are mostly wait time for the
+  straggler, not bandwidth. The all-reduce ends simultaneously on all hosts (~2.0 ms after the last arrival), and the step time
+  is set by the slowest host. Mean train_step is 16.473 ms; if the stalls took no time the mean would be 13.669 ms (-17.0%),
+  since each stall delays the step by 5.5-11.7 ms (total ~58 ms removed over 20 steps -> 2.8 ms per step).
+  Changes: fix host 2's storage path rather than the network -- prefetch and cache shards on local disk/SSD ahead of time
+  (read shards asynchronously in a background thread/tf.data/grain with a prefetch queue deep enough to cover a 12 ms read),
+  check host 2's storage/NIC (hot shard, noisy neighbour, remote-storage throttling), use more readers or retry/hedged reads
+  with a timeout, and shuffle the shard assignment so no host reads a cold shard synchronously on the critical path.
+  Expected effect: step ~16.5 -> ~13.7 ms (about 1.2x), plus a more regular step; tuning all-reduce (compression, bucketing)
+  would gain at most the ~2.3 ms true reduce time and does nothing for the 6 stalled steps.

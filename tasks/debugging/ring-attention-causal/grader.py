@@ -112,6 +112,45 @@ def passes_kv_around_the_ring(sol, ctx: Ctx):
         fail("no ppermute: K and V never move between devices")
 
 
+def _longest_axis(jaxpr, best=0):
+    for e in jaxpr.eqns:
+        for v in e.outvars:
+            shape = getattr(v.aval, "shape", ())
+            best = max([best, *[int(d) for d in shape]])
+        for p in e.params.values():
+            for inner in p if isinstance(p, (list, tuple)) else [p]:
+                j = getattr(inner, "jaxpr", None)
+                if j is not None:
+                    best = _longest_axis(j if hasattr(j, "eqns") else j.jaxpr, best)
+    return best
+
+
+@check(targets=["all-gather-kv"])
+def no_device_holds_the_whole_sequence(sol, ctx: Ctx):
+    """With 64 positions per device (D = 32, H = 4), no value on a device should have an axis
+    longer than a few shards: an axis of 256 or more positions means K or V (or scores against
+    them) were assembled for half the sequence or more, whatever collective moved them."""
+    q = jnp.zeros((64 * DEVICES, 4, 32), jnp.float32)
+    # the outer program holds the global (512, 4, 32) arrays; look inside shard_map only
+    inner = jax.make_jaxpr(_sharded(sol))(q, q, q).jaxpr
+    body = [e for e in _iter_eqns(inner) if e.primitive.name == "shard_map"]
+    if not body:
+        fail("no shard_map in the traced program")
+    longest = _longest_axis(body[0].params["jaxpr"] if hasattr(body[0].params["jaxpr"], "eqns") else body[0].params["jaxpr"].jaxpr)
+    if longest >= 4 * 64:
+        fail(f"a per-device value has an axis of {longest} positions: the device holds {longest // 64} shards' worth at once")
+
+
+def _iter_eqns(jaxpr):
+    for e in jaxpr.eqns:
+        yield e
+        for p in e.params.values():
+            for inner in p if isinstance(p, (list, tuple)) else [p]:
+                j = getattr(inner, "jaxpr", None)
+                if j is not None:
+                    yield from _iter_eqns(j if hasattr(j, "eqns") else j.jaxpr)
+
+
 @check(targets=["ring-offset"])
 def other_shapes_and_bf16(sol, ctx: Ctx):
     q, k, v = _qkv(ctx.make("normal", 5), s=8 * 24, h=2, d=64)

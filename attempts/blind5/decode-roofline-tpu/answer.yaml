@@ -1,0 +1,26 @@
+step_ms_b1_l4096: 10.13
+tokens_per_s_b1_l4096: 98.7
+crossover_batch_l128: 1352.0
+max_context_for_crossover: 218.6
+tokens_per_s_b256_l4096: 2731.8
+explanation: |
+  Model of one step: memory time = (weights 8.03e9 x 2 bytes + B x L x 131,072 bytes of KV) / 1.638e12 bytes/s; compute
+  time = 2 x 8.03e9 x B / 918e12. The step takes the longer one. KV per token is 2 x 32 x 8 x 128 x 2 = 131,072 bytes.
+
+  Small batch: at B=1, L=4096 the weights are 16.06e9 bytes (9.80 ms) and the KV is 0.54e9 bytes (0.33 ms), so memory time is 10.13 ms.
+  Compute is 2 x 8.03e9 / 918e12 = 0.017 ms. The step is 10.13 ms, one sequence gets 98.7 tokens/s, and decode is
+  memory-bound by a factor of about 580. The weight read is the whole cost, so one sequence is inefficient.
+
+  Large batch: the weights are read once per step whatever B is, so the per-sequence memory cost is only its KV
+  (0.33 ms at L=4096) plus a share of the weights. At B=256 the memory time is 93.7 ms (153.5e9 bytes including 137.4e9 of
+  KV) and compute is 4.5 ms, so the step is still memory-bound at 93.7 ms, and total throughput is 256 / 0.0937 = 2,732
+  tokens/s, about 28 times the single-sequence rate. Batching helps until KV traffic, not weights, dominates.
+
+  Crossover at L=128: compute equals memory when B x 2 x 8.03e9 / 918e12 = (16.06e9 + B x 128 x 131,072) / 1.638e12,
+  which gives B = 1,352. That batch is far above any practical size.
+
+  Why longer context moves the crossover: each sequence adds compute of 16.06 GFLOP (17.5 us) but KV traffic of
+  131 KB per token of context. The KV term per sequence grows linearly with L, so the crossover batch shrinks as
+  L grows. Compute-bound decode needs KV time per sequence below compute time per sequence, i.e. L below
+  2 x 8.03e9 x 1.638e12 / (918e12 x 131,072) = 218.6 tokens. For any context beyond about 219 tokens, decode is
+  memory-bound at every batch size, because the KV reads alone are more than the compute.

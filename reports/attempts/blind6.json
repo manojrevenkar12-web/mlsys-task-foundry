@@ -1,0 +1,330 @@
+{
+ "label": "blind6",
+ "recorded_at": "2026-10-25T12:09:34+00:00",
+ "forced": false,
+ "submissions": "blind6",
+ "tasks": [
+  {
+   "task": "continuous-batching",
+   "area": "serving",
+   "difficulty": 4,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.23
+  },
+  {
+   "task": "decode-roofline-tpu",
+   "area": "serving",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.18
+  },
+  {
+   "task": "dp-replicas-drift",
+   "area": "debugging",
+   "difficulty": 2,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 1.42
+  },
+  {
+   "task": "flash-attention-causal",
+   "area": "kernels",
+   "difficulty": 4,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 7.44
+  },
+  {
+   "task": "gpu-launch-bound",
+   "area": "profiling",
+   "difficulty": 2,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.3
+  },
+  {
+   "task": "grad-accumulation-weights",
+   "area": "debugging",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 3.46
+  },
+  {
+   "task": "host-bound-input",
+   "area": "profiling",
+   "difficulty": 2,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.19
+  },
+  {
+   "task": "int8-matmul-scales",
+   "area": "kernels",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 5.44
+  },
+  {
+   "task": "kv-capacity-planning",
+   "area": "serving",
+   "difficulty": 2,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.19
+  },
+  {
+   "task": "kv-capacity-sliding-window",
+   "area": "serving",
+   "difficulty": 4,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.18
+  },
+  {
+   "task": "matmul-hbm-traffic",
+   "area": "kernels",
+   "difficulty": 5,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 5.12
+  },
+  {
+   "task": "multihost-straggler",
+   "area": "profiling",
+   "difficulty": 4,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.2
+  },
+  {
+   "task": "nan-from-padding",
+   "area": "debugging",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 2.37
+  },
+  {
+   "task": "paged-attention-decode",
+   "area": "kernels",
+   "difficulty": 5,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 8.61
+  },
+  {
+   "task": "paged-kv-allocator",
+   "area": "serving",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.31
+  },
+  {
+   "task": "port-dma-kernel",
+   "area": "kernels",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 2.94
+  },
+  {
+   "task": "prefix-cache-hashing",
+   "area": "serving",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.21
+  },
+  {
+   "task": "recompiling-train-step",
+   "area": "profiling",
+   "difficulty": 2,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 8.34
+  },
+  {
+   "task": "ring-attention-causal",
+   "area": "debugging",
+   "difficulty": 5,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 8.89
+  },
+  {
+   "task": "rmsnorm-residual-ragged",
+   "area": "kernels",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 4.56
+  },
+  {
+   "task": "roofline-classify",
+   "area": "profiling",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.2
+  },
+  {
+   "task": "row-softmax",
+   "area": "kernels",
+   "difficulty": 2,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 3.3
+  },
+  {
+   "task": "same-dropout-everywhere",
+   "area": "debugging",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 2.81
+  },
+  {
+   "task": "speculative-decoding-math",
+   "area": "serving",
+   "difficulty": 2,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.18
+  },
+  {
+   "task": "tiled-matmul",
+   "area": "kernels",
+   "difficulty": 2,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 7.3
+  },
+  {
+   "task": "tpu-exposed-collectives",
+   "area": "profiling",
+   "difficulty": 3,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.22
+  },
+  {
+   "task": "vocab-parallel-loss",
+   "area": "debugging",
+   "difficulty": 4,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 7.2
+  }
+ ],
+ "missing": [],
+ "summary": {
+  "attempted": 27,
+  "passed": 27,
+  "not_attempted": 0,
+  "by_area": {
+   "debugging": {
+    "passed": 6,
+    "of": 6
+   },
+   "kernels": {
+    "passed": 8,
+    "of": 8
+   },
+   "profiling": {
+    "passed": 6,
+    "of": 6
+   },
+   "serving": {
+    "passed": 7,
+    "of": 7
+   }
+  },
+  "failure_modes": {}
+ }
+}

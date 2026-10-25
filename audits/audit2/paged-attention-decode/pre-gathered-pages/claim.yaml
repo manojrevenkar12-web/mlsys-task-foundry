@@ -1,0 +1,5 @@
+wrong: >
+  Gathers every sequence's pages with jnp.take(k_pages, page_table) outside the kernel, materialising
+  a (Hkv, B, pages_per_seq, page, D) copy of K and V, including the dead table entries, in HBM. That
+  violates "read the cache only inside the kernel, through the page table"; the kernel then reads the
+  copy with a plain BlockSpec, and the numbers are right.

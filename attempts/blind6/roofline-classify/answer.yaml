@@ -1,0 +1,28 @@
+ridge_flop_per_byte: 295.34
+ops:
+  prefill_gemm_4096x4096x4096: {bound: compute, roof_fraction: 0.84}
+  prefill_gemm_512x4096x4096: {bound: compute, roof_fraction: 0.70}
+  prefill_gemm_256x4096x4096: {bound: memory, roof_fraction: 0.75}
+  decode_gemm_8x4096x4096: {bound: memory, roof_fraction: 0.86}
+  decode_attention_b32_ctx2048: {bound: memory, roof_fraction: 0.80}
+  rmsnorm_8192x4096: {bound: memory, roof_fraction: 0.67}
+  rope_8192x4096: {bound: memory, roof_fraction: 0.55}
+  lm_head_64x128256x4096: {bound: memory, roof_fraction: 0.81}
+explanation: |
+  Ridge = 989.4e12 / 3.35e12 = 295.3 FLOP/byte. Roof at intensity I is min(989.4 TFLOP/s, I * 3.35 TB/s);
+  roof_fraction = (flops/time) / roof.
+  Surprises: (1) the 256x4096x4096 prefill GEMM is memory-bound (I = 227.6 < 295.3) even though it is a "prefill"
+  GEMM: with only 256 tokens the 32 MiB weight read dominates, so it runs at 571.8 TFLOP/s = 75% of its (memory-slanted)
+  roof of 762 TFLOP/s, which is only 58% of the flat compute peak -- judging it against 989 TFLOP/s would mislead.
+  The 512-row GEMM (I = 409.6) is compute-bound but only at 70% of roof, while the big 4096^3 GEMM (I = 1365) reaches 84%.
+  (2) lm_head with batch 64 is memory-bound (I = 63): the 1.07 GB vocab matrix is streamed once for only 64 rows, so it
+  sits at 171 TFLOP/s (81% of its bandwidth roof, 2.71 TB/s = 81% of HBM) -- 17% of peak FLOPs but nearly bandwidth-saturated.
+  (3) decode GEMM (I = 8) and decode attention (I = 1.0) are deeply memory-bound at 86% and 80% of roof (2.88 and 2.68 TB/s);
+  nothing left to gain there except moving fewer bytes (quantised weights/KV, larger batch, GQA/paged KV layout).
+  The two ops furthest below their roof are rope (0.55; 1.84 TB/s of 3.35) and rmsnorm (0.67; 2.25 TB/s). Both are
+  elementwise/reduction kernels that should stream near bandwidth, so the first thing to look at is fusion and launch/occupancy:
+  are rope, rmsnorm and the adjacent residual/QKV ops separate kernels each re-reading and re-writing the 8192x4096 activations
+  (rope's bytes 138 MB suggest extra cos/sin table reads and a strided layout)? Fuse rmsnorm into the residual add / GEMM
+  epilogue and rope into the QKV projection or attention prologue, check vectorised 16-byte loads, coalescing of the
+  interleaved even/odd rotation pairs, grid size vs 132 SMs (tail effect: each op is only 60-75 us, so launch gaps and the
+  wave tail matter), and compare against a tuned reference (e.g. a fused Triton/CUDA kernel) via ncu dram__throughput.

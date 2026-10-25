@@ -1,0 +1,4 @@
+wrong: >
+  Always uses the grid order (i, j, k) and never puts the N axis outermost, so for tall shapes where
+  keeping a full-K column strip of B resident is best it moves 14-39% more HBM bytes than the best
+  legal tiling (e.g. 4096x2048x2048: 1.14x, 16384x2048x14336: 1.39x); square shapes are optimal.

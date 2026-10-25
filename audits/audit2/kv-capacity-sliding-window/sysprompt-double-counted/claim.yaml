@@ -1,0 +1,4 @@
+wrong: >
+  Counts the full 2,048 blocks per global layer in each conversation and also the 1,024 shared
+  system-prompt blocks, double-counting the prompt: layer_blocks_per_conversation should exclude the
+  shared blocks (25,640), so max_conversations is 27 instead of 28.

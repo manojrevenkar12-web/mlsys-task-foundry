@@ -1,0 +1,13 @@
+bottleneck: straggler
+straggler_host: 2
+stall_event: read_shard_from_storage
+stalled_steps: 6
+mean_step_ms: 16.473
+step_ms_without_stall: 13.533
+explanation: >
+  /host:2 has read_shard_from_storage events in its Host input lane in 6 steps (3, 6, 8, 9, 10,
+  11), totalling 58.8 ms, which delay its forward/backward and its arrival at the all-reduce by
+  5.5-11.7 ms. The other hosts sit in the all-reduce until it arrives, so their all-reduce events
+  look long; the collective itself only takes ~2 ms after the last arrival. Removing the stalls
+  saves 58.8 ms over 20 steps, 2.94 ms per step: 16.47 -> 13.53 ms. Prefetch the shards or cache
+  them locally on host 2.

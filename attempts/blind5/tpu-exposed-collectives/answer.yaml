@@ -1,0 +1,28 @@
+exposed_share: 0.0804
+hidden_share: 0.8776
+most_exposed_collective: reduce-scatter
+exposed_us_per_step: 1170.9
+explanation: |
+  Per step the mean step is 14.55 ms. Exposed collective time (collective wall time with no compute op
+  running) is 1.17 ms per step, 8.0% of the step. Collective wall time is about 9.55 ms per step and 87.8%
+  of it overlaps with compute fusions. Hidden time is exposed time's complement, so the rest is in the
+  three places below.
+
+  Where the exposed time sits, per step: (1) the first all-gather of layer 0 weights, about 0.40 ms (0.39 to
+  0.41 ms), at the very start of the step, before the forward pass has any compute; (2) the reduce-scatter
+  of layer 0 gradients, about 0.72 ms (0.70 to 0.75 ms), which starts after the last backward fusion
+  (fusion.bwd.0) finishes, so there is no compute left to hide it; (3) the single all-reduce of loss and
+  gradient norm, about 52 us, which runs before the optimizer. By total, reduce-scatter has 5.78 ms of
+  exposed time over 8 steps, all-gather 3.17 ms and all-reduce 0.41 ms. The middle layers' all-gathers
+  and reduce-scatters overlap the forward and backward fusions, so they are hidden.
+
+  Why they cannot hide: the layer 0 weights are needed before any compute can start, and the layer 0
+  gradients are the last thing produced. Changes: (1) prefetch layer 0's weights across the step boundary, i.e.
+  all-gather them during the previous step's optimizer or keep the first layer's full weights resident,
+  which removes about 0.4 ms per step; (2) for the tail, reduce-scatter gradients per layer in buckets as
+  soon as each layer's backward finishes, and run the optimizer update for layers 7 to 1 while layer 0's
+  reduce-scatter is in flight, so only the update of layer 0 waits; (3) fold the loss and gradient-norm
+  all-reduce into an existing collective or compute the norm from the shards.
+
+  Expected effect: hiding the first all-gather and most of the final reduce-scatter removes about 0.8 to 1.1
+  ms of the 1.17 ms, so the step goes from 14.55 ms to about 13.5 to 13.8 ms (5 to 7%).

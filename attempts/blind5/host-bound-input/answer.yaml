@@ -1,0 +1,25 @@
+bottleneck: host_input
+device_busy_share: 0.113
+largest_host_phase: decode_images
+overlapped_step_ms: 16.63
+explanation: |
+  Steady state (steps 1 to 9): the mean step is 20.34 ms. Of that, load_batch takes 16.63 ms (82%),
+  and the device (ThunkExecutor::Execute on the tf_XLAExecute thread) is busy for 2.30 ms, 11.3% of the
+  step. The rest, about 3.4 ms, is dispatch of update, the host-to-device copy of the batch and the
+  block_until_ready wait. Compilation does not occur in steps 1 to 9 (step 0 only).
+
+  Inside load_batch, decode_images takes 15.0 ms on average (90% of load_batch; about 234 us per image
+  for 64 images), while augment takes 1.6 ms. decode_images is a per-image Python loop with a
+  reshape and mean for each image, so the training thread simply waits on the host while the device
+  sits idle. The device work is only a small fraction of the step.
+
+  Changes, in order of expected gain: (1) run loading in a background worker (a thread or process pool,
+  or a loader with num_workers) and prefetch 2 to 3 batches, so the next batch is ready while the
+  current update runs. The step then becomes max(load, rest), about 16.6 ms, a 19% gain; (2) vectorize
+  decode_images and augment (one batched numpy or jax op for the whole batch, or decode and resize on the
+  device), which should cut the load from 16.6 ms to a few milliseconds; the step then falls toward the
+  device-bound figure of about 2.3 ms plus overhead, so the expected gain is roughly 5 to 8 times; (3)
+  once the host is no longer the bottleneck, reduce the remaining dispatch and transfer overhead (about
+  1 ms per step) by batching the transfer and avoiding a block_until_ready on every step.
+
+  The overlapped estimate (16.63 ms) is the mean over steps 1 to 9 of max(load_batch, rest of step).

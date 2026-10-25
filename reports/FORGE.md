@@ -1,19 +1,19 @@
 # Forge report
 
-27 of 27 tasks proven. 157 of 157 plausible wrong solutions rejected by
-149 checks (15 checks no mutant fails).
+27 of 27 tasks proven. 160 of 160 plausible wrong solutions rejected by
+151 checks (15 checks no mutant fails).
 
 | Task | Area | Difficulty | Reference | Mutants killed | Checks | Problems |
 |---|---|---:|---|---:|---:|---|
 | dp-replicas-drift | debugging | 2 | passes (1 s) | 4/4 | 4 | - |
 | grad-accumulation-weights | debugging | 3 | passes (3 s) | 5/5 | 4 | - |
 | nan-from-padding | debugging | 3 | passes (3 s) | 5/5 | 5 | - |
-| ring-attention-causal | debugging | 5 | passes (8 s) | 7/7 | 7 | - |
+| ring-attention-causal | debugging | 5 | passes (11 s) | 8/8 | 8 | - |
 | same-dropout-everywhere | debugging | 3 | passes (3 s) | 5/5 | 4 | - |
 | vocab-parallel-loss | debugging | 4 | passes (8 s) | 6/6 | 4 | - |
 | flash-attention-causal | kernels | 4 | passes (6 s) | 8/8 | 8 | - |
 | int8-matmul-scales | kernels | 3 | passes (7 s) | 6/6 | 7 | - |
-| matmul-hbm-traffic | kernels | 5 | passes (4 s) | 7/7 | 8 | - |
+| matmul-hbm-traffic | kernels | 5 | passes (5 s) | 9/9 | 9 | - |
 | paged-attention-decode | kernels | 5 | passes (9 s) | 7/7 | 7 | - |
 | port-dma-kernel | kernels | 3 | passes (3 s) | 8/8 | 7 | - |
 | rmsnorm-residual-ragged | kernels | 3 | passes (4 s) | 7/7 | 8 | - |
@@ -69,10 +69,11 @@
 | Mutant | Failure modes | Rejected by |
 |---|---|---|
 | forward-patched-nan-grad | nan-gradient | gradients_match_and_are_finite |
-| gather-everything | all-gather-kv | passes_kv_around_the_ring |
+| gather-by-ppermute | all-gather-kv | no_device_holds_the_whole_sequence |
+| gather-everything | all-gather-kv | passes_kv_around_the_ring, no_device_holds_the_whole_sequence |
 | local-positions | ring-offset | matches_causal_attention, first_positions_see_only_themselves, gradients_match_and_are_finite, other_shapes_and_bf16 |
 | no-rescale | online-softmax-rescale | matches_causal_attention, gradients_match_and_are_finite, other_shapes_and_bf16 |
-| pvary-loop | api-removed, vma-carry | uses_current_api, runs_under_shard_map_with_default_checks, matches_causal_attention, first_positions_see_only_themselves, gradients_match_and_are_finite, passes_kv_around_the_ring, other_shapes_and_bf16 |
+| pvary-loop | api-removed, vma-carry | uses_current_api, runs_under_shard_map_with_default_checks, matches_causal_attention, first_positions_see_only_themselves, gradients_match_and_are_finite, passes_kv_around_the_ring, no_device_holds_the_whole_sequence, other_shapes_and_bf16 |
 | strict-causal | ring-offset | matches_causal_attention, first_positions_see_only_themselves, gradients_match_and_are_finite, other_shapes_and_bf16 |
 | wrong-direction | ring-offset | matches_causal_attention, gradients_match_and_are_finite, other_shapes_and_bf16 |
 
@@ -125,13 +126,15 @@
 
 | Mutant | Failure modes | Rejected by |
 |---|---|---|
+| accumulate-in-bf16-output | output-dtype, accumulator-init | rounds_to_bf16_once |
 | budget-without-accumulator | vmem-budget | fits_the_vmem_budget |
-| dot-outside | kernel-bypass | runs_one_pallas_kernel, correct_on_two_cores_in_random_order, long_reduction_matches |
+| dot-outside | kernel-bypass | runs_one_pallas_kernel, correct_on_two_cores_in_random_order, rounds_to_bf16_once, long_reduction_matches |
 | f32-output | output-dtype | matches_on_every_distribution, fits_the_vmem_budget, moves_close_to_the_least_hbm_traffic |
-| k-axis-parallel | reduction-axis-parallel | long_reduction_matches |
+| k-axis-parallel | reduction-axis-parallel | rounds_to_bf16_once, long_reduction_matches |
+| rows-outer-only | hbm-traffic, pipeline-revisits | moves_close_to_the_least_hbm_traffic |
 | rule-of-thumb-512 | hbm-traffic | moves_close_to_the_least_hbm_traffic |
 | single-buffered-budget | vmem-budget | fits_the_vmem_budget |
-| zero-every-step | accumulator-init | correct_on_two_cores_in_random_order, long_reduction_matches |
+| zero-every-step | accumulator-init | correct_on_two_cores_in_random_order, rounds_to_bf16_once, long_reduction_matches |
 
 ### paged-attention-decode
 

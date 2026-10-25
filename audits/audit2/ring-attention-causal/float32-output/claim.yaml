@@ -1,0 +1,3 @@
+wrong: >
+  Returns the float32 accumulator without casting back, so bfloat16 inputs give a float32 result,
+  violating "in the inputs' dtype"; values and gradients match within tolerance.

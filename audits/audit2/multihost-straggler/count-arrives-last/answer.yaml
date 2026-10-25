@@ -1,0 +1,12 @@
+bottleneck: straggler
+straggler_host: 2
+stall_event: read_shard_from_storage
+stalled_steps: 9
+mean_step_ms: 16.473
+step_ms_without_stall: 13.669
+explanation: >
+  Host 2 is the last host to reach the gradient all-reduce in 9 of the 20 steps; in the worst of
+  them it is late because of read_shard_from_storage events (up to 11.8 ms) in its Host input lane.
+  The other hosts wait inside the all-reduce, which is why their all-reduce events look long; after
+  the last arrival the collective takes only ~2 ms. Mean step 16.47 ms; with zero-length storage
+  reads 13.67 ms. Prefetch or cache host 2's shards.

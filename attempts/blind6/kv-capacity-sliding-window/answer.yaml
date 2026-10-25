@@ -1,0 +1,26 @@
+kv_bytes_per_token_per_layer: 4096
+layer_blocks_per_conversation: 25640
+shared_layer_blocks: 1024
+pool_layer_blocks: 732421
+max_conversations: 28
+explanation: |
+  Per token per layer: 2 (K,V) x 8 heads x 128 x 2 B = 4,096 B, so one layer-block (16 positions) is 65,536 B.
+  Pool: 80e9 - 8e9 (reserve) - 12e9 x 2 B (bf16 weights = 24e9) = 48e9 B; 48e9 / 65,536 = 732,421.9 -> 732,421 layer-blocks.
+  Local layers (40): the window is 4,096 positions, but blocks are aligned to multiples of 16 from position 0. When the newest token
+  is at position p, live blocks run from floor((p-4095)/16) to floor(p/16). If p is a multiple of 16 the window starts one position
+  into a block, so 4,096/16 = 256 blocks plus one partly covered block = 257 (e.g. p=16k: blocks k-256..k). At p % 16 = 0 or other
+  offsets the count is 256 or 257, never more, so the worst case ("whatever the exact position") is 257 blocks per local layer,
+  not 256, even at full length (positions 32,752-32,767 give 257 as well). 40 x 257 = 10,280. Global layers (8: layers 5, 11, ..., 47)
+  keep everything: 32,768 / 16 = 2,048 blocks each, of which the first 2,048/16 = 128 hold only system-prompt positions and are shared,
+  leaving 1,920 per conversation: 8 x 1,920 = 15,360. Per conversation 10,280 + 15,360 = 25,640 layer-blocks (vs 40 x 2,048 +
+  8 x 2,048 = 98,304 without a window: 3.8x less). Shared: 8 global layers x 128 blocks = 1,024 layer-blocks held once.
+  max_conversations = floor((732,421 - 1,024) / 25,640) = floor(28.52) = 28 (28 x 25,640 + 1,024 = 718,944 blocks used; a 29th needs
+  743,560 > 732,421). The system prompt saves 1,024 blocks per extra conversation on the global layers (about 4% of a conversation's
+  cost; it is 8 x 128 shared once instead of per conversation) and saves nothing in the local layers: at full length the window
+  has moved 28,672 positions past the system prompt, so its blocks were freed long ago and every local block a conversation holds
+  is unique (the system prompt only helps local layers early in a conversation, when position < ~6,144). Counting 6,144 shared
+  blocks (all layers) would also give 28, so the result is robust. To fit more: quantise KV to FP8 (halves block bytes, ~57 conversations),
+  quantise weights to FP8 (frees 12 GB = +25% pool, ~35 conversations), shrink the 8 GB reserve, shrink the global layers' cost
+  (fewer global layers, global-layer KV quantisation/offload to CPU/NVMe, MLA-style compression or sparse attention on the global
+  layers, which hold 60% of the per-conversation blocks), and use a tighter window or smaller alignment (e.g. 8-token blocks avoid
+  the extra partial block).

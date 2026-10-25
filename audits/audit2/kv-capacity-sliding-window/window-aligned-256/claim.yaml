@@ -1,0 +1,4 @@
+wrong: >
+  Counts a local layer's window as 4096/16 = 256 blocks, but a window that is not aligned to 16
+  spans 257 blocks, so layer_blocks_per_conversation is 25,600 instead of 25,640 (the
+  max_conversations of 28 happens to still come out right).

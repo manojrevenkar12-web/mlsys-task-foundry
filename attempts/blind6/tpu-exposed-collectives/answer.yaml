@@ -1,0 +1,23 @@
+exposed_share: 0.0804
+hidden_share: 0.8776
+most_exposed_collective: reduce-scatter
+exposed_us_per_step: 1170.9
+explanation: |
+  Over the 8 steps (mean step 14,555 us) the union of collective time is 9,564 us per step; 1,171 us of it per step (8.04% of
+  the step) has no compute op running at the same moment, so 87.8% of collective time is hidden. The exposed time sits in three
+  places in every step. (1) The step-start all-gather of layer 0's weights (~410 us): nothing precedes it, no compute can run until
+  the weights arrive, so it can never hide (the later gathers of layer i+1 are issued 10 us after layer i's compute starts and
+  hide fully behind the ~550 us fwd fusions and ~1.1 ms bwd fusions). (2) The reduce-scatter of layer 0's gradients (~713 us,
+  by far the largest piece, ~720 us/step of reduce-scatter exposed in total vs ~397 us for all-gather and ~52 us for all-reduce):
+  it can only start when bwd.0, the last backward fusion, has produced the gradients, and only the cheap optimizer fusion follows;
+  every earlier reduce-scatter overlaps the next layer's backward compute (~1.0-1.15 ms of compute against ~750 us of
+  communication). (3) The all-reduce (~42-52 us, the scalar/loss or norm reduction) that runs at the end after the last reduce-scatter,
+  before fusion.optimizer. These three form a tail/head chain: gather -> compute ... compute -> reduce-scatter -> all-reduce -> optimizer.
+  Changes: (a) shorten the exposed tail by splitting the last layer's reduce-scatter into chunks that start as gradients of the
+  last layer's sub-blocks (e.g. per-matmul) become ready, or reorder so the optimizer update of earlier layers runs under it
+  (overlap the optimizer with the last reduce-scatter, per-layer optimizer steps), which could hide most of the ~713 us
+  (~5% of step time); (b) hide the first all-gather by prefetching layer 0's weights at the end of the previous step (cross-step
+  prefetch / keep layer-0 params unsharded or all-gather embedding+layer 0 together while the embedding runs), saving up to ~410 us;
+  (c) fuse the tiny all-reduce into the reduce-scatter or issue it concurrently. Together these would recover up to ~1.1 ms,
+  cutting the step from ~14.55 ms to ~13.4 ms (about 8%); the steady-state per-layer collectives are already hidden, so
+  more bandwidth or larger buckets would not help.

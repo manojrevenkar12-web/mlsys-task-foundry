@@ -1,0 +1,5 @@
+wrong: >
+  The VMEM budget counts the double-buffered A, B and C blocks but not the float32 accumulator
+  scratch, so for K-split tilings it picks blocks that need more than 16 MiB (e.g. 22 MiB for
+  4096^3, 20 MiB for 256x11008x8192); its traffic looks at or below the legal optimum only because
+  the tiling does not fit.

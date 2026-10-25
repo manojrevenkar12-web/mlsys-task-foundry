@@ -1,0 +1,3 @@
+wrong: >
+  stalled_steps counts every step where host 2 arrives last at the all-reduce (9), ignoring the
+  prompt's "more than 1 ms after every other host" threshold; only 6 steps meet it.

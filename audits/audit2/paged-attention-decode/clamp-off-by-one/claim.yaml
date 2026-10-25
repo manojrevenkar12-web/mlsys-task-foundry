@@ -1,0 +1,5 @@
+wrong: >
+  The K/V index map clamps the page to lengths // page instead of ceil(lengths / page) - 1, so when
+  a sequence's length is an exact multiple of 16 (and shorter than the table) the pipeline copies one
+  dead page (an unused table entry) per KV head; the output is still right because positions are
+  masked.

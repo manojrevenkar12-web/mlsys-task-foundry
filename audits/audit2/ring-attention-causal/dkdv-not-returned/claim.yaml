@@ -1,0 +1,4 @@
+wrong: >
+  A custom_vjp ring backward rotates the dK/dV accumulators along with K/V but skips the final hop
+  (as the forward rightly does for K/V), so each block's dK and dV end up on the previous device:
+  the forward and dq match, but the gradients with respect to k and v are wrong.

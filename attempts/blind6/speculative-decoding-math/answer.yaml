@@ -1,0 +1,21 @@
+expected_tokens_a08_k4: 3.3616
+speedup_a08_k4_c005: 2.8013
+best_k_a08_c005: 8
+best_k_a06_c02: 2
+speedup_a06_c02_best: 1.4
+explanation: |
+  Expected tokens per target pass with k drafts and independent acceptance probability alpha: the verifier accepts the first j drafts
+  with probability alpha^j, and always adds one token, so E[tokens] = sum_{i=0..k} alpha^i = (1 - alpha^(k+1)) / (1 - alpha).
+  For alpha=0.8, k=4: (1 - 0.8^5)/0.2 = (1 - 0.32768)/0.2 = 3.3616.
+  One cycle costs k draft steps plus one target pass = 1 + c*k target-step units, and plain decoding yields 1 token per unit,
+  so speedup(k) = (1 - alpha^(k+1)) / ((1 - alpha)(1 + c*k)). At alpha=0.8, c=0.05, k=4: 3.3616 / 1.2 = 2.8013.
+  Scanning k=1..10 for alpha=0.8, c=0.05: 1.714, 2.218, 2.567, 2.801, 2.951, 3.040, 3.082, 3.092 (k=8, maximum), 3.078, 3.047 -> best k = 8
+  (a flat optimum: k=7..9 are within 0.5%). For alpha=0.6, c=0.2: 1.333, 1.400 (k=2, maximum), 1.360, 1.281, 1.192, 1.105, 1.024,
+  0.952, 0.888, 0.830 -> best k = 2 with speedup 1.40 (E[tokens] = 1+0.6+0.36 = 1.96, cost 1.4).
+  Speculative decoding stops paying off when the extra drafts add less than they cost: the marginal gain of draft k is alpha^k tokens
+  at marginal cost c, so keep drafting while alpha^k > c * speedup (roughly alpha^k > c*S); a poor draft (low alpha) or an expensive one (high c)
+  makes the optimum k small, and for alpha=0.6,c=0.2 anything beyond k=6 is slower than no speculation (speedup < 1.1 at k=6, < 1 at k>=8,
+  0.83 at k=10). In the limit the speedup is bounded by 1/(1-alpha) tokens per pass (5x at alpha=0.8, 2.5x at 0.6) and ignoring c; it also
+  needs the verifier to be memory-bound (the k+1 tokens verified for free, which fails at large batch where the target is compute-bound)
+  and acceptance that really is near-independent; if c rises (a draft that is a sizeable fraction of the target) or alpha falls below
+  roughly c, the speedup drops below 1 even at k=1 (1+alpha)/(1+c) < 1 when alpha < c.

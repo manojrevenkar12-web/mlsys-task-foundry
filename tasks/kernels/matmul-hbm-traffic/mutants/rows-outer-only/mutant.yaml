@@ -1,0 +1,5 @@
+modes:
+- hbm-traffic
+- pipeline-revisits
+note: 'Searches tilings with the row axis always outermost: optimal for square shapes, but for tall projections it cannot
+  keep a column strip of B resident and moves 14-39% more.'

@@ -1,0 +1,5 @@
+wrong: >
+  When K is split across grid steps it accumulates the partial products in the bfloat16 output
+  block instead of a float32 accumulator, violating "accumulate in float32"; it rounds to bf16 at
+  every k step, about doubling the error (about 0.3% relative instead of 0.16% at K=8192), which a
+  loose tolerance still accepts.

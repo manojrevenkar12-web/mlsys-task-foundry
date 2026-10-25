@@ -1,0 +1,23 @@
+step_ms_b1_l4096: 10.132
+tokens_per_s_b1_l4096: 98.69
+crossover_batch_l128: 1351.98
+max_context_for_crossover: 218.63
+tokens_per_s_b256_l4096: 2731.8
+explanation: |
+  Numbers: weights 8.03e9 x 2 B = 16.06 GB; KV per token = 2 (K,V) x 32 layers x 8 heads x 128 x 2 B = 131,072 B (128 KiB).
+  B=1, L=4096: KV = 4096 x 131,072 = 0.537 GB, memory = (16.06 + 0.537) GB / 1,638 GB/s = 10.132 ms; compute = 2 x 8.03e9 / 918e12
+  = 0.0175 ms, so memory dominates by 580x -> 98.7 tokens/s for the sequence.
+  Memory time is (W + B*L*kv)/BW and compute time is B*2P/F, both linear in B. Compute equals memory when
+  B*(2P/F - L*kv/BW) = W/BW. At L=128: 2P/F = 17.49 us per sequence, L*kv/BW = 10.24 us, so B = 9.804e-3 s / 7.25e-6 s = 1,352
+  (real-valued). Because KV traffic grows with B as well as L, a longer context lowers the margin (denominator) and pushes
+  the crossover to larger B: at L=128 you need B = 1,352, and when L*kv/BW reaches 2P/F no batch size ever makes
+  the step compute-bound. That limit is L = 2P*BW/(F*kv) = 218.6 tokens (kv bytes per sequence read per step per FLOP-equivalent
+  drops below the machine balance of 918e12/1638e9 = 560 FLOP/byte: each sequence does 16.06 GFLOP and reads 131 KB/token,
+  i.e. L x 131 KB; its intensity 16.06e9/(L*131072) is 560 at L=218.6). Above ~219 tokens KV reads alone make the step memory-bound
+  at any batch, e.g. L=4096 is never compute-bound.
+  B=256, L=4096: KV = 256 x 0.537 GB = 137.4 GB, memory = (16.06 + 137.4)/1638 = 93.7 ms vs compute 4.48 ms, so 256/0.0937 =
+  2,732 tokens/s, only 27.7x the single-sequence throughput for 256x the work because the KV cache cost (not the weights)
+  now dominates: 90% of bytes are KV. At small batch decode is limited by streaming the weights once per step (batch amortises
+  that: throughput roughly linear in B), at large batch/long context it is limited by streaming each sequence's own KV cache,
+  which does not amortise, so throughput saturates at BW/(L*kv) = 1638e9/(4096*131072) = 3,051 tokens/s at L=4096. To go beyond:
+  quantise or shrink the KV cache (FP8/int4, GQA/MLA, sliding windows), shorten context, or add chips/bandwidth; extra FLOPs do not help.

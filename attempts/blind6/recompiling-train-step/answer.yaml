@@ -1,0 +1,18 @@
+cause: recompilation
+step_compiles: 12
+compile_share: 0.822
+explanation: |
+  Every one of the 12 `train` annotations (~330-415 ms each, 4.48 s in total) contains a fresh XLA compile of `jit_step`:
+  12 sets of `HLO passes ... (jit_step)` events and 12 big `backend_compile_and_load` events of 260-330 ms (plus two ~6 ms helper
+  compiles for the asarray conversions). Summed over all `backend_compile_and_load` events inside the train annotations, compilation
+  is 3.68 s of 4.48 s = 82% of the time (the big step compiles alone are 78.5%); the ThunkExecutor events that actually execute
+  the program last a few ms or less. The reason is that `batches()` pads each batch to its own longest sequence
+  (width = lengths.max(), exponential lengths so 30-500 wide), so the `tokens`/`mask` shapes differ almost every batch and jit
+  retraces and recompiles for every new shape, a ~300 ms compile for a few ms of arithmetic.
+  Fix (solution.py): keep `step` as the module-level jit but give it only a few distinct shapes: pad each batch's width up to the
+  next power of two (minimum 32, capped at max_len=512) inside `batches`, i.e. buckets 64/128/256/512 in practice. The mask is
+  zero on padding and `loss_fn` already divides sum(nll*mask) by sum(mask), and padded targets are masked, so the loss and gradients
+  are unchanged (the 30-batch losses match the starter's to ~2e-6, float32 rounding). A 30-batch train() compiles `step` 4 times
+  (checked with step._cache_size()), and the padding is on average 1.4-1.6x the longest sequence (never above 2x) instead of
+  padding everything to 512. Compile cost falls from ~12 x 300 ms to at most 4 x 300 ms and is paid once per bucket, not per batch.
+  Further options: a persistent compilation cache, or sorting/bucketing sequences by length to reduce padding.

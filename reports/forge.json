@@ -1,5 +1,5 @@
 {
- "seconds": 2.9,
+ "seconds": 58.5,
  "tasks": [
   {
    "id": "dp-replicas-drift",
@@ -298,7 +298,7 @@
    "title": "Causal ring attention across eight devices, gradients included",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 8.35,
+   "reference_seconds": 11.26,
    "checks": [
     "uses_current_api",
     "runs_under_shard_map_with_default_checks",
@@ -306,6 +306,7 @@
     "first_positions_see_only_themselves",
     "gradients_match_and_are_finite",
     "passes_kv_around_the_ring",
+    "no_device_holds_the_whole_sequence",
     "other_shapes_and_bf16"
    ],
    "check_targets": {
@@ -332,6 +333,9 @@
     "passes_kv_around_the_ring": [
      "all-gather-kv"
     ],
+    "no_device_holds_the_whole_sequence": [
+     "all-gather-kv"
+    ],
     "other_shapes_and_bf16": [
      "ring-offset"
     ]
@@ -346,7 +350,18 @@
       "gradients_match_and_are_finite"
      ],
      "crashed": null,
-     "seconds": 9.2
+     "seconds": 11.21
+    },
+    "gather-by-ppermute": {
+     "modes": [
+      "all-gather-kv"
+     ],
+     "note": "Never calls all_gather, but sends every shard to every device with n-1 ppermutes of different shifts and concatenates them: an all-gather written by hand.",
+     "killed_by": [
+      "no_device_holds_the_whole_sequence"
+     ],
+     "crashed": null,
+     "seconds": 5.84
     },
     "gather-everything": {
      "modes": [
@@ -354,10 +369,11 @@
      ],
      "note": "All-gathers K and V on every device and masks locally: right answers, but every device holds the whole sequence.",
      "killed_by": [
-      "passes_kv_around_the_ring"
+      "passes_kv_around_the_ring",
+      "no_device_holds_the_whole_sequence"
      ],
      "crashed": null,
-     "seconds": 4.0
+     "seconds": 4.99
     },
     "local-positions": {
      "modes": [
@@ -371,7 +387,7 @@
       "other_shapes_and_bf16"
      ],
      "crashed": null,
-     "seconds": 7.54
+     "seconds": 9.04
     },
     "no-rescale": {
      "modes": [
@@ -384,7 +400,7 @@
       "other_shapes_and_bf16"
      ],
      "crashed": null,
-     "seconds": 8.06
+     "seconds": 10.88
     },
     "pvary-loop": {
      "modes": [
@@ -399,10 +415,11 @@
       "first_positions_see_only_themselves",
       "gradients_match_and_are_finite",
       "passes_kv_around_the_ring",
+      "no_device_holds_the_whole_sequence",
       "other_shapes_and_bf16"
      ],
      "crashed": null,
-     "seconds": 0.81
+     "seconds": 0.9
     },
     "strict-causal": {
      "modes": [
@@ -416,7 +433,7 @@
       "other_shapes_and_bf16"
      ],
      "crashed": null,
-     "seconds": 8.95
+     "seconds": 12.27
     },
     "wrong-direction": {
      "modes": [
@@ -429,7 +446,7 @@
       "other_shapes_and_bf16"
      ],
      "crashed": null,
-     "seconds": 9.45
+     "seconds": 10.81
     }
    },
    "idle_checks": [],
@@ -438,7 +455,7 @@
    "rubric_issues": [],
    "problems": [],
    "ok": true,
-   "killed": 7
+   "killed": 8
   },
   {
    "id": "same-dropout-everywhere",
@@ -975,12 +992,13 @@
    "title": "A bf16 matmul tiled for the least HBM traffic that fits in VMEM",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 4.4,
+   "reference_seconds": 5.34,
    "checks": [
     "uses_current_api",
     "runs_one_pallas_kernel",
     "matches_on_every_distribution",
     "correct_on_two_cores_in_random_order",
+    "rounds_to_bf16_once",
     "long_reduction_matches",
     "fits_the_vmem_budget",
     "moves_close_to_the_least_hbm_traffic",
@@ -1003,6 +1021,10 @@
      "reduction-axis-parallel",
      "accumulator-init"
     ],
+    "rounds_to_bf16_once": [
+     "output-dtype",
+     "accumulator-init"
+    ],
     "long_reduction_matches": [
      "accumulator-init",
      "output-dtype"
@@ -1019,6 +1041,18 @@
     ]
    },
    "mutants": {
+    "accumulate-in-bf16-output": {
+     "modes": [
+      "output-dtype",
+      "accumulator-init"
+     ],
+     "note": "Accumulates the k partial products directly in the bf16 output block instead of a float32 scratch: right to about 0.3%, but rounded at every step.",
+     "killed_by": [
+      "rounds_to_bf16_once"
+     ],
+     "crashed": null,
+     "seconds": 4.96
+    },
     "budget-without-accumulator": {
      "modes": [
       "vmem-budget"
@@ -1028,7 +1062,7 @@
       "fits_the_vmem_budget"
      ],
      "crashed": null,
-     "seconds": 4.19
+     "seconds": 5.16
     },
     "dot-outside": {
      "modes": [
@@ -1038,10 +1072,11 @@
      "killed_by": [
       "runs_one_pallas_kernel",
       "correct_on_two_cores_in_random_order",
+      "rounds_to_bf16_once",
       "long_reduction_matches"
      ],
      "crashed": null,
-     "seconds": 4.14
+     "seconds": 4.79
     },
     "f32-output": {
      "modes": [
@@ -1054,7 +1089,7 @@
       "moves_close_to_the_least_hbm_traffic"
      ],
      "crashed": null,
-     "seconds": 3.89
+     "seconds": 4.99
     },
     "k-axis-parallel": {
      "modes": [
@@ -1062,10 +1097,23 @@
      ],
      "note": "Marks the reduction axis parallel: on two cores the k steps of one output block run on different cores and partial sums are lost.",
      "killed_by": [
+      "rounds_to_bf16_once",
       "long_reduction_matches"
      ],
      "crashed": null,
-     "seconds": 4.65
+     "seconds": 6.09
+    },
+    "rows-outer-only": {
+     "modes": [
+      "hbm-traffic",
+      "pipeline-revisits"
+     ],
+     "note": "Searches tilings with the row axis always outermost: optimal for square shapes, but for tall projections it cannot keep a column strip of B resident and moves 14-39% more.",
+     "killed_by": [
+      "moves_close_to_the_least_hbm_traffic"
+     ],
+     "crashed": null,
+     "seconds": 5.45
     },
     "rule-of-thumb-512": {
      "modes": [
@@ -1076,7 +1124,7 @@
       "moves_close_to_the_least_hbm_traffic"
      ],
      "crashed": null,
-     "seconds": 5.07
+     "seconds": 6.32
     },
     "single-buffered-budget": {
      "modes": [
@@ -1087,7 +1135,7 @@
       "fits_the_vmem_budget"
      ],
      "crashed": null,
-     "seconds": 4.01
+     "seconds": 4.83
     },
     "zero-every-step": {
      "modes": [
@@ -1096,10 +1144,11 @@
      "note": "Clears the accumulator on every k step instead of the first: only the last K block survives.",
      "killed_by": [
       "correct_on_two_cores_in_random_order",
+      "rounds_to_bf16_once",
       "long_reduction_matches"
      ],
      "crashed": null,
-     "seconds": 4.11
+     "seconds": 5.34
     }
    },
    "idle_checks": [
@@ -1111,7 +1160,7 @@
    "rubric_issues": [],
    "problems": [],
    "ok": true,
-   "killed": 7
+   "killed": 9
   },
   {
    "id": "paged-attention-decode",
@@ -3226,9 +3275,9 @@
  "summary": {
   "tasks": 27,
   "ok": 27,
-  "mutants": 157,
-  "killed": 157,
-  "checks": 149,
+  "mutants": 160,
+  "killed": 160,
+  "checks": 151,
   "idle_checks": 15
  }
 }

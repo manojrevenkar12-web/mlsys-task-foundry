@@ -1,0 +1,15 @@
+bottleneck: straggler
+straggler_host: 3
+stall_event: read_shard_from_storage
+stalled_steps: 6
+mean_step_ms: 16.473
+step_ms_without_stall: 13.669
+explanation: >
+  All hosts join the gradient all-reduce at nearly the same moment in 14 of the 20 steps, and then
+  the all-reduce takes about 2.0 ms after the last host arrives in every step. In 6 steps (3, 6, 8,
+  9, 10, 11) one host's Host input lane shows a read_shard_from_storage event of 6.8-11.8 ms on top
+  of next_batch, so it reaches the all-reduce 5.5-11.7 ms after the others. The other three hosts'
+  all-reduce events start when they arrive and end when the late host has arrived, so they look
+  long (up to ~14 ms) although the wire time is only ~2 ms: that is waiting, not communication.
+  Mean step is 16.47 ms; without the storage reads it would be 13.67 ms (-17%). Fix the slow host's
+  input pipeline: prefetch/cache shards locally or read ahead asynchronously.

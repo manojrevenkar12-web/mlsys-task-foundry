@@ -1,0 +1,4 @@
+wrong: >
+  Masks the scores of positions past the length but not the V rows, so the zero weights meet the
+  last page's garbage in p @ v; when the tail of a partial last page holds NaN or Inf the output is
+  NaN (correct only when the pool's unused slots are finite).

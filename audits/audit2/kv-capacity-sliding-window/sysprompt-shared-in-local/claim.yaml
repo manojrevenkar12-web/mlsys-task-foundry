@@ -1,0 +1,4 @@
+wrong: >
+  Keeps the system prompt's blocks in all 48 layers (shared_layer_blocks 6,144), although local
+  layers free those blocks once the window has moved past position 2,047, so at full length only
+  the 8 global layers hold them (1,024).

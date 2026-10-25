@@ -1,0 +1,22 @@
+bottleneck: host_input
+device_busy_share: 0.113
+largest_host_phase: decode_images
+overlapped_step_ms: 16.63
+explanation: |
+  Steady state (steps 1-9) the mean train step is 20.34 ms, of which load_batch (host-side decode + augment, before the jitted
+  update is even dispatched) takes 16.63 ms = 82%. Inside it decode_images takes 15.0 ms (74% of the step, ~90% of load_batch),
+  augment 1.6 ms (8%). The device is busy (ThunkExecutor::Execute on the tf_XLAExecute thread) only 2.30 ms per step on average
+  (sum 20.7 ms over 183.1 ms of steps = 11.3%); the other ~3.7 ms after load_batch is dispatch, host-to-device copy and waiting for
+  the ~2.3 ms of compute. Step 0 is different: ~800 ms of backend_compile_and_load events (compilation of update and helpers)
+  inflate it to 273 ms, but that is a one-time cost and does not recur in steps 1-9 (no compile events there), so it is not the
+  bottleneck. The device sits idle ~89% of the time waiting for the Python input pipeline, which runs serially with the update.
+  Changes in order of expected gain: (1) take decode_images off the critical path: vectorise the per-image Python loop
+  (one batched rng.integers + reshape/mean over the whole (64,64,64,3) array instead of 64 iterations), or use real decoding in
+  worker processes (tf.data / grain / torch DataLoader with num_workers>=4); this alone attacks 15 ms of the 20.3 ms. (2) Overlap:
+  prefetch the next batch on a background thread/process while the device runs the current update (double buffering with
+  jax.device_put ahead of time); with perfect overlap each step takes max(load 16.63 ms, rest 3.71 ms) = 16.6 ms (a 1.22x speedup,
+  20.34 -> 16.63 ms) and device busy share rises to ~14% -- loading is still the longer side, so overlap alone only helps ~18%
+  and parallel workers are needed to go beyond it: with loading parallelised ~4-8x the step becomes device/dispatch bound at
+  about 3.7 ms (~5x faster in total). (3) Vectorise augment (batched flips with np.where and a single roll per shift group), worth
+  ~1.6 ms. (4) Don't block with loss.block_until_ready() every step so dispatch of the next step can run ahead. Host-to-device
+  copy is not the issue (the whole post-load remainder is 3.7 ms, of which 2.3 ms is compute).

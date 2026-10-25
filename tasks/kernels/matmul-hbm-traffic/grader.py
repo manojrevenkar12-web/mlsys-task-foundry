@@ -9,7 +9,13 @@ from foundry.checks import Ctx, check, fail, lowers_for_tpu
 
 MiB = 1 << 20
 BUDGET = 16 * MiB
-SHAPES = {"skinny output": (8192, 8192, 256), "square": (4096, 4096, 4096), "deep reduction": (2048, 16384, 2048)}
+SHAPES = {
+    "skinny output": (8192, 8192, 256),
+    "square": (4096, 4096, 4096),
+    "deep reduction": (2048, 16384, 2048),
+    "tall projection": (4096, 2048, 2048),
+    "MLP up-projection": (16384, 2048, 14336),
+}
 SLACK = 1.05  # within 5% of the least traffic any legal tiling achieves
 MAX_STEPS = 200_000
 
@@ -150,6 +156,27 @@ def correct_on_two_cores_in_random_order(sol, ctx: Ctx):
     err = np.abs(np.asarray(got, np.float64) - want).max() / np.abs(want).max()
     if err > 1e-2:
         fail(f"wrong on two simulated cores (max error {err:.3g})")
+
+
+def _bf16_ulp(x):
+    x = np.abs(np.asarray(x, np.float64))
+    return np.exp2(np.floor(np.log2(np.maximum(x, 1e-30))) - 7)  # bf16 keeps 8 significant bits
+
+
+@check(targets=["output-dtype", "accumulator-init"])
+def rounds_to_bf16_once(sol, ctx: Ctx):
+    """Accumulating in float32 and rounding once leaves every output within one bf16 unit in the
+    last place of the exact product (positive inputs: no cancellation). Accumulating in bf16, in
+    the output block or anywhere else, rounds at every k step and drifts further."""
+    rng = ctx.rng(9)
+    # a shape whose least-traffic tilings split K, so partial sums must be carried between steps
+    a = jnp.asarray(rng.random((1024, 8192)), jnp.bfloat16)
+    b = jnp.asarray(rng.random((8192, 1024)), jnp.bfloat16)
+    got = np.asarray(sol.matmul(a, b, interpret=_interp()), np.float64)
+    want = np.asarray(a, np.float64) @ np.asarray(b, np.float64)
+    ulps = np.abs(got - want) / _bf16_ulp(want)
+    if ulps.max() > 1.0:
+        fail(f"outputs are up to {ulps.max():.1f} bf16 ulps from the exact product ({np.mean(ulps > 1):.0%} beyond one): not accumulated in float32")
 
 
 @check(targets=["accumulator-init", "output-dtype"])

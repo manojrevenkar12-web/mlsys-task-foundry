@@ -1,0 +1,144 @@
+{
+ "label": "audit2",
+ "recorded_at": "2026-10-25T12:02:12+00:00",
+ "forced": false,
+ "variants": [
+  {
+   "task": "kv-capacity-sliding-window",
+   "variant": "sysprompt-double-counted",
+   "claim": "Counts the full 2,048 blocks per global layer in each conversation and also the 1,024 shared system-prompt blocks, double-counting the prompt: layer_blocks_per_conversation should exclude the shared blocks (25,640), so max_conversations is 27 instead of 28.\n",
+   "escaped": false,
+   "caught_by": [
+    "blocks_one_conversation_needs",
+    "conversations_that_fit"
+   ]
+  },
+  {
+   "task": "kv-capacity-sliding-window",
+   "variant": "sysprompt-shared-in-local",
+   "claim": "Keeps the system prompt's blocks in all 48 layers (shared_layer_blocks 6,144), although local layers free those blocks once the window has moved past position 2,047, so at full length only the 8 global layers hold them (1,024).\n",
+   "escaped": false,
+   "caught_by": [
+    "blocks_the_system_prompt_shares"
+   ]
+  },
+  {
+   "task": "kv-capacity-sliding-window",
+   "variant": "window-aligned-256",
+   "claim": "Counts a local layer's window as 4096/16 = 256 blocks, but a window that is not aligned to 16 spans 257 blocks, so layer_blocks_per_conversation is 25,600 instead of 25,640 (the max_conversations of 28 happens to still come out right).\n",
+   "escaped": false,
+   "caught_by": [
+    "blocks_one_conversation_needs"
+   ]
+  },
+  {
+   "task": "matmul-hbm-traffic",
+   "variant": "bf16-accumulate-in-output",
+   "claim": "When K is split across grid steps it accumulates the partial products in the bfloat16 output block instead of a float32 accumulator, violating \"accumulate in float32\"; it rounds to bf16 at every k step, about doubling the error (about 0.3% relative instead of 0.16% at K=8192), which a loose tolerance still accepts.\n",
+   "escaped": true,
+   "caught_by": []
+  },
+  {
+   "task": "matmul-hbm-traffic",
+   "variant": "rows-outer-only",
+   "claim": "Always uses the grid order (i, j, k) and never puts the N axis outermost, so for tall shapes where keeping a full-K column strip of B resident is best it moves 14-39% more HBM bytes than the best legal tiling (e.g. 4096x2048x2048: 1.14x, 16384x2048x14336: 1.39x); square shapes are optimal.\n",
+   "escaped": true,
+   "caught_by": []
+  },
+  {
+   "task": "matmul-hbm-traffic",
+   "variant": "vmem-ignores-acc-scratch",
+   "claim": "The VMEM budget counts the double-buffered A, B and C blocks but not the float32 accumulator scratch, so for K-split tilings it picks blocks that need more than 16 MiB (e.g. 22 MiB for 4096^3, 20 MiB for 256x11008x8192); its traffic looks at or below the legal optimum only because the tiling does not fit.\n",
+   "escaped": false,
+   "caught_by": [
+    "fits_the_vmem_budget"
+   ]
+  },
+  {
+   "task": "multihost-straggler",
+   "variant": "count-arrives-last",
+   "claim": "stalled_steps counts every step where host 2 arrives last at the all-reduce (9), ignoring the prompt's \"more than 1 ms after every other host\" threshold; only 6 steps meet it.\n",
+   "escaped": false,
+   "caught_by": [
+    "counts_the_stalled_steps"
+   ]
+  },
+  {
+   "task": "multihost-straggler",
+   "variant": "pid-as-host",
+   "claim": "Reports the straggler as host 3 by reading the trace's process id (pid 3), but pid 3 is the process named /host:2; the slow host is host 2.\n",
+   "escaped": false,
+   "caught_by": [
+    "finds_the_host"
+   ]
+  },
+  {
+   "task": "multihost-straggler",
+   "variant": "subtract-whole-stall",
+   "claim": "step_ms_without_stall subtracts each stall's full duration from the step, but a step only shortens by how much later host 2 arrived than the next-latest host (capped at the stall), so the right value is 13.669 ms; 13.533 is about 1% off, outside the 0.4% tolerance.\n",
+   "escaped": false,
+   "caught_by": [
+    "predicts_the_step_without_the_stall"
+   ]
+  },
+  {
+   "task": "paged-attention-decode",
+   "variant": "clamp-off-by-one",
+   "claim": "The K/V index map clamps the page to lengths // page instead of ceil(lengths / page) - 1, so when a sequence's length is an exact multiple of 16 (and shorter than the table) the pipeline copies one dead page (an unused table entry) per KV head; the output is still right because positions are masked.\n",
+   "escaped": false,
+   "caught_by": [
+    "fetches_each_live_page_once_and_nothing_past_the_length"
+   ]
+  },
+  {
+   "task": "paged-attention-decode",
+   "variant": "pre-gathered-pages",
+   "claim": "Gathers every sequence's pages with jnp.take(k_pages, page_table) outside the kernel, materialising a (Hkv, B, pages_per_seq, page, D) copy of K and V, including the dead table entries, in HBM. That violates \"read the cache only inside the kernel, through the page table\"; the kernel then reads the copy with a plain BlockSpec, and the numbers are right.\n",
+   "escaped": false,
+   "caught_by": [
+    "one_kernel_and_no_gather_outside_it",
+    "fetches_each_live_page_once_and_nothing_past_the_length"
+   ]
+  },
+  {
+   "task": "paged-attention-decode",
+   "variant": "unmasked-value-tail",
+   "claim": "Masks the scores of positions past the length but not the V rows, so the zero weights meet the last page's garbage in p @ v; when the tail of a partial last page holds NaN or Inf the output is NaN (correct only when the pool's unused slots are finite).\n",
+   "escaped": false,
+   "caught_by": [
+    "matches_with_grouped_heads",
+    "every_length_against_one_page_boundary",
+    "correct_on_two_cores_in_random_order"
+   ]
+  },
+  {
+   "task": "ring-attention-causal",
+   "variant": "dkdv-not-returned",
+   "claim": "A custom_vjp ring backward rotates the dK/dV accumulators along with K/V but skips the final hop (as the forward rightly does for K/V), so each block's dK and dV end up on the previous device: the forward and dq match, but the gradients with respect to k and v are wrong.\n",
+   "escaped": false,
+   "caught_by": [
+    "gradients_match_and_are_finite"
+   ]
+  },
+  {
+   "task": "ring-attention-causal",
+   "variant": "float32-output",
+   "claim": "Returns the float32 accumulator without casting back, so bfloat16 inputs give a float32 result, violating \"in the inputs' dtype\"; values and gradients match within tolerance.\n",
+   "escaped": false,
+   "caught_by": [
+    "other_shapes_and_bf16"
+   ]
+  },
+  {
+   "task": "ring-attention-causal",
+   "variant": "ppermute-full-gather",
+   "claim": "Uses only ppermute, but sends every device's K and V to every other device with n-1 ppermutes of different shifts and concatenates them, so each device holds the whole sequence's K and V (an all-gather written as ppermutes). That violates \"no device may gather the whole sequence\"; outputs and gradients are right.\n",
+   "escaped": true,
+   "caught_by": []
+  }
+ ],
+ "summary": {
+  "variants": 15,
+  "escaped": 3
+ }
+}

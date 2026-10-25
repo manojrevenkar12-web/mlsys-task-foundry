@@ -1,0 +1,27 @@
+bottleneck: launch_bound
+gpu_busy_share: 0.5675
+kernels_per_iteration: 602
+optimizer_busy_share: 0.4454
+explanation: |
+  What limits the iteration: the CPU. The Python main thread issues 602 cudaLaunchKernel calls per
+  iteration (3010 over the 5 iterations), each taking about 7 to 8 us of host time, and the launches
+  are spaced about 9.0 us apart (median) in the optimizer phase. The GPU kernels in that phase are short:
+  median 3.1 us, sum 1.87 ms, against a phase length of 4.23 ms. So the GPU sits idle about 55% of the
+  optimizer phase waiting for the next launch.
+
+  Evidence per iteration (5 iterations, all alike; iteration about 5.42 ms): the forward and backward
+  part is two GEMMs (ampere_bf16 128x256 at 391 us and 256x128 at 794 us), about 1.2 ms of GPU
+  work. After that the optimizer runs as 600 tiny elementwise kernels (vectorized mul, add, lerp and
+  sqrt_div, 150 of each per iteration), i.e. an unfused per-parameter update. Kernels are running in
+  0.57 of the iteration overall, and in 0.445 of the optimizer phase (from the first kernel under 10 us
+  to the end of the iteration).
+
+  Changes, in order: (1) use the fused or foreach optimizer (fused=True or foreach=True for AdamW or
+  SGD), which turns the 600 launches into a handful of multi-tensor kernels; (2) capture the optimizer
+  step, or the whole iteration, in a CUDA graph (torch.compile mode="reduce-overhead" or manual graph
+  capture), so the launch cost is paid once per graph; (3) if the step is still small, raise the per-
+  step work (larger batch or gradient accumulation) so the GPU work per launch grows.
+
+  Expected effect: the GPU work per iteration is about 1.2 ms of GEMMs plus 1.9 ms of elementwise
+  kernels, so the floor without kernel fusion is about 3.1 to 3.3 ms per iteration, down from 5.4 ms
+  (roughly 1.6 to 1.7 times faster). Fusing the optimizer also lowers the elementwise kernel time itself.

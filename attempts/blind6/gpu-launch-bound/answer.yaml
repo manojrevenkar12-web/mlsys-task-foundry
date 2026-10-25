@@ -1,0 +1,24 @@
+bottleneck: launch_bound
+gpu_busy_share: 0.5675
+kernels_per_iteration: 602
+optimizer_busy_share: 0.445
+explanation: |
+  The iteration is limited by the Python thread issuing kernels, not by the GPU. Each of the 5 ProfilerSteps lasts ~5.41-5.46 ms
+  (mean ~5.43 ms) and launches 602 kernels: 2 big GEMMs (380 us + 828 us = ~1.21 ms) and 600 tiny elementwise kernels
+  (mul/add/lerp/sqrt_div, 150 each, median 3.1 us) -- the optimizer phase, one kernel per op per parameter tensor (150 tensors).
+  Evidence: (1) the GPU is busy only 56.8% of the iteration (about 3.07 ms of 5.43 ms), and only 44.5% (~1.86 ms of ~4.2 ms)
+  from the first <10 us kernel to the end of the step; the GPU sits idle between the tiny kernels. (2) cudaLaunchKernel calls are
+  back to back on the CPU thread, each ~8 us long with ~8.9 us spacing; 602 launches x ~8.95 us = ~5.4 ms, and the launch span
+  (5.40 ms) is within 10 us of the whole step length, i.e. the CPU is ~88.6% occupied issuing launches for the whole step and the
+  step ends ~5 us after the last launch. (3) Each tiny kernel runs ~3 us but costs ~9 us of CPU time to launch, so launch cost is
+  ~3x the kernel runtime and the GPU drains the queue and waits. The two GEMMs are launched early, run while the CPU gets ahead,
+  and are not the issue; it is not compute or memory bound (the 1.2 ms of real math is 22% of the step) and not data loading
+  (no gap before step start; the launch queue is continuously fed).
+  Changes, in order of expected effect: (a) replace the per-parameter optimizer loops with a fused/multi-tensor optimizer
+  (torch._foreach_* or fused=True AdamW/apex FusedAdam): 600 launches collapse to a handful, removing ~5.3 ms of launch time; the step
+  would then be GPU-bound at about the 1.2 ms of GEMM plus a few tens of us of optimizer work, i.e. ~1.3-1.5 ms, roughly 3.5-4x faster.
+  (b) CUDA Graphs / torch.compile(mode="reduce-overhead") of the whole step: replays all 602 kernels with one launch, so the CPU cost
+  disappears and the step runs at its GPU time of ~3.1 ms (about 1.75x) even without fusion; combined with (a) ~1.3 ms.
+  (c) torch.compile to fuse the elementwise chain into few kernels, which also cuts the kernel count and the memory traffic.
+  Using a faster CPU or fewer Python ops per launch helps only marginally. After the fix, re-profile: the new bottleneck will be
+  the two GEMMs (compute bound), where bf16/tensor-core efficiency matters.

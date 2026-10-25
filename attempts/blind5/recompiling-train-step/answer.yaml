@@ -1,0 +1,19 @@
+cause: recompilation
+step_compiles: 12
+compile_share: 0.822
+explanation: |
+  The trace is a jax.profiler capture of 12 train steps on CPU. Every batch has a different padded width,
+  because batches() pads each batch to its own longest sequence (widths from 53 to 274 tokens across the
+  batches). jit_step is compiled once per batch: the "HLO passes through layout assignment (jit_step)"
+  event appears 12 times, one per train annotation, and each train step spends about 0.27 to 0.34 s in
+  backend_compile_and_load. Summed over all train steps, compilation takes 3.68 s of the 4.48 s spent
+  inside train annotations, so compile_share is 0.822. The device execution (XLA thunks) totals about 73 ms
+  over the 12 batches, under 35 ms for any batch, so almost every train step is spent compiling.
+
+  What I changed: padding goes to power-of-two buckets, at least 64 and at most 512 (bucket_width in
+  solution.py), instead of the batch's own maximum. The jitted step then sees only the shapes 64, 128, 256 and
+  512, so a 30-batch train() compiles it 4 times (the jit cache holds 4 entries). Padding positions have
+  mask 0 and are excluded from the loss, and the random draws are unchanged, so the losses equal the
+  starter's to float32 rounding (max absolute difference 1.9e-6). Padding is 1.40 times the longest sequence on
+  average over the 30 batches (1.42 in total), and never more than 1.97 times, so it is within the
+  2x allowance.
