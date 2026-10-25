@@ -1,0 +1,111 @@
+{
+ "label": "blind4",
+ "recorded_at": "2026-10-25T11:54:45+00:00",
+ "forced": false,
+ "submissions": "blind4",
+ "tasks": [
+  {
+   "task": "kv-capacity-sliding-window",
+   "area": "serving",
+   "difficulty": 4,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.25
+  },
+  {
+   "task": "matmul-hbm-traffic",
+   "area": "kernels",
+   "difficulty": 5,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 5.56
+  },
+  {
+   "task": "multihost-straggler",
+   "area": "profiling",
+   "difficulty": 4,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 0.19
+  },
+  {
+   "task": "paged-attention-decode",
+   "area": "kernels",
+   "difficulty": 5,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 8.41
+  },
+  {
+   "task": "ring-attention-causal",
+   "area": "debugging",
+   "difficulty": 5,
+   "passed": true,
+   "score": 1.0,
+   "crashed": null,
+   "failed_checks": [],
+   "modes": {},
+   "seconds": 7.58
+  }
+ ],
+ "missing": [
+  "continuous-batching",
+  "decode-roofline-tpu",
+  "dp-replicas-drift",
+  "flash-attention-causal",
+  "gpu-launch-bound",
+  "grad-accumulation-weights",
+  "host-bound-input",
+  "int8-matmul-scales",
+  "kv-capacity-planning",
+  "nan-from-padding",
+  "paged-kv-allocator",
+  "port-dma-kernel",
+  "prefix-cache-hashing",
+  "recompiling-train-step",
+  "rmsnorm-residual-ragged",
+  "roofline-classify",
+  "row-softmax",
+  "same-dropout-everywhere",
+  "speculative-decoding-math",
+  "tiled-matmul",
+  "tpu-exposed-collectives",
+  "vocab-parallel-loss"
+ ],
+ "summary": {
+  "attempted": 5,
+  "passed": 5,
+  "not_attempted": 22,
+  "by_area": {
+   "debugging": {
+    "passed": 1,
+    "of": 1
+   },
+   "kernels": {
+    "passed": 2,
+    "of": 2
+   },
+   "profiling": {
+    "passed": 1,
+    "of": 1
+   },
+   "serving": {
+    "passed": 1,
+    "of": 1
+   }
+  },
+  "failure_modes": {}
+ }
+}

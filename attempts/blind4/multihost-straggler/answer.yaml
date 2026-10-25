@@ -1,0 +1,22 @@
+bottleneck: straggler
+straggler_host: 2
+stall_event: read_shard_from_storage
+stalled_steps: 6
+mean_step_ms: 16.473
+step_ms_without_stall: 13.669
+explanation: >
+  Every host's step is load (next_batch, 1.2-2.1 ms) + forward_backward (~8.8-9.5 ms) + gradient
+  all-reduce + optimizer (0.6 ms). The all-reduce is a synchronising collective: its event on each
+  host starts when that host arrives and ends when the last host has arrived plus about 2.0 ms of
+  real transfer (end minus last arrival is 1.9-2.1 ms in every step). In steps 3, 6, 8, 9, 10 and
+  11, host 2 (/host:2) runs a read_shard_from_storage of 6.8-11.8 ms in its Host input lane before
+  next_batch, so it reaches the all-reduce 5.5-11.7 ms after every other host; hosts 0, 1 and 3
+  sit inside a long all-reduce that is really waiting for host 2, not moving data. That is why the
+  all-reduce looks like a large share of the step (about 24% on average, over half in stalled
+  steps on the waiting hosts) while host 2's own all-reduce in those steps is short. In the other
+  14 steps arrivals are within ~0.6 ms and the step is ~13.7 ms, compute-dominated. Mean
+  train_step is 16.47 ms; with the storage reads taking no time it would be 13.67 ms (about 17%
+  faster). Fix the input pipeline on host 2, not the network: prefetch/stage the next shard
+  asynchronously (tf.data/grain prefetch, local SSD cache or read-ahead of shards, more reader
+  threads), or check that host's storage path/disk; buying bandwidth or overlapping the
+  all-reduce would recover almost nothing, since the actual collective is only ~2 ms.

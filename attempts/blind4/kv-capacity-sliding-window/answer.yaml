@@ -1,0 +1,24 @@
+kv_bytes_per_token_per_layer: 4096
+layer_blocks_per_conversation: 25640
+shared_layer_blocks: 1024
+pool_layer_blocks: 732421
+max_conversations: 28
+explanation: >
+  One token in one layer stores K and V: 2 x 8 heads x 128 dims x 2 bytes = 4,096 bytes, so a
+  16-token block is 65,536 bytes. Weights take 12e9 x 2 = 24 GB, activations 8 GB, leaving a
+  48e9-byte pool = 732,421 blocks. Global layers (8 of them) keep all 32,768 positions = 2,048
+  blocks each; the first 128 blocks of each are the 2,048-token system prompt (it ends exactly on
+  a block boundary), which is shared, so each conversation owns 1,920 x 8 = 15,360 global blocks.
+  Local layers (40): the window is the newest 4,096 positions [t-4095, t]. It covers exactly 256
+  aligned blocks only when t is the last position of a block; at any other position the oldest
+  block is partly in the window and cannot be freed, so the worst case is 257 blocks per local
+  layer, 40 x 257 = 10,280. Because the guarantee must hold whatever the exact position, we budget
+  257, giving 15,360 + 10,280 = 25,640 blocks per conversation. The system prompt saves 128 blocks
+  in each global layer (1,024 shared blocks held once); in the local layers it saves nothing at
+  full length, since positions 0-2,047 left every window long ago and those blocks were freed (it
+  only helps local layers while a conversation is still under ~6k tokens). (732,421 - 1,024) /
+  25,640 = 28.5, so 28 conversations fit. Global layers dominate (60% of blocks for 1/6 of the
+  layers); to fit more: quantize the KV cache to fp8 (about 2x, 57 conversations), quantize weights
+  to fp8/int8 (frees 12 GB, about 35), trim the activation reserve, share or compress the global
+  layers' KV (e.g. MLA/fewer KV heads on global layers), or use a ring buffer per local layer of
+  exactly 4,096 positions so local blocks never exceed 256.
