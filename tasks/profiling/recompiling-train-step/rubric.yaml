@@ -7,7 +7,7 @@ criteria:
   - id: cites-the-trace
     weight: 25
     text: Points to trace events that show it (backend_compile_and_load or jit_step pass events inside train steps)
-    pass: '"each of the first steps contains a 20-60 ms backend_compile_and_load and the jit_step HLO passes"'
+    pass: '"every train step contains a backend_compile_and_load of tens to hundreds of ms, with HLO pass events for module jit_step"'
     fail: describes the problem without naming any event in the trace
   - id: fix-and-why-loss-is-unchanged
     weight: 25

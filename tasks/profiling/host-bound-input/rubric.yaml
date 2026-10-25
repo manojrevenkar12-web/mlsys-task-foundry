@@ -2,12 +2,12 @@ criteria:
   - id: host-bound-with-numbers
     weight: 30
     text: Says the device is idle most of each step and backs it with the measured busy share and load time
-    pass: '"the device is busy about 5% of the step; load_batch takes ~15 ms of a ~17 ms step"'
+    pass: '"the device is busy about 11% of the step; load_batch takes ~16.6 ms of a ~20 ms step"'
     fail: '"the model is slow" or a claim with no numbers from the trace'
   - id: names-decode
     weight: 20
     text: Names decode_images as the largest host cost and augment as minor
-    pass: '"decode_images is ~90% of load_batch; augment ~10%"'
+    pass: '"decode_images is ~15 ms of the 16.6 ms load_batch; augment ~1.6 ms"'
     fail: treats load_batch as one opaque block
   - id: overlap-first
     weight: 25

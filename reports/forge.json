@@ -1,5 +1,5 @@
 {
- "seconds": 441.3,
+ "seconds": 85.6,
  "tasks": [
   {
    "id": "dp-replicas-drift",
@@ -1388,7 +1388,7 @@
    "title": "Where does a training step's time go when the device is mostly idle?",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 0.28,
+   "reference_seconds": 0.23,
    "checks": [
     "names_the_bottleneck",
     "measures_device_busy_share",
@@ -1420,7 +1420,7 @@
       "names_the_bottleneck"
      ],
      "crashed": null,
-     "seconds": 0.24
+     "seconds": 0.25
     },
     "container-not-phase": {
      "modes": [
@@ -1431,7 +1431,7 @@
       "finds_the_largest_host_phase"
      ],
      "crashed": null,
-     "seconds": 0.25
+     "seconds": 0.29
     },
     "counted-compile-step": {
      "modes": [
@@ -1442,7 +1442,7 @@
       "measures_device_busy_share"
      ],
      "crashed": null,
-     "seconds": 0.26
+     "seconds": 0.32
     },
     "overlap-ignored": {
      "modes": [
@@ -1454,7 +1454,7 @@
       "bounds_the_step_with_perfect_overlap"
      ],
      "crashed": null,
-     "seconds": 0.34
+     "seconds": 0.26
     },
     "python-thread-events": {
      "modes": [
@@ -1465,7 +1465,7 @@
       "measures_device_busy_share"
      ],
      "crashed": null,
-     "seconds": 0.29
+     "seconds": 0.36
     }
    },
    "idle_checks": [],
@@ -1484,7 +1484,7 @@
    "title": "A training step that recompiles every batch",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 11.04,
+   "reference_seconds": 11.09,
    "checks": [
     "names_the_cause",
     "counts_the_compilations_in_the_trace",
@@ -1523,7 +1523,7 @@
       "names_the_cause"
      ],
      "crashed": null,
-     "seconds": 8.12
+     "seconds": 8.77
     },
     "counted-every-compile": {
      "modes": [
@@ -1534,7 +1534,7 @@
       "counts_the_compilations_in_the_trace"
      ],
      "crashed": null,
-     "seconds": 8.03
+     "seconds": 8.91
     },
     "mask-dropped": {
      "modes": [
@@ -1545,7 +1545,7 @@
       "losses_are_unchanged_by_padding"
      ],
      "crashed": null,
-     "seconds": 16.85
+     "seconds": 7.81
     },
     "multiple-of-eight": {
      "modes": [
@@ -1556,7 +1556,7 @@
       "fixed_train_compiles_step_at_most_six_times"
      ],
      "crashed": null,
-     "seconds": 20.86
+     "seconds": 16.63
     },
     "nested-events-summed": {
      "modes": [
@@ -1568,7 +1568,7 @@
       "measures_the_compile_share"
      ],
      "crashed": null,
-     "seconds": 14.33
+     "seconds": 10.52
     },
     "pad-to-max": {
      "modes": [
@@ -1579,7 +1579,7 @@
       "padding_stays_below_twice_the_longest_sequence"
      ],
      "crashed": null,
-     "seconds": 8.72
+     "seconds": 11.03
     }
    },
    "idle_checks": [],
