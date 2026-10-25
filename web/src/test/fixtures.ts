@@ -45,14 +45,15 @@ export const detail: TaskDetail = {
 
 export const summary: Summary = {
   forge: { tasks: 2, ok: 1, mutants: 5, killed: 4, checks: 7, idle_checks: 1 },
-  attempts: [{ label: "blind1", attempted: 2, passed: 1, not_attempted: 0, by_area: {} }],
-  audits: [{ label: "audit1", variants: 3, escaped: 1 }],
+  attempts: [{ label: "blind1", submissions: "blind1", regrade: false, attempted: 2, passed: 1, not_attempted: 0, by_area: {} }],
+  audits: [{ label: "audit1", submissions: "audit1", regrade: false, variants: 3, escaped: 1 }],
 };
 
 export const emptySummary: Summary = { forge: null, attempts: [], audits: [] };
 
 export const attempt: AttemptDoc = {
   label: "blind1",
+  submissions: "blind1",
   recorded_at: "2026-10-25T10:00:00+00:00",
   forced: false,
   tasks: [
@@ -74,6 +75,7 @@ export const attempt: AttemptDoc = {
 
 export const audit: AuditDoc = {
   label: "audit1",
+  submissions: "audit1",
   recorded_at: "2026-10-25T11:00:00+00:00",
   variants: [
     { task: "tiled-matmul", variant: "drops-last-tile", claim: "Ignores the last K tile.", escaped: false, caught_by: ["matches_reference"] },

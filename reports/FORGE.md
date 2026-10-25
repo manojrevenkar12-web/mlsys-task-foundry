@@ -5,19 +5,19 @@
 
 | Task | Area | Difficulty | Reference | Mutants killed | Checks | Problems |
 |---|---|---:|---|---:|---:|---|
-| dp-replicas-drift | debugging | 2 | passes (1 s) | 4/4 | 4 | - |
+| dp-replicas-drift | debugging | 2 | passes (2 s) | 4/4 | 4 | - |
 | grad-accumulation-weights | debugging | 3 | passes (3 s) | 5/5 | 4 | - |
 | nan-from-padding | debugging | 3 | passes (3 s) | 5/5 | 5 | - |
-| ring-attention-causal | debugging | 5 | passes (11 s) | 8/8 | 8 | - |
+| ring-attention-causal | debugging | 5 | passes (9 s) | 8/8 | 8 | - |
 | same-dropout-everywhere | debugging | 3 | passes (3 s) | 5/5 | 4 | - |
-| vocab-parallel-loss | debugging | 4 | passes (8 s) | 6/6 | 4 | - |
-| flash-attention-causal | kernels | 4 | passes (6 s) | 8/8 | 8 | - |
-| int8-matmul-scales | kernels | 3 | passes (7 s) | 6/6 | 7 | - |
+| vocab-parallel-loss | debugging | 4 | passes (7 s) | 6/6 | 4 | - |
+| flash-attention-causal | kernels | 4 | passes (7 s) | 8/8 | 8 | - |
+| int8-matmul-scales | kernels | 3 | passes (6 s) | 6/6 | 7 | - |
 | matmul-hbm-traffic | kernels | 5 | passes (5 s) | 9/9 | 9 | - |
 | paged-attention-decode | kernels | 5 | passes (9 s) | 7/7 | 7 | - |
 | port-dma-kernel | kernels | 3 | passes (3 s) | 8/8 | 7 | - |
-| rmsnorm-residual-ragged | kernels | 3 | passes (4 s) | 7/7 | 8 | - |
-| row-softmax | kernels | 2 | passes (3 s) | 7/7 | 7 | - |
+| rmsnorm-residual-ragged | kernels | 3 | passes (5 s) | 7/7 | 8 | - |
+| row-softmax | kernels | 2 | passes (4 s) | 7/7 | 7 | - |
 | tiled-matmul | kernels | 2 | passes (8 s) | 9/9 | 7 | - |
 | gpu-launch-bound | profiling | 2 | passes (0 s) | 4/4 | 4 | - |
 | host-bound-input | profiling | 2 | passes (0 s) | 5/5 | 4 | - |

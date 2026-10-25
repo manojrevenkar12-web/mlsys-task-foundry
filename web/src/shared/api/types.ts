@@ -61,8 +61,8 @@ export interface TaskDetail extends Omit<TaskRow, "forge"> {
 
 export interface Summary {
   forge: { tasks: number; ok: number; mutants: number; killed: number; checks: number; idle_checks: number } | null;
-  attempts: { label: string; attempted: number; passed: number; not_attempted: number; by_area: Record<string, { passed: number; of: number }> }[];
-  audits: { label: string; variants: number; escaped: number }[];
+  attempts: { label: string; submissions: string; regrade: boolean; attempted: number; passed: number; not_attempted: number; by_area: Record<string, { passed: number; of: number }> }[];
+  audits: { label: string; submissions: string; regrade: boolean; variants: number; escaped: number }[];
 }
 
 export interface AttemptTask {
@@ -78,6 +78,7 @@ export interface AttemptTask {
 
 export interface AttemptDoc {
   label: string;
+  submissions: string;
   recorded_at: string;
   forced: boolean;
   tasks: AttemptTask[];
@@ -87,6 +88,7 @@ export interface AttemptDoc {
 
 export interface AuditDoc {
   label: string;
+  submissions: string;
   recorded_at: string;
   variants: { task: string; variant: string; claim: string; escaped: boolean; caught_by: string[] }[];
   summary: { variants: number; escaped: number };

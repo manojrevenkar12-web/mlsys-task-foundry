@@ -41,7 +41,9 @@ def test_health_and_summary(client):
     assert client.get("/healthz").json() == {"ok": True}
     s = client.get("/api/summary").json()
     assert s["forge"]["killed"] == 2
-    assert s["attempts"] == [{"label": "blind1", "attempted": 3, "passed": 1, "not_attempted": 0}]
+    assert s["attempts"] == [
+        {"label": "blind1", "submissions": "blind1", "regrade": False, "attempted": 3, "passed": 1, "not_attempted": 0}
+    ]
     assert s["audits"][0]["escaped"] == 1
 
 
@@ -128,3 +130,17 @@ def test_console_is_served_and_cannot_escape_its_folder(reports, tmp_path, monke
     assert c.get("/assets/app.js").text == "console.log(1)"
     assert "outside" not in c.get("/..%2Fsecret.txt").text
     assert c.get("/api/nothing").status_code == 404
+
+
+def test_regrades_follow_first_runs_and_name_their_submissions(reports, tmp_path, monkeypatch):
+    (reports / "attempts" / "a-regraded.json").write_text(
+        json.dumps({"label": "a-regraded", "tasks": [], "summary": {"attempted": 1, "passed": 1, "not_attempted": 0}})
+    )
+    (reports / "attempts" / "z.json").write_text(
+        json.dumps({"label": "z", "tasks": [], "summary": {"attempted": 1, "passed": 0, "not_attempted": 0}})
+    )
+    monkeypatch.setenv("FOUNDRY_WEB_DIR", str(tmp_path / "no-web"))
+    c = TestClient(create_app(reports=reports, tasks_dir=TASKS_DIR, db=tmp_path / "r.sqlite"))
+    rows = c.get("/api/summary").json()["attempts"]
+    assert [(r["label"], r["regrade"]) for r in rows] == [("blind1", False), ("z", False), ("a-regraded", True)]
+    assert c.get("/api/attempts/a-regraded").json()["submissions"] == "a"

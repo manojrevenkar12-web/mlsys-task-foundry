@@ -142,6 +142,11 @@ describe("results", () => {
     expect(await screen.findByRole("heading", { name: "blind1: 1 of 2 tasks passed" })).toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: /Grader audit audit1: 1 of 2 wrong submissions escaped/ })).toBeInTheDocument();
     expect(screen.getAllByText(/busy share/i).length).toBeGreaterThan(0);
-    await waitFor(() => expect(screen.getByText("Accumulates in bf16.").closest("tr")).toHaveAttribute("data-escaped", "true"));
+    expect(screen.getByText("Accumulates in bf16.").closest("tr")).toHaveAttribute("data-escaped", "true");
+    // passed tasks and caught submissions wait behind a toggle
+    expect(screen.queryByText("Ignores the last K tile.")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Show 1 caught submission" }));
+    await waitFor(() => expect(screen.getByText("Ignores the last K tile.")).toBeInTheDocument());
+    expect(screen.getAllByText(/First run, never rewritten/).length).toBe(2);
   });
 });

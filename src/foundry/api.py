@@ -32,6 +32,21 @@ def _json(path: Path) -> Any:
         return None
 
 
+def _submissions(d: dict[str, Any]) -> str:
+    """Which submissions a report graded: its own label for a first run, or the set it regraded."""
+    return str(d.get("submissions") or d["label"].split("-regraded")[0])
+
+
+def _runs(folder: Path) -> list[dict[str, Any]]:
+    """Reports in a folder, first runs before regrades, each in label order."""
+    rows = [
+        {"label": d["label"], "submissions": _submissions(d), "regrade": _submissions(d) != d["label"], **d["summary"]}
+        for p in sorted(folder.glob("*.json"))
+        if (d := _json(p)) and "label" in d
+    ]
+    return sorted(rows, key=lambda r: (r["regrade"], r["label"]))
+
+
 def create_app(reports: Path | None = None, tasks_dir: Path | None = None, db: Path | None = None) -> FastAPI:
     reports = reports or config.REPORTS_DIR
     tasks_dir = tasks_dir or config.TASKS_DIR
@@ -60,12 +75,8 @@ def create_app(reports: Path | None = None, tasks_dir: Path | None = None, db: P
         doc = _json(reports / "forge.json") or {}
         return {
             "forge": doc.get("summary"),
-            "attempts": [
-                {"label": d["label"], **d["summary"]} for p in sorted((reports / "attempts").glob("*.json")) if (d := _json(p))
-            ],
-            "audits": [
-                {"label": d["label"], **d["summary"]} for p in sorted((reports / "audits").glob("*.json")) if (d := _json(p))
-            ],
+            "attempts": _runs(reports / "attempts"),
+            "audits": _runs(reports / "audits"),
         }
 
     @app.get("/api/tasks")
@@ -132,14 +143,14 @@ def create_app(reports: Path | None = None, tasks_dir: Path | None = None, db: P
         d = _json(reports / "attempts" / f"{Path(label).name}.json")
         if d is None:
             raise HTTPException(404, f"no attempt report {label}")
-        return d
+        return d | {"submissions": _submissions(d)}
 
     @app.get("/api/audits/{label}")
     def audit(label: str) -> Any:
         d = _json(reports / "audits" / f"{Path(label).name}.json")
         if d is None:
             raise HTTPException(404, f"no audit report {label}")
-        return d
+        return d | {"submissions": _submissions(d)}
 
     @app.get("/api/reviews")
     def reviews(task: str | None = None) -> dict[str, Any]:

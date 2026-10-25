@@ -25,6 +25,6 @@ normal) so a kernel that is only right on unit-scale inputs fails.
 Writing a task means writing its wrong answers too, which roughly doubles the work and is the point:
 the mutants are the record of what an expert expects to go wrong. The forge has rejected its own
 author's work several times (an attention reference that was ill-conditioned on scaled inputs, a
-data-parallel reference that was 8× off under JAX 0.12's automatic gradient psum, and five mutants
+data-parallel reference that was 8× off under JAX 0.12's automatic gradient psum, and seven mutants
 that turned out to be correct solutions). Equivalent mutants are deleted, never "killed" by
 tightening a grader against correct code.

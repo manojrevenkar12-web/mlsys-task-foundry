@@ -143,6 +143,7 @@ def run_audit(label: str, root: Path | None = None, force: bool = False) -> dict
         "label": label,
         "recorded_at": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
         "forced": force,
+        "submissions": root.name,
         "variants": rows,
         "summary": {"variants": len(rows), "escaped": sum(bool(r["escaped"]) for r in rows)},
     }

@@ -73,7 +73,7 @@
   white-space: nowrap;
 }
 
-tr[data-passed] .result {
+tr[data-good] .result {
   color: var(--proven);
 }
 
@@ -98,4 +98,24 @@ tr[data-escaped] .result {
   .title {
     font-size: var(--text-xl);
   }
+}
+
+.more {
+  min-height: var(--touch);
+  padding: 0 var(--space-2);
+  border: 0;
+  background: none;
+  color: var(--ink-muted);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.more:hover {
+  color: var(--ink);
+}
+
+.table tfoot td {
+  border-bottom: 0;
 }
