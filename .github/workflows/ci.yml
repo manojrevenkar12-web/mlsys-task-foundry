@@ -48,8 +48,11 @@ jobs:
       - run: docker build -t mlsys-task-foundry .
       - name: the image serves the console and the API
         run: |
-          docker run -d --name f -p 8000:8000 mlsys-task-foundry
-          for i in $(seq 30); do curl -fs localhost:8000/healthz && break; sleep 1; done
-          curl -fs localhost:8000/api/summary | python -c "import json,sys; d=json.load(sys.stdin); assert d['forge']['tasks'] >= 20, d"
-          curl -fs localhost:8000/ | grep -q 'id="root"'
-          docker logs f
+          if ! out=$(docker run -d --name foundry -p 18765:8000 mlsys-task-foundry 2>&1); then
+            echo "::error::docker run failed: $out"; exit 1
+          fi
+          for i in $(seq 40); do curl -fs localhost:18765/healthz && break; sleep 1; done
+          if ! curl -fs localhost:18765/api/summary | python3 -c "import json,sys; d=json.load(sys.stdin); assert d['forge']['tasks'] >= 20, d"; then
+            echo "::error::summary check failed: $(docker logs foundry 2>&1 | tail -5 | tr '\n' ' ')"; exit 1
+          fi
+          curl -fs localhost:18765/ | grep -q 'id="root"' || { echo "::error::console not served"; exit 1; }
