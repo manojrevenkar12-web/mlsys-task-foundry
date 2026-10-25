@@ -3,7 +3,7 @@ import jax.numpy as jnp
 import numpy as np
 from jax.experimental.pallas import tpu as pltpu
 
-from foundry.checks import Ctx, check, fail
+from foundry.checks import Ctx, check, fail, lowers_for_tpu
 
 
 def _interp(seed=0, cores=1):
@@ -65,3 +65,11 @@ def correct_when_parallel_axes_run_on_two_cores_in_random_order(sol, ctx: Ctx):
     for seed in (1, 2, 3):
         got = sol.matmul(jnp.asarray(a), jnp.asarray(b), interpret=_interp(seed=seed, cores=2))
         ctx.close(got, want, rtol=2e-4, atol=1e-3, what=f"two cores, grid order seed {seed}")
+
+
+@check(targets=["interpret-only"])
+def lowers_for_a_real_tpu(sol, ctx: Ctx):
+    """The interpreter is lenient; a chip is not. Lower with the solution's own defaults, no TPU needed."""
+    SD = jax.ShapeDtypeStruct
+    for dt in (jnp.float32, jnp.bfloat16):
+        lowers_for_tpu(lambda a, b: sol.matmul(a, b), SD((512, 1024), dt), SD((1024, 384), dt), what=f"matmul ({jnp.dtype(dt).name})")

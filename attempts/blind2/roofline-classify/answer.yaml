@@ -1,0 +1,35 @@
+ridge_flop_per_byte: 295.34
+ops:
+  prefill_gemm_4096x4096x4096: {bound: compute, roof_fraction: 0.84}
+  prefill_gemm_512x4096x4096: {bound: compute, roof_fraction: 0.70}
+  prefill_gemm_256x4096x4096: {bound: memory, roof_fraction: 0.75}
+  decode_gemm_8x4096x4096: {bound: memory, roof_fraction: 0.86}
+  decode_attention_b32_ctx2048: {bound: memory, roof_fraction: 0.80}
+  rmsnorm_8192x4096: {bound: memory, roof_fraction: 0.67}
+  rope_8192x4096: {bound: memory, roof_fraction: 0.55}
+  lm_head_64x128256x4096: {bound: memory, roof_fraction: 0.81}
+explanation: >-
+  Ridge = 989.4e12 / 3.35e12 = 295.3 FLOP/byte; roof = min(989.4 TF, AI x 3.35 TB/s). Arithmetic
+  intensities: 4096^3 GEMM 1365 (compute, 831 TF achieved = 0.84 of peak); 512x4096x4096 GEMM 409.6
+  (compute, 693 TF = 0.70); 256x4096x4096 GEMM 227.6 (memory; roof 762 TF, achieved 572 TF = 0.75,
+  2.51 TB/s); decode GEMM M=8 AI 7.97 (memory, 2.88 TB/s = 0.86); decode attention AI 1.0 (memory,
+  2.68 TB/s = 0.80); rmsnorm AI 1.0 (memory, 2.24 TB/s = 0.67); RoPE AI 1.45 (memory, roof 4.87 TF,
+  1.84 TB/s = 0.55); LM head 64 tokens AI 63.0 (memory, roof 211 TF, 2.71 TB/s = 0.81). Surprises:
+  (1) a 256-token prefill GEMM is already memory-bound on H100 -- with M=256 the 32 MiB bf16 weight
+  matrix dominates the bytes, AI ~ M/(1+M/4096...) ~ 228 < 295, so small prefill chunks (< ~300
+  tokens) do not reach the tensor-core roof and chunked-prefill sizes should be >= ~512; (2) the LM
+  head, 67 GFLOP and the biggest single matmul here, is memory-bound (AI 63) because 64 tokens are
+  multiplied against a 1.05 GB 128256x4096 weight, so it is a weight-streaming op whose cost only
+  falls by batching more tokens per head call; (3) decode attention does 1 FLOP per byte -- it is pure
+  KV streaming, no tensor-core work matters. The two ops furthest below their roof are both cheap
+  elementwise ops: RoPE at 0.55 (75.1 us vs a 41.3 us floor) and RMSNorm at 0.67 (59.8 us vs 40.1 us).
+  For RoPE I would look first at memory access efficiency: the rotate-half/interleaved pairing gives
+  strided or non-vectorised loads (not 16-byte bf16x8 accesses), and cos/sin tables re-read per
+  head instead of cached; then check the bytes moved in Nsight Compute (dram__bytes vs the 138 MB
+  minimum) and fuse RoPE into the QKV-projection epilogue or the attention kernel so it costs no
+  separate HBM pass. For RMSNorm I would look first at whether it makes two passes over each 4096-wide
+  row (one to reduce sum of squares, one to normalise) re-reading from HBM rather than keeping the row
+  in registers/shared memory, and at occupancy/launch shape (one small block per row, reduction
+  latency); then fuse it with the preceding residual add (and the following quantisation/GEMM
+  prologue) so the activations are read once. Both have ~40 us floors, so fixing them saves ~35 us
+  and ~20 us per call respectively; the GEMMs are within 70-86% of roof and have less to give.

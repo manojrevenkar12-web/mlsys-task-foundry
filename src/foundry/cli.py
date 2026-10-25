@@ -49,11 +49,16 @@ def list_cmd() -> None:
 
 
 @app.command()
-def attempt(label: str, force: bool = typer.Option(False, help="rewrite an existing report (dev runs only)")) -> None:
+def attempt(
+    label: str,
+    force: bool = typer.Option(False, help="rewrite an existing report (dev runs only)"),
+    submissions: str = typer.Option("", help="grade attempts/<this>/ under a new report label (a regrade)"),
+) -> None:
     """Grade attempts/<label>/<task>/ submissions; the first run is recorded once."""
-    from . import attempts
+    from . import attempts, config
 
-    doc = attempts.run_attempts(label, force=force)
+    root = config.ROOT / "attempts" / submissions if submissions else None
+    doc = attempts.run_attempts(label, root=root, force=force)
     s = doc["summary"]
     typer.echo(f"{label}: passed {s['passed']}/{s['attempted']} ({s['not_attempted']} not attempted) {json.dumps(s['by_area'])}")
 

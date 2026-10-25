@@ -1,0 +1,28 @@
+bottleneck: launch_bound
+gpu_busy_share: 0.568
+kernels_per_iteration: 602
+optimizer_busy_share: 0.445
+explanation: >-
+  Each of the 5 iterations (ProfilerStep#0-4, 5.41-5.46 ms, mean 5.43 ms) launches 602 kernels
+  (3,010 cudaLaunchKernel calls in total, one per kernel on stream 7): 2 bf16 GEMMs
+  (ampere_bf16_s16816gemm_128x256 ~390 us and _256x128 ~810 us) and then 600 tiny
+  vectorized_elementwise kernels (mul, add, lerp, sqrt_div, 150 of each -- an unfused per-parameter
+  Adam-style update) averaging 3.1 us each. The GPU is busy (union of kernel intervals) only 3.08 ms
+  of 5.43 ms = 56.8% of the iteration. The first ~1.2 ms (the two GEMMs) is ~99% busy; from the first
+  kernel shorter than 10 us to the end of the iteration (~4.2 ms) the GPU is busy only 44.5% of the
+  time. The reason is on the CPU: the single Python thread issues a cudaLaunchKernel every ~9.0 us
+  (each call ~8.0 us of CPU time), while each kernel runs for ~3.1 us, so the launch queue is always
+  empty -- after each kernel the GPU sits idle ~3.9 us (mean gap) waiting for the next launch. The
+  optimizer phase lasts 600 x ~7 us ~ 4.2 ms set by launch rate, not by GPU work (~1.9 ms). This is
+  launch-bound, not compute-, memory- or data-loading-bound (no gaps between iterations or before the
+  first GEMM, and the GEMMs themselves are back to back). Changes, in order of expected effect:
+  (1) use a fused / multi-tensor optimizer (torch.optim.AdamW(fused=True) or foreach=True, or
+  torch.compile of the optimizer step) so the 600 elementwise launches become a handful of
+  multi_tensor_apply kernels: the optimizer phase drops from ~4.2 ms to roughly its memory time
+  (<= ~1.9 ms, likely less since 4 passes over each tensor become 1), iteration ~5.43 -> ~3.0 ms
+  (~1.8x). (2) Capture the step with CUDA graphs (torch.cuda.graphs / torch.compile
+  mode="reduce-overhead") so one graph launch replaces 602 launches: iteration approaches the GPU
+  busy time, ~3.1 ms (~43% shorter), and combined with (1) ~2.5 ms or less. (3) Reduce the remaining
+  Python overhead per launch (avoid per-parameter Python loops, .item() syncs) and, if needed,
+  increase per-kernel work (larger batch) so kernel time exceeds the ~9 us launch interval. Expect
+  GPU busy share to go from 57% to >90%.

@@ -1,0 +1,30 @@
+exposed_share: 0.0804
+hidden_share: 0.8776
+most_exposed_collective: reduce-scatter
+exposed_us_per_step: 1170.9
+explanation: >-
+  Over the 8 steps (116,439 us total, ~14.55 ms per step), collectives run (union of both async
+  lanes) for 76,508 us (9.56 ms/step) and compute fusions for 13.38 ms/step. Of the collective time,
+  9,367 us (1,171 us/step) has no compute running beside it: 8.0% of the step time is exposed
+  communication and 87.8% of the collective time is hidden. Almost all of it sits at the two edges of
+  the step, where there is no independent compute to overlap with: (1) the last reduce-scatter (layer
+  0's gradients), ~722 us/step, starts only after fusion.bwd.0 finishes and the optimizer cannot start
+  until it (and the 52 us all-reduce of loss/grad-norm, which depends on all gradients) is done --
+  nothing is left to compute in the backward pass; (2) the first all-gather (layer 0's forward
+  weights), ~397 us/step, runs at the very start of the step before any fusion can begin, because
+  the next step's first gather is not issued until the previous optimizer update finishes; (3) the
+  all-reduce, ~52 us/step. All other all-gathers (prefetched one layer ahead) and reduce-scatters
+  (layer l overlapped with bwd of layer l-1) are fully hidden; e.g. ~400 us gathers under ~540 us
+  forward fusions and ~730 us reduce-scatters under ~1,050 us backward fusions. Totals by collective:
+  reduce-scatter 5,779 us exposed (62%), all-gather 3,174 us (34%), all-reduce 415 us (4%), so the
+  reduce-scatter is most to blame. Changes: (a) overlap the tail with the optimizer: apply the update
+  per layer as each layer's reduce-scatter finishes (layer 7's shard can be updated while layers
+  6..0 still compute; only layer 0's update and the global-norm all-reduce remain), or compute
+  the grad-norm from per-shard partial sums so the clip does not serialise everything -- this hides
+  most of the 722 us, leaving ~ the layer-0 update; (b) prefetch the next step's layer-0 all-gather
+  during the current step's optimizer/backward tail (or keep layer 0 / embedding replicated, or
+  don't reshard after forward for the last layer -- like reshard_after_forward=False -- which also
+  removes the layer-0 bwd gather), hiding ~397 us; (c) split the final reduce-scatter into chunks
+  pipelined with the end of fusion.bwd.0. Together these would remove up to ~1.1 ms of the ~1.17 ms
+  exposed per step, i.e. ~7-8% faster steps (14.55 -> ~13.4-13.5 ms); the step is otherwise
+  compute-bound (13.38 ms of fusions).

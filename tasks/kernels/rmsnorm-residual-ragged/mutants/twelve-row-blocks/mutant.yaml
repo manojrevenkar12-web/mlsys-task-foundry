@@ -1,0 +1,4 @@
+modes:
+- interpret-only
+note: 'Uses blocks of 12 rows: right in the interpreter, but 12 is not a multiple of the 8-row sublane tile, so it does not
+  lower.'

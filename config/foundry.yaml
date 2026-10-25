@@ -11,6 +11,11 @@ forge:
   leak_min_chars: 60          # a run of reference code this long found in the prompt is a leak
   require_all_mutants_killed: true
 
+tpu_lowering:
+  # Kernel graders lower each solution for this chip (Pallas to Mosaic) without running it.
+  device_kind: "TPU v6 lite"   # TPU v6e, as jax.devices() names it
+  num_cores: 1
+
 inputs:
   # Hidden input distributions every numeric check runs on, after KernelBench-Verified
   # (graders that test one distribution let shape-matched bypasses through).

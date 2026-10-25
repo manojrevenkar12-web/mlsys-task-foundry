@@ -1,0 +1,4 @@
+modes:
+- interpret-only
+note: 'Defaults to 64 x 64 tiles: correct in the interpreter, but a (64, 64) float32 block breaks the TPU''s (8, 128) tiling,
+  so it does not lower for a real chip.'

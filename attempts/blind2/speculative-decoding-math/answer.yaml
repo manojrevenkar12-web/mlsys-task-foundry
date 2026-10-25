@@ -1,0 +1,20 @@
+expected_tokens_a08_k4: 3.3616
+speedup_a08_k4_c005: 2.8013
+best_k_a08_c005: 8
+best_k_a06_c02: 2
+speedup_a06_c02_best: 1.4
+explanation: >-
+  With i.i.d. acceptance alpha, the number of tokens per target pass is E(k) = 1 + alpha + ... +
+  alpha^k = (1 - alpha^(k+1)) / (1 - alpha) (accepted prefix plus the target's own bonus/correction
+  token). One round costs k draft steps plus one target pass = (k c + 1) target-step units, so the
+  speedup over plain decoding (1 token per unit) is S(k) = (1 - alpha^(k+1)) / ((1 - alpha)(1 + k c)).
+  alpha=0.8, k=4: E = (1 - 0.8^5)/0.2 = 3.3616 tokens; cost 1.2 -> S = 2.801. Scanning k=1..10 at
+  c=0.05: 1.714, 2.218, 2.567, 2.801, 2.951, 3.040, 3.082, 3.092 (k=8), 3.078, 3.047 -> best k=8,
+  S=3.09. At alpha=0.6, c=0.2: 1.333, 1.400 (k=2), 1.360, 1.281, 1.192, ... -> best k=2, S=1.40, and
+  for k>=8 it is below 1 (0.95 at k=8). Going from k to k+1, the marginal token gained by going from k to k+1 is alpha^(k+1) while the marginal cost
+  is c target-steps, so k should grow only while alpha^(k+1) / E(k) > c / (1 + k c), i.e. long
+  drafts only pay when alpha is high and c is small. Speculative decoding stops paying off overall
+  when S(1) = (1+alpha)/(1+c) < 1, i.e. alpha < c, and in practice it gives little when acceptance is
+  low (mismatched draft, high temperature), the draft is expensive relative to the target, or when
+  the target is no longer memory-bound (large batches), because then verifying k+1 tokens no longer
+  costs the same as one step.

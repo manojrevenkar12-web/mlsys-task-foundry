@@ -1,0 +1,3 @@
+modes:
+- interpret-only
+note: 'Uses blocks of 4 rows: the interpreter accepts them, Mosaic needs a multiple of 8 rows (or the whole array).'

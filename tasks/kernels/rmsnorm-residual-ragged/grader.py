@@ -3,7 +3,7 @@ import jax.numpy as jnp
 import numpy as np
 from jax.experimental.pallas import tpu as pltpu
 
-from foundry.checks import Ctx, check, fail
+from foundry.checks import Ctx, check, fail, lowers_for_tpu
 
 
 def _interp():
@@ -73,3 +73,10 @@ def eps_is_inside_the_square_root(sol, ctx: Ctx):
     w = np.ones((128,), np.float32)
     _, y = _run(sol, x, r, w, eps=1e-6)
     ctx.close(y, _ref(x, r, w, 1e-6)[1], rtol=1e-3, atol=1e-6, what="tiny rows")
+
+
+@check(targets=["interpret-only"])
+def lowers_for_a_real_tpu(sol, ctx: Ctx):
+    """The interpreter is lenient; a chip is not. Lower with the solution's own defaults, no TPU needed."""
+    SD = jax.ShapeDtypeStruct
+    lowers_for_tpu(lambda x, r, w: sol.add_rmsnorm(x, r, w), SD((100, 256), jnp.float32), SD((100, 256), jnp.float32), SD((256,), jnp.float32), what="add_rmsnorm")

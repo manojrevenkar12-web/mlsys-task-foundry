@@ -128,3 +128,30 @@ class Ctx:
 
 def fail(msg: str) -> None:
     raise CheckFailed(msg)
+
+
+def lowers_for_tpu(fn: Callable[..., Any], *specs: Any, what: str = "the kernel") -> None:
+    """Lower `fn` for a real TPU (Pallas to Mosaic) without running it.
+
+    The TPU interpreter accepts kernels a chip would reject: blocks that break the (8, 128) tiling,
+    ops Mosaic cannot lower. Lowering needs no TPU, so a check can demand it. `specs` are
+    jax.ShapeDtypeStruct arguments; the result must contain a Mosaic custom call, so a kernel that
+    silently falls back to interpret mode or plain XLA does not count."""
+    import jax
+
+    from . import config
+
+    target = config.settings()["tpu_lowering"]
+    # kernels may ask which chip they run on (pltpu.get_tpu_info); on CPU that needs a named target
+    device = jax.sharding.AbstractDevice(
+        device_kind=str(target["device_kind"]), num_cores=int(target["num_cores"]), platform="tpu"
+    )
+    mesh = jax.sharding.AbstractMesh((1,), ("lowering",), abstract_device=device)
+    try:
+        with jax.sharding.use_abstract_mesh(mesh):
+            text = jax.jit(fn).trace(*specs).lower(lowering_platforms=("tpu",)).as_text()
+    except Exception as e:  # any lowering error is the finding
+        msg = " ".join(str(e).split())
+        raise CheckFailed(f"{what} does not lower for a TPU: {type(e).__name__}: {msg[:300]}") from None
+    if "tpu_custom_call" not in text:
+        raise CheckFailed(f"{what} lowers without a Mosaic kernel (interpret mode or plain XLA)")

@@ -1,0 +1,29 @@
+bottleneck: host_input
+device_busy_share: 0.113
+largest_host_phase: decode_images
+overlapped_step_ms: 16.63
+explanation: >-
+  Steady state (steps 1-9): the `train` step averages 20.34 ms (18.1-22.7 ms). Inside it,
+  `load_batch` takes 16.63 ms on average (81.8% of the step), of which `decode_images` is 15.00 ms
+  (73.8% of the step) and `augment` 1.61 ms; the jitted `update` dispatch (PjitFunction) is only
+  ~0.08 ms and the device (ThunkExecutor::Execute on the tf_XLAExecute thread) is busy 2.30 ms per
+  step, an 11.3% share. The remaining ~3.7 ms is the update plus the block_until_ready wait and
+  Python overhead. There is no recompilation after step 0 (step 0 is 273 ms because of
+  backend_compile_and_load of update, ~185 ms, and of small helper computations), and the
+  host-to-device copies of a 64x32x32x3 float32 batch (0.8 MB) are negligible. So the device idles
+  ~89% of the time waiting for single-threaded Python/NumPy input work: the step is host-input bound.
+  If loading the next batch overlapped perfectly with the current step, each step would take
+  max(16.63 ms load, 3.71 ms rest) = 16.63 ms (an 18% gain only), so overlap alone is not enough --
+  the loader itself must get faster. Changes in order of expected gain: (1) speed up decode_images
+  (15.0 ms, 74%): vectorise it over the batch (one rng.integers call for (64, 64, 64, 3) and one
+  reshape/mean instead of a 64-iteration Python loop), or in a real pipeline use a fast decoder
+  (PIL-SIMD / nvJPEG / tf.data or DALI decode) -- expect decode to drop by 10x or more, the step to
+  fall from ~20 ms toward the ~3.7 ms device+dispatch floor; (2) parallelise and prefetch the input
+  pipeline: run load_batch in background workers (multiprocessing / grain / tf.data with
+  num_parallel_calls, a prefetch queue of 2-3 batches, and jax.device_put ahead of time) so loading
+  of batch n+1 overlaps update of batch n -- the step becomes max(load/workers, 3.7 ms), e.g. 4
+  workers -> ~4.2 ms; (3) vectorise augment (1.6 ms; batched flips via np.where and rolls via
+  index arithmetic, or do augmentation on device inside the jitted update) and (4) drop the per-step
+  block_until_ready/float(loss) sync so JAX's async dispatch overlaps the device with the next
+  batch's loading. After (1)+(2) the device busy share should rise from 11% to well over 50%;
+  then a larger batch per step would raise it further.

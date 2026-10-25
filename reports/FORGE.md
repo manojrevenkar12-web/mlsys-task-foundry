@@ -1,7 +1,7 @@
 # Forge report
 
-22 of 22 tasks proven. 114 of 114 plausible wrong solutions rejected by
-105 checks (9 checks no mutant fails).
+22 of 22 tasks proven. 119 of 119 plausible wrong solutions rejected by
+111 checks (10 checks no mutant fails).
 
 | Task | Area | Difficulty | Reference | Mutants killed | Checks | Problems |
 |---|---|---:|---|---:|---:|---|
@@ -10,12 +10,12 @@
 | nan-from-padding | debugging | 3 | passes (3 s) | 5/5 | 5 | - |
 | same-dropout-everywhere | debugging | 3 | passes (3 s) | 5/5 | 4 | - |
 | vocab-parallel-loss | debugging | 4 | passes (8 s) | 6/6 | 4 | - |
-| flash-attention-causal | kernels | 4 | passes (6 s) | 7/7 | 6 | - |
-| int8-matmul-scales | kernels | 3 | passes (6 s) | 5/5 | 6 | - |
-| port-dma-kernel | kernels | 3 | passes (3 s) | 6/6 | 5 | - |
-| rmsnorm-residual-ragged | kernels | 3 | passes (5 s) | 5/5 | 6 | - |
-| row-softmax | kernels | 2 | passes (3 s) | 6/6 | 6 | - |
-| tiled-matmul | kernels | 2 | passes (10 s) | 8/8 | 6 | - |
+| flash-attention-causal | kernels | 4 | passes (8 s) | 7/7 | 7 | - |
+| int8-matmul-scales | kernels | 3 | passes (7 s) | 6/6 | 7 | - |
+| port-dma-kernel | kernels | 3 | passes (4 s) | 7/7 | 6 | - |
+| rmsnorm-residual-ragged | kernels | 3 | passes (6 s) | 6/6 | 7 | - |
+| row-softmax | kernels | 2 | passes (3 s) | 7/7 | 7 | - |
+| tiled-matmul | kernels | 2 | passes (8 s) | 9/9 | 7 | - |
 | gpu-launch-bound | profiling | 2 | passes (0 s) | 4/4 | 4 | - |
 | host-bound-input | profiling | 2 | passes (0 s) | 5/5 | 4 | - |
 | recompiling-train-step | profiling | 2 | passes (11 s) | 6/6 | 6 | - |
@@ -96,10 +96,11 @@
 
 | Mutant | Failure modes | Rejected by |
 |---|---|---|
-| dequant-first | kernel-bypass | runs_a_pallas_kernel, matches_with_distinct_row_and_channel_scales, exact_integer_sums_with_long_k, correct_on_two_cores_in_random_order, one_sided_and_sparse_values |
+| dequant-first | kernel-bypass | runs_a_pallas_kernel, matches_with_distinct_row_and_channel_scales, exact_integer_sums_with_long_k, correct_on_two_cores_in_random_order, one_sided_and_sparse_values, lowers_for_a_real_tpu |
 | float32-accumulator | int-accum-overflow | exact_integer_sums_with_long_k |
-| int16-accumulator | int-accum-overflow | matches_with_distinct_row_and_channel_scales, exact_integer_sums_with_long_k, correct_on_two_cores_in_random_order, one_sided_and_sparse_values |
+| int16-accumulator | int-accum-overflow | matches_with_distinct_row_and_channel_scales, exact_integer_sums_with_long_k, correct_on_two_cores_in_random_order, one_sided_and_sparse_values, lowers_for_a_real_tpu |
 | k-parallel | reduction-axis-parallel | matches_with_distinct_row_and_channel_scales, exact_integer_sums_with_long_k, correct_on_two_cores_in_random_order, one_sided_and_sparse_values |
+| k-tiles-of-64 | interpret-only | lowers_for_a_real_tpu |
 | scales-transposed | quant-scale-axis | correct_on_two_cores_in_random_order, one_sided_and_sparse_values |
 
 ### port-dma-kernel
@@ -107,9 +108,10 @@
 | Mutant | Failure modes | Rejected by |
 |---|---|---|
 | blockspec-instead | kernel-bypass | keeps_the_manual_dma |
-| hallucinated-params | api-hallucinated | keeps_the_manual_dma, matches_on_every_distribution, data_is_used_only_after_the_wait, bf16_in_bf16_out |
-| kept-pl-dot | api-removed | uses_current_api, keeps_the_manual_dma, matches_on_every_distribution, data_is_used_only_after_the_wait, bf16_in_bf16_out |
-| kept-pltpu-any | api-removed | uses_current_api, keeps_the_manual_dma, matches_on_every_distribution, data_is_used_only_after_the_wait, bf16_in_bf16_out |
+| hallucinated-params | api-hallucinated | keeps_the_manual_dma, matches_on_every_distribution, data_is_used_only_after_the_wait, bf16_in_bf16_out, lowers_for_a_real_tpu |
+| kept-pl-dot | api-removed | uses_current_api, keeps_the_manual_dma, matches_on_every_distribution, data_is_used_only_after_the_wait, bf16_in_bf16_out, lowers_for_a_real_tpu |
+| kept-pltpu-any | api-removed | uses_current_api, keeps_the_manual_dma, matches_on_every_distribution, data_is_used_only_after_the_wait, bf16_in_bf16_out, lowers_for_a_real_tpu |
+| rows-of-4 | interpret-only | lowers_for_a_real_tpu |
 | wait-after-use | accumulator-init | matches_on_every_distribution, data_is_used_only_after_the_wait, bf16_in_bf16_out |
 | wrong-row-offset | narrow-distribution | matches_on_every_distribution, data_is_used_only_after_the_wait, bf16_in_bf16_out |
 
@@ -122,6 +124,7 @@
 | norm-before-add | narrow-distribution | full_blocks_on_every_distribution, every_row_right_when_the_last_block_is_partial, bf16_in_bf16_out_computed_in_f32 |
 | outputs-swapped | narrow-distribution | full_blocks_on_every_distribution, every_row_right_when_the_last_block_is_partial, bf16_in_bf16_out_computed_in_f32, eps_is_inside_the_square_root |
 | pad-to-block | ragged-tail, shape-special-case | every_row_right_when_the_last_block_is_partial |
+| twelve-row-blocks | interpret-only | lowers_for_a_real_tpu |
 
 ### row-softmax
 
@@ -130,7 +133,8 @@
 | bf16-math | output-dtype | bf16_in_bf16_out_computed_in_f32 |
 | column-max | softmax-unstable | matches_on_every_input_distribution, finite_and_exact_for_logits_in_the_hundreds, bf16_in_bf16_out_computed_in_f32, other_shapes_and_row_blocks |
 | fixed-rows | shape-special-case | finite_and_exact_for_logits_in_the_hundreds, bf16_in_bf16_out_computed_in_f32, other_shapes_and_row_blocks |
-| library-softmax | kernel-bypass | runs_a_pallas_kernel |
+| four-row-blocks | interpret-only | lowers_for_a_real_tpu |
+| library-softmax | kernel-bypass | runs_a_pallas_kernel, lowers_for_a_real_tpu |
 | log-domain-shift | softmax-unstable, narrow-distribution | finite_and_exact_for_logits_in_the_hundreds |
 | no-max-subtraction | softmax-unstable | matches_on_every_input_distribution, finite_and_exact_for_logits_in_the_hundreds |
 
@@ -138,13 +142,14 @@
 
 | Mutant | Failure modes | Rejected by |
 |---|---|---|
-| bf16-accumulator | output-dtype | bf16_in_bf16_out_with_f32_accumulation |
+| bf16-accumulator | output-dtype | bf16_in_bf16_out_with_f32_accumulation, lowers_for_a_real_tpu |
 | f32-output | output-dtype | bf16_in_bf16_out_with_f32_accumulation |
 | fixed-grid | shape-special-case | handles_other_shapes_and_blocks, bf16_in_bf16_out_with_f32_accumulation, correct_when_parallel_axes_run_on_two_cores_in_random_order |
 | flush-at-first-step | accumulator-init | matches_on_every_input_distribution, handles_other_shapes_and_blocks, bf16_in_bf16_out_with_f32_accumulation, correct_when_parallel_axes_run_on_two_cores_in_random_order |
-| jnp-bypass | kernel-bypass | runs_a_pallas_kernel |
+| jnp-bypass | kernel-bypass | runs_a_pallas_kernel, lowers_for_a_real_tpu |
 | parallel-k | reduction-axis-parallel | matches_on_every_input_distribution, handles_other_shapes_and_blocks, bf16_in_bf16_out_with_f32_accumulation, correct_when_parallel_axes_run_on_two_cores_in_random_order |
-| removed-api | api-removed | uses_current_api, runs_a_pallas_kernel, matches_on_every_input_distribution, handles_other_shapes_and_blocks, bf16_in_bf16_out_with_f32_accumulation, correct_when_parallel_axes_run_on_two_cores_in_random_order |
+| removed-api | api-removed | uses_current_api, runs_a_pallas_kernel, matches_on_every_input_distribution, handles_other_shapes_and_blocks, bf16_in_bf16_out_with_f32_accumulation, correct_when_parallel_axes_run_on_two_cores_in_random_order, lowers_for_a_real_tpu |
+| tiles-of-64 | interpret-only | lowers_for_a_real_tpu |
 | zero-every-step | accumulator-init | matches_on_every_input_distribution, handles_other_shapes_and_blocks, bf16_in_bf16_out_with_f32_accumulation, correct_when_parallel_axes_run_on_two_cores_in_random_order |
 
 ### gpu-launch-bound

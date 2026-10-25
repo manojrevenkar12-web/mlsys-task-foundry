@@ -1,0 +1,24 @@
+step_ms_b1_l4096: 10.132
+tokens_per_s_b1_l4096: 98.69
+crossover_batch_l128: 1352.0
+max_context_for_crossover: 218.6
+tokens_per_s_b256_l4096: 2731.8
+explanation: >-
+  Model: bytes = 2 x 8.03e9 = 16.06 GB of weights + B x L x 131,072 B of KV (2 (K,V) x 32 layers x
+  8 heads x 128 dim x 2 B); FLOPs = 2 x 8.03e9 x B. At B=1, L=4096 the step moves 16.06 GB + 0.537 GB
+  = 16.60 GB -> 16.60e9 / 1.638e12 = 10.13 ms, while compute is only 16.06e9 / 918e12 = 0.0175 ms
+  (580x less), so one sequence gets ~98.7 tok/s and decode is purely HBM-bandwidth bound: every token
+  re-reads all weights. Batching amortises the weight read: compute grows 17.5 us per sequence while
+  memory grows only by that sequence's KV (L x 131 kB / 1.638 TB/s = 10.24 us per sequence at L=128).
+  Setting 17.49e-6 B = 9.80e-3 + 10.24e-6 B gives B = 1352 at L=128. But the KV read also scales with
+  B, so a sequence is compute-heavier than memory-heavier only if its per-sequence FLOP time
+  (2P/918e12 = 17.49 us) exceeds its per-sequence KV time (L x 131,072 / 1.638e12): L < 218.6 tokens.
+  Beyond ~219 tokens of context no batch size makes the step compute-bound -- the weight cost is
+  amortised away but the KV cost is per sequence, i.e. its arithmetic intensity is fixed at
+  ~2P/(L x 131 kB) FLOP/byte, below the v6e ridge of 918e12/1.638e12 = 560 FLOP/byte. At B=256,
+  L=4096: memory = (16.06 GB + 137.4 GB) / 1.638 TB/s = 93.7 ms vs compute 4.48 ms, so throughput is
+  256 / 93.7 ms = 2,732 tok/s total (10.7 tok/s per sequence), and 88% of the bytes are KV cache.
+  So at small batch the weight read limits decode; at large batch with long contexts the KV read
+  does; longer contexts raise the per-sequence bytes and push the crossover batch up (to infinity
+  past ~219 tokens). Levers are KV size (GQA/MQA, FP8/int8 KV, paged sharing of prefixes) rather
+  than more batch.

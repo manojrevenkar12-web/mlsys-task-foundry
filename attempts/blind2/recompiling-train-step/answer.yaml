@@ -1,0 +1,18 @@
+cause: recompilation
+step_compiles: 12
+compile_share: 0.822
+explanation: >-
+  The 12 `train` steps take 4.48 s in total (~373 ms each), yet the compiled computation itself
+  (ThunkExecutor::Execute on the XLA execute thread) runs only ~73 ms in all. Every step contains a
+  PjitFunction(step) that does lower_sharding_computation (~12-17 ms) and a backend_compile_and_load
+  of 260-330 ms with the jit_step XLA pass pipeline (layout assignment, simplification, ...): 12
+  compiles of jit_step in 12 batches, i.e. a cache miss every time. backend_compile_and_load events
+  account for 82.2% of the time inside `train` (78.5% from the 12 big jit_step compiles, the rest
+  from two ~6 ms shape-dependent helper compiles per batch); lowering adds another ~4%. The cause is
+  that `batches()` pads each batch to its own longest sequence, so the (8, width) tokens/mask arrays
+  have a new shape almost every batch and jax.jit specialises and recompiles per input shape. Fix:
+  pad each batch up to a power-of-two bucket (16, 32, 64, 128, 256, 512; less than twice the longest
+  sequence, mean padding well under 2x) so `step` sees at most 6 shapes and compiles at most 6
+  times over 30 batches (typically 3-4, since widths cluster at 64-256); after warm-up every step is
+  a cache hit and runs in milliseconds. The padded positions have mask 0 (and token 0), and the loss
+  divides by the sum of the mask, so the loss and gradients are unchanged.

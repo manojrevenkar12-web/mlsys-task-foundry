@@ -3,7 +3,7 @@ import jax.numpy as jnp
 import numpy as np
 from jax.experimental.pallas import tpu as pltpu
 
-from foundry.checks import Ctx, check, fail
+from foundry.checks import Ctx, check, fail, lowers_for_tpu
 
 
 def _interp(seed=None, cores=1):
@@ -80,3 +80,12 @@ def one_sided_and_sparse_values(sol, ctx: Ctx):
         xs = rng.uniform(0.01, 0.1, 128).astype(np.float32)
         ws = rng.uniform(0.01, 0.1, 128).astype(np.float32)
         ctx.close(_run(sol, xq, xs, wq, ws, interpret=_interp()), _ref(xq, xs, wq, ws), rtol=1e-5, atol=1e-6, what=name)
+
+
+@check(targets=["interpret-only"])
+def lowers_for_a_real_tpu(sol, ctx: Ctx):
+    """The interpreter is lenient; a chip is not. Lower with the solution's own defaults, no TPU needed."""
+    SD = jax.ShapeDtypeStruct
+    lowers_for_tpu(
+        lambda x, xs, w, ws: sol.qmatmul(x, xs, w, ws),
+        SD((256, 512), jnp.int8), SD((256, 1), jnp.float32), SD((512, 384), jnp.int8), SD((1, 384), jnp.float32), what="qmatmul")

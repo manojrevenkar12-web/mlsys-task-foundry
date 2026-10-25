@@ -1,0 +1,4 @@
+modes:
+- interpret-only
+note: 'Uses 64-wide K tiles: exact in the interpreter, but the (128, 64) int8 block is narrower than the 128-lane tile, so
+  it does not lower.'

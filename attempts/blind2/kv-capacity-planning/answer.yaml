@@ -1,0 +1,17 @@
+kv_bytes_per_token: 131072
+kv_blocks: 24766
+seqs_at_8k: 48
+seqs_at_8k_fp8: 96
+explanation: >-
+  KV per token = 2 (K and V) x 32 layers x 8 KV heads x 128 dim x 2 bytes = 131,072 B (128 KiB);
+  GQA keeps it 4x smaller than 32 full heads would. Usable HBM = 0.9 x 80e9 = 72.0e9 B; weights =
+  8.03e9 x 2 = 16.06e9 B; reserve 4e9 B; KV pool = 72.0e9 - 16.06e9 - 4.0e9 = 51.94e9 B. One 16-token
+  block = 16 x 131,072 = 2,097,152 B, so floor(51.94e9 / 2,097,152) = 24,766 blocks (396,256 tokens).
+  An 8,192-token sequence needs 8192/16 = 512 blocks (1.07 GB), so floor(24,766 / 512) = 48
+  sequences (48.4). With FP8 KV a block is 1,048,576 B -> 49,533 blocks -> floor(49,533 / 512) = 96
+  sequences. Meaning: if every conversation is 8k tokens long, the server can hold at most 48
+  concurrent sequences in bf16 (96 in FP8), so the decode batch is capped at 48 regardless of
+  max_num_seqs or compute headroom; admitting more forces queueing or preemption/recompute. Since
+  decode at batch 48 is still memory-bound (weights 16 GB + KV ~51 GB read per step), throughput is
+  set by this KV limit; FP8 KV doubles the batch (and halves the KV bytes read per step), at some
+  accuracy risk.

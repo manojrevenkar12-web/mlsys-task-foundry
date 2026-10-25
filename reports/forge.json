@@ -1,5 +1,5 @@
 {
- "seconds": 85.6,
+ "seconds": 262.5,
  "tasks": [
   {
    "id": "dp-replicas-drift",
@@ -509,14 +509,15 @@
    "title": "Flash attention forward with a causal mask and online softmax",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 5.92,
+   "reference_seconds": 8.38,
    "checks": [
     "uses_current_api",
     "runs_a_pallas_kernel",
     "full_attention_matches",
     "causal_attention_matches",
     "exact_on_every_distribution_and_large_scores",
-    "correct_on_two_cores_in_random_order"
+    "correct_on_two_cores_in_random_order",
+    "lowers_for_a_real_tpu"
    ],
    "check_targets": {
     "uses_current_api": [
@@ -542,6 +543,9 @@
     "correct_on_two_cores_in_random_order": [
      "reduction-axis-parallel",
      "accumulator-init"
+    ],
+    "lowers_for_a_real_tpu": [
+     "interpret-only"
     ]
    },
    "mutants": {
@@ -557,7 +561,7 @@
       "correct_on_two_cores_in_random_order"
      ],
      "crashed": null,
-     "seconds": 4.84
+     "seconds": 6.54
     },
     "max-not-tracked": {
      "modes": [
@@ -572,7 +576,7 @@
       "correct_on_two_cores_in_random_order"
      ],
      "crashed": null,
-     "seconds": 5.4
+     "seconds": 5.59
     },
     "no-acc-rescale": {
      "modes": [
@@ -586,7 +590,7 @@
       "correct_on_two_cores_in_random_order"
      ],
      "crashed": null,
-     "seconds": 4.18
+     "seconds": 5.73
     },
     "no-scale": {
      "modes": [
@@ -600,7 +604,7 @@
       "correct_on_two_cores_in_random_order"
      ],
      "crashed": null,
-     "seconds": 6.05
+     "seconds": 4.31
     },
     "no-sum-rescale": {
      "modes": [
@@ -614,7 +618,7 @@
       "correct_on_two_cores_in_random_order"
      ],
      "crashed": null,
-     "seconds": 5.96
+     "seconds": 4.32
     },
     "normalise-every-step": {
      "modes": [
@@ -628,7 +632,7 @@
       "correct_on_two_cores_in_random_order"
      ],
      "crashed": null,
-     "seconds": 4.3
+     "seconds": 4.38
     },
     "strict-causal": {
      "modes": [
@@ -641,12 +645,13 @@
       "correct_on_two_cores_in_random_order"
      ],
      "crashed": null,
-     "seconds": 5.68
+     "seconds": 4.52
     }
    },
    "idle_checks": [
     "uses_current_api",
-    "runs_a_pallas_kernel"
+    "runs_a_pallas_kernel",
+    "lowers_for_a_real_tpu"
    ],
    "api_findings": [],
    "leaks": [],
@@ -663,14 +668,15 @@
    "title": "int8 x int8 matmul with per-row and per-channel scales",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 6.42,
+   "reference_seconds": 6.55,
    "checks": [
     "uses_current_api",
     "runs_a_pallas_kernel",
     "matches_with_distinct_row_and_channel_scales",
     "exact_integer_sums_with_long_k",
     "correct_on_two_cores_in_random_order",
-    "one_sided_and_sparse_values"
+    "one_sided_and_sparse_values",
+    "lowers_for_a_real_tpu"
    ],
    "check_targets": {
     "uses_current_api": [
@@ -693,6 +699,9 @@
     ],
     "one_sided_and_sparse_values": [
      "narrow-distribution"
+    ],
+    "lowers_for_a_real_tpu": [
+     "interpret-only"
     ]
    },
    "mutants": {
@@ -706,10 +715,11 @@
       "matches_with_distinct_row_and_channel_scales",
       "exact_integer_sums_with_long_k",
       "correct_on_two_cores_in_random_order",
-      "one_sided_and_sparse_values"
+      "one_sided_and_sparse_values",
+      "lowers_for_a_real_tpu"
      ],
      "crashed": null,
-     "seconds": 2.54
+     "seconds": 2.13
     },
     "float32-accumulator": {
      "modes": [
@@ -720,7 +730,7 @@
       "exact_integer_sums_with_long_k"
      ],
      "crashed": null,
-     "seconds": 9.25
+     "seconds": 6.54
     },
     "int16-accumulator": {
      "modes": [
@@ -731,10 +741,11 @@
       "matches_with_distinct_row_and_channel_scales",
       "exact_integer_sums_with_long_k",
       "correct_on_two_cores_in_random_order",
-      "one_sided_and_sparse_values"
+      "one_sided_and_sparse_values",
+      "lowers_for_a_real_tpu"
      ],
      "crashed": null,
-     "seconds": 7.28
+     "seconds": 6.34
     },
     "k-parallel": {
      "modes": [
@@ -748,7 +759,18 @@
       "one_sided_and_sparse_values"
      ],
      "crashed": null,
-     "seconds": 6.27
+     "seconds": 6.89
+    },
+    "k-tiles-of-64": {
+     "modes": [
+      "interpret-only"
+     ],
+     "note": "Uses 64-wide K tiles: exact in the interpreter, but the (128, 64) int8 block is narrower than the 128-lane tile, so it does not lower.",
+     "killed_by": [
+      "lowers_for_a_real_tpu"
+     ],
+     "crashed": null,
+     "seconds": 7.36
     },
     "scales-transposed": {
      "modes": [
@@ -760,7 +782,7 @@
       "one_sided_and_sparse_values"
      ],
      "crashed": null,
-     "seconds": 4.99
+     "seconds": 5.69
     }
    },
    "idle_checks": [
@@ -771,7 +793,7 @@
    "rubric_issues": [],
    "problems": [],
    "ok": true,
-   "killed": 5
+   "killed": 6
   },
   {
    "id": "port-dma-kernel",
@@ -781,13 +803,14 @@
    "title": "Port a manual-DMA kernel from old Pallas to JAX 0.12",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 2.99,
+   "reference_seconds": 4.38,
    "checks": [
     "uses_current_api",
     "keeps_the_manual_dma",
     "matches_on_every_distribution",
     "data_is_used_only_after_the_wait",
-    "bf16_in_bf16_out"
+    "bf16_in_bf16_out",
+    "lowers_for_a_real_tpu"
    ],
    "check_targets": {
     "uses_current_api": [
@@ -807,6 +830,9 @@
     ],
     "bf16_in_bf16_out": [
      "narrow-distribution"
+    ],
+    "lowers_for_a_real_tpu": [
+     "interpret-only"
     ]
    },
    "mutants": {
@@ -819,7 +845,7 @@
       "keeps_the_manual_dma"
      ],
      "crashed": null,
-     "seconds": 3.26
+     "seconds": 4.21
     },
     "hallucinated-params": {
      "modes": [
@@ -830,10 +856,11 @@
       "keeps_the_manual_dma",
       "matches_on_every_distribution",
       "data_is_used_only_after_the_wait",
-      "bf16_in_bf16_out"
+      "bf16_in_bf16_out",
+      "lowers_for_a_real_tpu"
      ],
      "crashed": null,
-     "seconds": 1.06
+     "seconds": 1.28
     },
     "kept-pl-dot": {
      "modes": [
@@ -845,10 +872,11 @@
       "keeps_the_manual_dma",
       "matches_on_every_distribution",
       "data_is_used_only_after_the_wait",
-      "bf16_in_bf16_out"
+      "bf16_in_bf16_out",
+      "lowers_for_a_real_tpu"
      ],
      "crashed": null,
-     "seconds": 1.12
+     "seconds": 1.5
     },
     "kept-pltpu-any": {
      "modes": [
@@ -860,10 +888,22 @@
       "keeps_the_manual_dma",
       "matches_on_every_distribution",
       "data_is_used_only_after_the_wait",
-      "bf16_in_bf16_out"
+      "bf16_in_bf16_out",
+      "lowers_for_a_real_tpu"
      ],
      "crashed": null,
-     "seconds": 1.08
+     "seconds": 1.28
+    },
+    "rows-of-4": {
+     "modes": [
+      "interpret-only"
+     ],
+     "note": "Copies 4 rows per step: the DMA and the result are right in the interpreter, but a (4, e) output block is not a multiple of 8 rows and does not lower.",
+     "killed_by": [
+      "lowers_for_a_real_tpu"
+     ],
+     "crashed": null,
+     "seconds": 5.43
     },
     "wait-after-use": {
      "modes": [
@@ -876,7 +916,7 @@
       "bf16_in_bf16_out"
      ],
      "crashed": null,
-     "seconds": 2.49
+     "seconds": 3.15
     },
     "wrong-row-offset": {
      "modes": [
@@ -889,7 +929,7 @@
       "bf16_in_bf16_out"
      ],
      "crashed": null,
-     "seconds": 2.51
+     "seconds": 3.17
     }
    },
    "idle_checks": [],
@@ -902,7 +942,7 @@
    "rubric_issues": [],
    "problems": [],
    "ok": true,
-   "killed": 6
+   "killed": 7
   },
   {
    "id": "rmsnorm-residual-ragged",
@@ -912,14 +952,15 @@
    "title": "Fused residual add and RMSNorm when rows do not fill the last block",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 4.71,
+   "reference_seconds": 6.1,
    "checks": [
     "uses_current_api",
     "runs_a_pallas_kernel",
     "full_blocks_on_every_distribution",
     "every_row_right_when_the_last_block_is_partial",
     "bf16_in_bf16_out_computed_in_f32",
-    "eps_is_inside_the_square_root"
+    "eps_is_inside_the_square_root",
+    "lowers_for_a_real_tpu"
    ],
    "check_targets": {
     "uses_current_api": [
@@ -941,6 +982,9 @@
     ],
     "eps_is_inside_the_square_root": [
      "narrow-distribution"
+    ],
+    "lowers_for_a_real_tpu": [
+     "interpret-only"
     ]
    },
    "mutants": {
@@ -954,7 +998,7 @@
       "eps_is_inside_the_square_root"
      ],
      "crashed": null,
-     "seconds": 4.76
+     "seconds": 5.49
     },
     "floor-grid": {
      "modes": [
@@ -965,7 +1009,7 @@
       "every_row_right_when_the_last_block_is_partial"
      ],
      "crashed": null,
-     "seconds": 3.34
+     "seconds": 3.57
     },
     "norm-before-add": {
      "modes": [
@@ -978,7 +1022,7 @@
       "bf16_in_bf16_out_computed_in_f32"
      ],
      "crashed": null,
-     "seconds": 3.38
+     "seconds": 4.05
     },
     "outputs-swapped": {
      "modes": [
@@ -992,7 +1036,7 @@
       "eps_is_inside_the_square_root"
      ],
      "crashed": null,
-     "seconds": 3.02
+     "seconds": 4.04
     },
     "pad-to-block": {
      "modes": [
@@ -1004,7 +1048,18 @@
       "every_row_right_when_the_last_block_is_partial"
      ],
      "crashed": null,
-     "seconds": 3.24
+     "seconds": 3.75
+    },
+    "twelve-row-blocks": {
+     "modes": [
+      "interpret-only"
+     ],
+     "note": "Uses blocks of 12 rows: right in the interpreter, but 12 is not a multiple of the 8-row sublane tile, so it does not lower.",
+     "killed_by": [
+      "lowers_for_a_real_tpu"
+     ],
+     "crashed": null,
+     "seconds": 4.6
     }
    },
    "idle_checks": [
@@ -1016,7 +1071,7 @@
    "rubric_issues": [],
    "problems": [],
    "ok": true,
-   "killed": 5
+   "killed": 6
   },
   {
    "id": "row-softmax",
@@ -1026,14 +1081,15 @@
    "title": "Row softmax that survives large logits and bf16",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 3.27,
+   "reference_seconds": 3.32,
    "checks": [
     "uses_current_api",
     "runs_a_pallas_kernel",
     "matches_on_every_input_distribution",
     "finite_and_exact_for_logits_in_the_hundreds",
     "bf16_in_bf16_out_computed_in_f32",
-    "other_shapes_and_row_blocks"
+    "other_shapes_and_row_blocks",
+    "lowers_for_a_real_tpu"
    ],
    "check_targets": {
     "uses_current_api": [
@@ -1055,6 +1111,9 @@
     ],
     "other_shapes_and_row_blocks": [
      "shape-special-case"
+    ],
+    "lowers_for_a_real_tpu": [
+     "interpret-only"
     ]
    },
    "mutants": {
@@ -1067,7 +1126,7 @@
       "bf16_in_bf16_out_computed_in_f32"
      ],
      "crashed": null,
-     "seconds": 3.27
+     "seconds": 3.3
     },
     "column-max": {
      "modes": [
@@ -1081,7 +1140,7 @@
       "other_shapes_and_row_blocks"
      ],
      "crashed": null,
-     "seconds": 2.67
+     "seconds": 2.68
     },
     "fixed-rows": {
      "modes": [
@@ -1094,7 +1153,18 @@
       "other_shapes_and_row_blocks"
      ],
      "crashed": null,
-     "seconds": 3.02
+     "seconds": 2.68
+    },
+    "four-row-blocks": {
+     "modes": [
+      "interpret-only"
+     ],
+     "note": "Uses blocks of 4 rows: the interpreter accepts them, Mosaic needs a multiple of 8 rows (or the whole array).",
+     "killed_by": [
+      "lowers_for_a_real_tpu"
+     ],
+     "crashed": null,
+     "seconds": 3.57
     },
     "library-softmax": {
      "modes": [
@@ -1102,10 +1172,11 @@
      ],
      "note": "Calls jax.nn.softmax on the whole array instead of writing the kernel.",
      "killed_by": [
-      "runs_a_pallas_kernel"
+      "runs_a_pallas_kernel",
+      "lowers_for_a_real_tpu"
      ],
      "crashed": null,
-     "seconds": 1.41
+     "seconds": 1.47
     },
     "log-domain-shift": {
      "modes": [
@@ -1117,7 +1188,7 @@
       "finite_and_exact_for_logits_in_the_hundreds"
      ],
      "crashed": null,
-     "seconds": 3.66
+     "seconds": 3.45
     },
     "no-max-subtraction": {
      "modes": [
@@ -1129,7 +1200,7 @@
       "finite_and_exact_for_logits_in_the_hundreds"
      ],
      "crashed": null,
-     "seconds": 3.23
+     "seconds": 3.43
     }
    },
    "idle_checks": [
@@ -1140,7 +1211,7 @@
    "rubric_issues": [],
    "problems": [],
    "ok": true,
-   "killed": 6
+   "killed": 7
   },
   {
    "id": "tiled-matmul",
@@ -1150,14 +1221,15 @@
    "title": "Tiled matmul with an f32 accumulator, ready for two TensorCores",
    "reference_passed": true,
    "deterministic": true,
-   "reference_seconds": 9.69,
+   "reference_seconds": 8.13,
    "checks": [
     "uses_current_api",
     "runs_a_pallas_kernel",
     "matches_on_every_input_distribution",
     "handles_other_shapes_and_blocks",
     "bf16_in_bf16_out_with_f32_accumulation",
-    "correct_when_parallel_axes_run_on_two_cores_in_random_order"
+    "correct_when_parallel_axes_run_on_two_cores_in_random_order",
+    "lowers_for_a_real_tpu"
    ],
    "check_targets": {
     "uses_current_api": [
@@ -1180,6 +1252,9 @@
     "correct_when_parallel_axes_run_on_two_cores_in_random_order": [
      "reduction-axis-parallel",
      "accumulator-init"
+    ],
+    "lowers_for_a_real_tpu": [
+     "interpret-only"
     ]
    },
    "mutants": {
@@ -1189,10 +1264,11 @@
      ],
      "note": "The scratch accumulator has the input dtype, so bf16 inputs accumulate in bf16.",
      "killed_by": [
-      "bf16_in_bf16_out_with_f32_accumulation"
+      "bf16_in_bf16_out_with_f32_accumulation",
+      "lowers_for_a_real_tpu"
      ],
      "crashed": null,
-     "seconds": 7.34
+     "seconds": 7.59
     },
     "f32-output": {
      "modes": [
@@ -1203,7 +1279,7 @@
       "bf16_in_bf16_out_with_f32_accumulation"
      ],
      "crashed": null,
-     "seconds": 8.31
+     "seconds": 7.57
     },
     "fixed-grid": {
      "modes": [
@@ -1216,7 +1292,7 @@
       "correct_when_parallel_axes_run_on_two_cores_in_random_order"
      ],
      "crashed": null,
-     "seconds": 4.79
+     "seconds": 4.41
     },
     "flush-at-first-step": {
      "modes": [
@@ -1230,7 +1306,7 @@
       "correct_when_parallel_axes_run_on_two_cores_in_random_order"
      ],
      "crashed": null,
-     "seconds": 5.19
+     "seconds": 4.5
     },
     "jnp-bypass": {
      "modes": [
@@ -1238,7 +1314,8 @@
      ],
      "note": "Skips the kernel and calls jnp.dot on the whole arrays.",
      "killed_by": [
-      "runs_a_pallas_kernel"
+      "runs_a_pallas_kernel",
+      "lowers_for_a_real_tpu"
      ],
      "crashed": null,
      "seconds": 1.52
@@ -1255,7 +1332,7 @@
       "correct_when_parallel_axes_run_on_two_cores_in_random_order"
      ],
      "crashed": null,
-     "seconds": 4.95
+     "seconds": 4.78
     },
     "removed-api": {
      "modes": [
@@ -1268,10 +1345,22 @@
       "matches_on_every_input_distribution",
       "handles_other_shapes_and_blocks",
       "bf16_in_bf16_out_with_f32_accumulation",
-      "correct_when_parallel_axes_run_on_two_cores_in_random_order"
+      "correct_when_parallel_axes_run_on_two_cores_in_random_order",
+      "lowers_for_a_real_tpu"
      ],
      "crashed": null,
-     "seconds": 1.1
+     "seconds": 1.11
+    },
+    "tiles-of-64": {
+     "modes": [
+      "interpret-only"
+     ],
+     "note": "Defaults to 64 x 64 tiles: correct in the interpreter, but a (64, 64) float32 block breaks the TPU's (8, 128) tiling, so it does not lower for a real chip.",
+     "killed_by": [
+      "lowers_for_a_real_tpu"
+     ],
+     "crashed": null,
+     "seconds": 18.79
     },
     "zero-every-step": {
      "modes": [
@@ -1285,7 +1374,7 @@
       "correct_when_parallel_axes_run_on_two_cores_in_random_order"
      ],
      "crashed": null,
-     "seconds": 3.98
+     "seconds": 4.2
     }
    },
    "idle_checks": [],
@@ -1294,7 +1383,7 @@
    "rubric_issues": [],
    "problems": [],
    "ok": true,
-   "killed": 8
+   "killed": 9
   },
   {
    "id": "gpu-launch-bound",
@@ -2373,9 +2462,9 @@
  "summary": {
   "tasks": 22,
   "ok": 22,
-  "mutants": 114,
-  "killed": 114,
-  "checks": 105,
-  "idle_checks": 9
+  "mutants": 119,
+  "killed": 119,
+  "checks": 111,
+  "idle_checks": 10
  }
 }

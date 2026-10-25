@@ -1,0 +1,4 @@
+modes:
+- interpret-only
+note: 'Copies 4 rows per step: the DMA and the result are right in the interpreter, but a (4, e) output block is not a multiple
+  of 8 rows and does not lower.'

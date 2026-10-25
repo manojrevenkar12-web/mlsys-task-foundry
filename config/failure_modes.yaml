@@ -13,6 +13,7 @@ modes:
   ragged-tail: {area: kernels, text: "Reads or writes past the logical end when the size is not a multiple of the block", source: expert}
   quant-scale-axis: {area: kernels, text: "Applies per-channel quantisation scales along the wrong axis or at the wrong time", source: expert}
   int-accum-overflow: {area: kernels, text: "Accumulates int8 products in a narrow integer type", source: expert}
+  interpret-only: {area: kernels, text: "Passes in the TPU interpreter but cannot lower for a real chip (blocks off the (8, 128) tiling, ops Mosaic does not support)", source: "Pallas TPU lowering rules; interpret mode does not enforce them"}
   kernel-bypass: {area: kernels, text: "Computes the answer with plain jnp/XLA instead of the kernel the task asks for", source: "KernelBench: fallback to library calls"}
   shape-special-case: {area: any, text: "Hard-codes the shapes or values the visible tests use", source: "KernelBench-Verified: shape-matched bypasses"}
   narrow-distribution: {area: any, text: "Correct only on the input distribution the visible tests use", source: "KernelBench-Verified: four-distribution hidden suite"}

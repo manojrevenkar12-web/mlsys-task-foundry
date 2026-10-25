@@ -5,7 +5,7 @@ import jax.numpy as jnp
 import numpy as np
 from jax.experimental.pallas import tpu as pltpu
 
-from foundry.checks import Ctx, check, fail
+from foundry.checks import Ctx, check, fail, lowers_for_tpu
 
 
 def _interp(seed=None, cores=1):
@@ -76,3 +76,10 @@ def correct_on_two_cores_in_random_order(sol, ctx: Ctx):
     for seed in (1, 2):
         got = sol.attention(*(jnp.asarray(t) for t in (q, k, v)), causal=True, interpret=_interp(seed, 2))
         ctx.close(got, want, rtol=1e-4, atol=1e-5, what=f"two cores, seed {seed}")
+
+
+@check(targets=["interpret-only"])
+def lowers_for_a_real_tpu(sol, ctx: Ctx):
+    """The interpreter is lenient; a chip is not. Lower with the solution's own defaults, no TPU needed."""
+    SD = jax.ShapeDtypeStruct
+    lowers_for_tpu(lambda q, k, v: sol.attention(q, k, v, causal=True), *[SD((2, 512, 64), jnp.float32)] * 3, what="causal attention")

@@ -3,7 +3,7 @@ import jax.numpy as jnp
 import numpy as np
 from jax.experimental.pallas import tpu as pltpu
 
-from foundry.checks import Ctx, check, fail
+from foundry.checks import Ctx, check, fail, lowers_for_tpu
 
 
 def _interp():
@@ -58,3 +58,11 @@ def other_shapes_and_row_blocks(sol, ctx: Ctx):
     for shape, br in [((24, 128), 8), ((64, 2048), 16), ((8, 640), 8)]:
         x = mk(shape) * 10
         ctx.close(sol.softmax(jnp.asarray(x), br=br, interpret=_interp()), _ref(x), rtol=1e-5, atol=1e-7, what=f"{shape}, br={br}")
+
+
+@check(targets=["interpret-only"])
+def lowers_for_a_real_tpu(sol, ctx: Ctx):
+    """The interpreter is lenient; a chip is not. Lower with the solution's own defaults, no TPU needed."""
+    SD = jax.ShapeDtypeStruct
+    for dt in (jnp.float32, jnp.bfloat16):
+        lowers_for_tpu(lambda x: sol.softmax(x), SD((64, 1024), dt), what=f"softmax ({jnp.dtype(dt).name})")

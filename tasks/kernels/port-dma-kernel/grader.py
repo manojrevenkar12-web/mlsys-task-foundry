@@ -3,7 +3,7 @@ import jax.numpy as jnp
 import numpy as np
 from jax.experimental.pallas import tpu as pltpu
 
-from foundry.checks import Ctx, check, fail
+from foundry.checks import Ctx, check, fail, lowers_for_tpu
 
 
 def _interp(mode="on_wait"):
@@ -48,3 +48,10 @@ def bf16_in_bf16_out(sol, ctx: Ctx):
         fail(f"bf16 inputs gave {got.dtype}")
     want = np.asarray(x.astype(jnp.float32), np.float64) @ np.asarray(w.astype(jnp.float32), np.float64)
     ctx.close(np.asarray(got.astype(jnp.float32)), want, rtol=2e-2, atol=0.25, what="bf16")
+
+
+@check(targets=["interpret-only"])
+def lowers_for_a_real_tpu(sol, ctx: Ctx):
+    """The interpreter is lenient; a chip is not. Lower with the solution's own defaults, no TPU needed."""
+    SD = jax.ShapeDtypeStruct
+    lowers_for_tpu(lambda x, w: sol.project(x, w), SD((256, 128), jnp.float32), SD((128, 128), jnp.float32), what="project")

@@ -68,6 +68,7 @@ def run_attempts(label: str, root: Path | None = None, force: bool = False) -> d
         "label": label,
         "recorded_at": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
         "forced": force,
+        "submissions": root.name,
         "tasks": rows,
         "missing": missing,
         "summary": _summary(rows, missing),
@@ -101,7 +102,8 @@ def attempts_markdown(doc: dict[str, Any]) -> str:
     lines = [
         f"# Attempts: {doc['label']}",
         "",
-        f"Recorded {doc['recorded_at']}{' (forced rewrite)' if doc['forced'] else ''}. Passed {s['passed']} of {s['attempted']} attempted"
+        f"Recorded {doc['recorded_at']}{' (forced rewrite)' if doc['forced'] else ''}"
+        f"{'' if doc.get('submissions', doc['label']) == doc['label'] else ' from the submissions in attempts/' + doc['submissions'] + '/'}. Passed {s['passed']} of {s['attempted']} attempted"
         f" tasks ({s['not_attempted']} not attempted).",
         "",
         "| Area | Passed |",
